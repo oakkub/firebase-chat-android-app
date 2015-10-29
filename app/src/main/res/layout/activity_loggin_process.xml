@@ -1,0 +1,17 @@
+<android.support.design.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.oakkub.chat.activities.FacebookLoginActivity" >
+
+    <fragment
+        android:id="@+id/logging_in_fragment"
+        android:name="com.oakkub.chat.fragments.FacebookLoginActivityFragment"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior"
+        tools:layout="@layout/login_process" />
+
+</android.support.design.widget.CoordinatorLayout>

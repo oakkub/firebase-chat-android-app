@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.design.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity" >
+
+    <android.support.design.widget.AppBarLayout
+        android:layout_height="wrap_content"
+        android:layout_width="match_parent"
+        android:background="@color/colorPrimary"
+        android:theme="@style/AppTheme.AppBarOverlay" >
+
+        <android.support.v7.widget.Toolbar
+            android:id="@+id/main_toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            app:layout_scrollFlags="scroll|enterAlways|snap"
+            app:popupTheme="@style/AppTheme.PopupOverlay" />
+
+        <android.support.design.widget.TabLayout
+            android:id="@+id/main_tablayout"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/listPreferredItemHeight"
+            app:layout_anchor="@id/main_toolbar"
+            app:layout_anchorGravity="bottom"
+            app:tabMode="fixed"
+            app:tabGravity="fill"
+            style="@style/TabLayoutStyle" />
+
+    </android.support.design.widget.AppBarLayout>
+
+    <com.oakkub.chat.views.widgets.ViewPager
+        android:id="@+id/viewpager"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior" />
+
+    <include
+        layout="@layout/fab_main" />
+
+</android.support.design.widget.CoordinatorLayout>

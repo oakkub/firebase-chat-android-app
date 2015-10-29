@@ -1,0 +1,50 @@
+<resources>
+    <string name="app_name">Chat</string>
+    <string name="action_settings">Settings</string>
+    <string name="title_activity_login">LoginActivity</string>
+    <string name="title_activity_register">RegisterActivity</string>
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="facebook_app_id">1646438208961419</string>
+
+    <string name="hint.message.email_example">Email (ex: example@gmail.com)</string>
+    <string name="hint.message.password">Password</string>
+    <string name="hint.message.confirmed_password">Confirmed password</string>
+
+    <string name="error.message.fill_out_information">Please fill out all data.</string>
+    <string name="error.message.email_taken">This email is already taken.</string>
+    <string name="error.message.network">Network error occurred, Please try again.</string>
+    <string name="error.message.incorrect_id_or_password">Incorrect email or password.</string>
+    <string name="error.message.email_invalid">Invalid email.</string>
+    <string name="error.message.confirm_password">Confirmed password must equals to password.</string>
+    <string name="error.message.login">Cannot logged in, Please try again.</string>
+    <string name="error.message.internet_connection">Cannot proceed, Please check your internet connection.</string>
+
+    <string name="login">Log in</string>
+    <string name="logging_in_with_google">Logging in with Google</string>
+    <string name="login_with_google">Log in with Google</string>
+    <string name="logging_out_with_google">Logging out with Google</string>
+    <string name="logging_in_with_facebook">Logging in with Facebook</string>
+    <string name="login_with_facebook">Log in with Facebook</string>
+    <string name="logging_out_with_facebook">Logging out with Facebook</string>
+    <string name="logging_in_with_twitter">Logging in with Twitter</string>
+    <string name="login_with_twitter">Log in with Twitter</string>
+    <string name="logging_out_with_twitter">Logging out with Twitter</string>
+    <string name="logging_in_with_email">Logging in with Email</string>
+    <string name="login_with_email">Log in with Email</string>
+    <string name="logging_out_with_email">Logging out with Email</string>
+
+    <string name="authenticating_user">Authenticating user</string>
+
+    <string name="register">Register</string>
+    <string name="registration">Registration</string>
+
+    <string name="or">Or</string>
+
+    <string name="settings.logout">Logout</string>
+    <string name="title_activity_facebook_login">FacebookLoginActivity</string>
+    <string name="create_account">Create account</string>
+    <string name="title_activity_authentication">AuthenticationActivity</string>
+    <string name="title_activity_email_login">EmailLoginActivity</string>
+    <string name="add_friend">Add Friend</string>
+
+</resources>

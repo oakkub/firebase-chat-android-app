@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.design.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="true"
+    tools:context="com.oakkub.chat.activities.AddFriendActivity">
+
+    <include
+        layout="@layout/simple_toolbar" />
+
+    <fragment
+        android:id="@+id/fragment"
+        android:name="com.oakkub.chat.fragments.AddFriendActivityFragment"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior"
+        tools:layout="@layout/fragment_add_friend" />
+
+</android.support.design.widget.CoordinatorLayout>

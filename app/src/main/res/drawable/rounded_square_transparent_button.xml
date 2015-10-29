@@ -1,0 +1,40 @@
+<selector
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:exitFadeDuration="@android:integer/config_mediumAnimTime" >
+
+    <item
+        android:state_pressed="false" >
+
+        <shape
+            android:shape="rectangle" >
+
+            <stroke
+                android:color="@color/whiteGray"
+                android:width="@dimen/spacing_tiny" />
+
+            <solid android:color="@android:color/transparent" />
+            <corners android:radius="@dimen/spacing_small" />
+
+        </shape>
+
+    </item>
+
+    <item
+        android:state_pressed="true" >
+
+        <shape
+            android:shape="rectangle" >
+
+            <stroke
+                android:color="@color/whiteGray"
+                android:width="@dimen/spacing_tiny" />
+
+            <solid android:color="@color/nearTransparent" />
+            <corners android:radius="@dimen/spacing_small" />
+
+        </shape>
+
+    </item>
+
+</selector>
+

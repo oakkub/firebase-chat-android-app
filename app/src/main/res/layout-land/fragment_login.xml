@@ -1,0 +1,54 @@
+<android.support.v4.widget.NestedScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content" >
+
+    <LinearLayout
+        android:layout_height="wrap_content"
+        android:layout_width="match_parent"
+        android:id="@+id/login_layout"
+        android:orientation="vertical"
+        android:layout_marginTop="@dimen/spacing_small"
+        android:divider="@drawable/spacer_medium"
+        android:showDividers="middle"
+        android:gravity="center" >
+
+        <Button
+            android:id="@+id/login_with_email_button"
+            android:layout_width="@dimen/spacing_giant"
+            android:layout_height="@dimen/spacing_bigger"
+            android:text="@string/create_account"
+            android:background="@drawable/rounded_square_transparent_button"
+            style="@style/DefaultButtonStyle" />
+
+        <TextView
+            android:id="@+id/or_header_textview"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/or"
+            android:textAllCaps="true"
+            android:layout_margin="@dimen/spacing_small"
+            android:fontFamily="sans-serif-light"
+            style="@style/TextViewHeaderStyle" />
+
+        <Button
+            android:id="@+id/google_login_button"
+            android:layout_width="@dimen/spacing_giant"
+            android:layout_height="@dimen/spacing_bigger"
+            android:text="@string/login_with_google"
+            android:background="@drawable/google_sign_in_button"
+            style="@style/GoogleButtonStyle" />
+        
+        <Button
+            android:id="@+id/facebook_login_button"
+            android:layout_width="@dimen/spacing_giant"
+            android:layout_height="@dimen/spacing_bigger"
+            android:text="@string/login_with_facebook"
+            android:background="@drawable/facebook_login_button"
+            style="@style/FacebookButtonStyle" />
+
+
+    </LinearLayout>
+
+</android.support.v4.widget.NestedScrollView>
+

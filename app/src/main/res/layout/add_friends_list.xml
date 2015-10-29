@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.v7.widget.CardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/addFriendProfileRoot"
+    android:layout_width="@dimen/cardview_width"
+    android:layout_height="wrap_content"
+    android:clickable="true"
+    android:focusable="true"
+    android:foreground="?attr/selectableItemBackground"
+    style="@style/CardViewStyle" >
+
+    <LinearLayout
+        xmlns:fresco="http://schemas.android.com/apk/res-auto"
+        android:orientation="vertical"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:divider="@drawable/spacer_medium"
+        android:showDividers="beginning|middle|end"
+        android:layout_gravity="center"
+        android:gravity="center" >
+
+        <com.facebook.drawee.view.SimpleDraweeView
+            android:id="@+id/addFriendProfileImageView"
+            android:layout_width="@dimen/spacing_bigger2"
+            android:layout_height="@dimen/spacing_bigger2"
+            fresco:roundAsCircle="true" />
+
+        <TextView
+            android:id="@+id/addFriendNameTextView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:textAllCaps="false" />
+
+        <Button
+            android:id="@+id/addFriendButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/add_friend"
+            android:textAppearance="@style/TextAppearance.AppCompat.Small" />
+
+    </LinearLayout>
+
+</android.support.v7.widget.CardView>

@@ -1,0 +1,69 @@
+package com.oakkub.chat.fragments;
+
+import android.content.Context;
+import android.support.v4.app.Fragment;
+import android.os.Bundle;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+
+import com.oakkub.chat.R;
+import com.oakkub.chat.views.widgets.ToolbarCommunicator;
+import com.oakkub.chat.views.adapters.ListAdapter;
+
+import java.util.Arrays;
+
+/**
+ * A placeholder fragment containing a simple view.
+ */
+public class MainActivityFragment extends Fragment {
+
+    private ToolbarCommunicator toolbarCommunicator;
+
+    public static MainActivityFragment newInstance() {
+
+        MainActivityFragment fragment = new MainActivityFragment();
+
+        return fragment;
+    }
+
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+
+        toolbarCommunicator = (ToolbarCommunicator) getActivity();
+    }
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        setRetainInstance(true);
+    }
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
+
+        View rootView = inflater.inflate(R.layout.fragment_main, container, false);
+
+        RecyclerView recyclerView = (RecyclerView) rootView.findViewById(R.id.recyclerview);
+        recyclerView.setHasFixedSize(true);
+        recyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
+        recyclerView.setAdapter(new ListAdapter(Arrays.asList(getStrings())));
+
+        return rootView;
+    }
+
+    private String[] getStrings() {
+
+        String[] s = new String[100];
+
+        for (int i = 0; i < s.length; i++) {
+            s[i] = String.valueOf(i);
+        }
+        return s;
+    }
+}
