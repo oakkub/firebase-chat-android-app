@@ -1,6 +1,7 @@
 package com.oakkub.chat.modules;
 
 import android.app.Application;
+import android.app.NotificationManager;
 import android.content.Context;
 import android.net.ConnectivityManager;
 import android.view.inputmethod.InputMethodManager;
@@ -26,6 +27,12 @@ public class SystemServiceModule {
     @Provides
     ConnectivityManager provideConnectivityManager(Application application) {
         return (ConnectivityManager) application.getSystemService(Context.CONNECTIVITY_SERVICE);
+    }
+
+    @PerApp
+    @Provides
+    NotificationManager provideNotificationManager(Application application) {
+        return (NotificationManager) application.getSystemService(Context.NOTIFICATION_SERVICE);
     }
 
 }

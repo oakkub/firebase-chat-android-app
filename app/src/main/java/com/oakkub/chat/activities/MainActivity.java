@@ -1,8 +1,6 @@
 package com.oakkub.chat.activities;
 
 import android.content.Intent;
-import android.content.res.ColorStateList;
-import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.TransitionDrawable;
 import android.os.Bundle;
@@ -20,14 +18,15 @@ import com.firebase.client.DataSnapshot;
 import com.firebase.client.Firebase;
 import com.firebase.client.FirebaseError;
 import com.firebase.client.ValueEventListener;
+import com.oakkub.chat.R;
 import com.oakkub.chat.fragments.FacebookLoginActivityFragment;
+import com.oakkub.chat.fragments.FriendsFragment;
 import com.oakkub.chat.managers.AppController;
 import com.oakkub.chat.utils.FirebaseUtil;
-import com.oakkub.chat.views.widgets.Fab;
-import com.oakkub.chat.views.widgets.ToolbarCommunicator;
 import com.oakkub.chat.views.adapters.MainViewPagerAdapter;
-import com.oakkub.chat.R;
-import com.oakkub.chat.views.widgets.ViewPager;
+import com.oakkub.chat.views.widgets.Fab;
+import com.oakkub.chat.views.widgets.toolbar.ToolbarCommunicator;
+import com.oakkub.chat.views.widgets.viewpager.ViewPager;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -39,11 +38,9 @@ import butterknife.OnClick;
 public class MainActivity extends AppCompatActivity implements
         ToolbarCommunicator, ViewPager.OnPageChangeListener {
 
+    public static final String LOGIN_SUCCESS_ACTION = "com.oakkub.chat.activities.MainActivity.LOGIN_SUCCESS_ACTION";
     private static final String TAG = MainActivity.class.getSimpleName();
     private static final int[] FAB_DRAWABLES = {R.drawable.ic_sms_24dp, R.drawable.ic_person_add_24dp};
-
-    public static final String LOGIN_SUCCESS_ACTION = "com.oakkub.chat.activities.MainActivity.LOGIN_SUCCESS_ACTION";
-
     @Bind(R.id.main_toolbar)
     Toolbar toolbar;
     @Bind(R.id.main_tablayout)
@@ -54,16 +51,14 @@ public class MainActivity extends AppCompatActivity implements
     Fab fab;
 
     @Inject
-    @Named(FirebaseUtil.NAMED_CURRENT_USER)
-    Firebase currentUserFirebase;
-
-    @Inject
     @Named(FirebaseUtil.NAMED_CONNECTION)
     Firebase connectionFirebase;
 
     @Inject
-    @Named(FirebaseUtil.NAMED_USER_ONLINE)
+    @Named(FirebaseUtil.NAMED_ONLINE_USERS)
     Firebase onlineUserFirebase;
+
+    private AuthData authData;
 
     private MainViewPagerAdapter mainViewPagerAdapter;
 
@@ -80,8 +75,10 @@ public class MainActivity extends AppCompatActivity implements
 
         setToolbar();
         setupPager();
-        setupFirebaseComponent();
 
+        if (savedInstanceState == null) {
+            setupFirebaseComponent();
+        }
     }
 
     private void checkAction() {
@@ -96,7 +93,13 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     private void checkAuthentication() {
-        if (connectionFirebase.getAuth() == null) finish();
+        authData = connectionFirebase.getAuth();
+
+        if (authData == null) {
+            Intent loginIntent = new Intent(this, LoginActivity.class);
+            loginIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            startActivity(loginIntent);
+        }
     }
 
     private void setupPager() {
@@ -105,16 +108,33 @@ public class MainActivity extends AppCompatActivity implements
         viewPager.setAdapter(mainViewPagerAdapter);
         viewPager.addOnPageChangeListener(this);
         tabLayout.setupWithViewPager(viewPager);
-
     }
 
     @Override
     public void onPageSelected(int position) {
+        onPageSelectedFabAnimation(position);
+        onSelectedFragment(position);
+    }
+
+    @Override
+    public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+        fab.setClickable(positionOffsetPixels == 0 && fab.getVisibility() == View.VISIBLE);
+    }
+
+    @Override
+    public void onPageScrollStateChanged(int state) {
+        if (state == ViewPager.SCROLL_STATE_SETTLING) {
+            animateFabWithScaleAnimation();
+            fab.setClickable(fab.getVisibility() == View.VISIBLE);
+        }
+    }
+
+    private void onPageSelectedFabAnimation(int position) {
         // change fab image, according to the selected position of viewpager
         if (position < mainViewPagerAdapter.getCount() - 1 &&
-            position < FAB_DRAWABLES.length) {
+                position < FAB_DRAWABLES.length) {
 
-            if (viewPager.getPreviousItem() < FAB_DRAWABLES.length) {
+            if (viewPager.getPreviousPosition() < FAB_DRAWABLES.length) {
                 Drawable[] layers = new Drawable[] {
                         fab.getDrawable(),
                         ContextCompat.getDrawable(this, FAB_DRAWABLES[position])
@@ -128,19 +148,6 @@ public class MainActivity extends AppCompatActivity implements
 
                 fab.setImageDrawable(ContextCompat.getDrawable(this, FAB_DRAWABLES[position]));
             }
-        }
-    }
-
-    @Override
-    public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
-        fab.setClickable(positionOffsetPixels == 0 && fab.getVisibility() == View.VISIBLE);
-    }
-
-    @Override
-    public void onPageScrollStateChanged(int state) {
-        if (state == ViewPager.SCROLL_STATE_SETTLING) {
-            animateFabWithScaleAnimation();
-            fab.setClickable(fab.getVisibility() == View.VISIBLE);
         }
     }
 
@@ -182,12 +189,13 @@ public class MainActivity extends AppCompatActivity implements
 
                 if (connected) {
 
-                    onlineUserFirebase.child(FirebaseUtil.CHILD_ONLINE).onDisconnect().setValue(Boolean.FALSE);
-                    onlineUserFirebase.child(FirebaseUtil.CHILD_ONLINE).setValue(Boolean.TRUE);
+                    Firebase currentOnlineUser = onlineUserFirebase.child(authData.getUid());
 
-                    onlineUserFirebase.child(FirebaseUtil.CHILD_LAST_ONLINE)
-                            .onDisconnect().setValue(System.currentTimeMillis());
-                    onlineUserFirebase.child(FirebaseUtil.CHILD_LAST_ONLINE)
+                    currentOnlineUser.child(FirebaseUtil.CHILD_ONLINE).onDisconnect().setValue(Boolean.FALSE);
+                    currentOnlineUser.child(FirebaseUtil.CHILD_ONLINE).setValue(Boolean.TRUE);
+
+                    currentOnlineUser.child(FirebaseUtil.CHILD_LAST_ONLINE)
+                            .onDisconnect()
                             .setValue(System.currentTimeMillis());
                 }
             }
@@ -268,21 +276,50 @@ public class MainActivity extends AppCompatActivity implements
 
     private void performLogout() {
 
-        AuthData authData = connectionFirebase.getAuth();
-
         if (authData != null) {
 
             if (FirebaseUtil.isFacebookLogin(authData.getProvider())) {
+
                 logout(FacebookLoginActivity.class,
                         FacebookLoginActivityFragment.LOGOUT_ACTION,
                         FacebookLoginActivityFragment.RC_FACEBOOK);
+
             } else if (FirebaseUtil.isGoogleLogin(authData.getProvider())) {
+
                 logout(GoogleLoginActivity.class,
                         GoogleLoginActivity.ACTION_LOGOUT,
                         GoogleLoginActivity.RC_GOOGLE);
+
             } else if (FirebaseUtil.isEmailLogin(authData.getProvider())) {
+
                 firebaseUnAuthenticate();
             }
+        }
+    }
+
+    private void onSelectedFragment(int position) {
+        switch (position) {
+
+            case 0:
+                break;
+
+            case 1:
+                onFriendListFragmentSelected(position);
+                break;
+
+            case 2:
+                break;
+
+        }
+    }
+
+    private void onFriendListFragmentSelected(int position) {
+        FriendsFragment friendsFragment =
+                (FriendsFragment) mainViewPagerAdapter.getRegisteredFragment(position);
+
+        if (friendsFragment != null) {
+            // get friend list
+            friendsFragment.getUserFriends();
         }
     }
 
@@ -297,8 +334,12 @@ public class MainActivity extends AppCompatActivity implements
 
     private void firebaseLogout() {
 
-        onlineUserFirebase.child(FirebaseUtil.CHILD_ONLINE).setValue(Boolean.FALSE);
-        onlineUserFirebase.child(FirebaseUtil.CHILD_LAST_ONLINE).setValue(System.currentTimeMillis());
+        onlineUserFirebase.child(authData.getUid())
+                .child(FirebaseUtil.CHILD_ONLINE)
+                .setValue(Boolean.FALSE);
+        onlineUserFirebase.child(authData.getUid())
+                .child(FirebaseUtil.CHILD_LAST_ONLINE)
+                .setValue(System.currentTimeMillis());
 
         onlineUserFirebase.unauth();
     }

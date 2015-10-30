@@ -2,20 +2,21 @@ package com.oakkub.chat.fragments;
 
 import android.content.Context;
 import android.content.Intent;
-import android.support.v4.app.Fragment;
 import android.os.Bundle;
+import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 
+import com.google.android.gms.common.SignInButton;
+import com.oakkub.chat.R;
 import com.oakkub.chat.activities.FacebookLoginActivity;
 import com.oakkub.chat.activities.GoogleLoginActivity;
 import com.oakkub.chat.activities.LoginActivity;
 import com.oakkub.chat.utils.NetworkUtil;
 import com.oakkub.chat.utils.Util;
-import com.oakkub.chat.views.widgets.ViewPagerCommunicator;
-import com.oakkub.chat.R;
+import com.oakkub.chat.views.widgets.viewpager.ViewPagerCommunicator;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
@@ -34,7 +35,7 @@ public class LoginActivityFragment extends Fragment implements View.OnClickListe
 
     /* Google view */
     @Bind(R.id.google_login_button)
-    Button googleLoginButton;
+    SignInButton googleLoginButton;
 
     /* Facebook view */
     @Bind(R.id.facebook_login_button)
@@ -127,6 +128,8 @@ public class LoginActivityFragment extends Fragment implements View.OnClickListe
         loginWithEmailButton.setOnClickListener(this);
         googleLoginButton.setOnClickListener(this);
         facebookButton.setOnClickListener(this);
+
+        googleLoginButton.setSize(SignInButton.SIZE_WIDE);
 
     }
 

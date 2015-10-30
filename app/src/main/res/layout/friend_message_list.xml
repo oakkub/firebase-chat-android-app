@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:fresco="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/message_root"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_margin="@dimen/spacing_small"
+    android:clickable="true"
+    android:divider="@drawable/spacer_medium"
+    android:focusable="true"
+    android:gravity="start"
+    android:orientation="horizontal"
+    android:showDividers="beginning|middle|end">
+
+    <com.facebook.drawee.view.SimpleDraweeView
+        android:id="@+id/friend_message_profile_image_view"
+        android:layout_width="@dimen/spacing_bigger"
+        android:layout_height="@dimen/spacing_bigger"
+        fresco:roundAsCircle="true" />
+
+    <TextView
+        android:id="@+id/friend_message_text_view"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical"
+        android:background="@color/colorAccent"
+        android:padding="@dimen/spacing_small"
+        android:textColor="@android:color/white" />
+
+</LinearLayout>

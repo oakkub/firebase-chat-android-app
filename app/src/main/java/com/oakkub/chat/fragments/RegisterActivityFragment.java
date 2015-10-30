@@ -1,9 +1,8 @@
 package com.oakkub.chat.fragments;
 
-import android.content.Context;
 import android.content.Intent;
-import android.support.v4.app.Fragment;
 import android.os.Bundle;
+import android.support.v4.app.Fragment;
 import android.support.v7.app.AppCompatActivity;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -17,19 +16,14 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
-import com.firebase.client.AuthData;
 import com.firebase.client.Firebase;
 import com.firebase.client.FirebaseError;
 import com.oakkub.chat.R;
 import com.oakkub.chat.activities.AuthenticationActivity;
-import com.oakkub.chat.activities.MainActivity;
-import com.oakkub.chat.models.UserInfo;
 import com.oakkub.chat.utils.FirebaseUtil;
 import com.oakkub.chat.utils.TextUtil;
 import com.oakkub.chat.utils.Util;
 import com.oakkub.chat.views.dialogs.ProgressDialogFragment;
-
-import java.util.Map;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
@@ -55,17 +49,9 @@ public class RegisterActivityFragment extends Fragment
     @Bind(R.id.register_button)
     Button registerButton;
 
-    private Context context;
     private Firebase firebase;
 
     private ProgressDialogFragment progressDialog;
-
-    @Override
-    public void onAttach(Context context) {
-        super.onAttach(context);
-
-        this.context = context;
-    }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {

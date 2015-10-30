@@ -12,14 +12,16 @@ public class UserInfo {
     public static final int FRIEND = 1;
     public static final int ADD_FRIEND = 2;
 
-    public static String EMAIL = "email";
-    public static String DISPLAY_NAME = "displayName";
-    public static String PROFILE_IMAGE_URL = "profileImageURL";
-    public static String REGISTERED_DATE = "registeredDate";
+    public static final String EMAIL = "email";
+    public static final String DISPLAY_NAME = "displayName";
+    public static final String PROFILE_IMAGE_URL = "profileImageURL";
+    public static final String REGISTERED_DATE = "registeredDate";
 
     String email;
     String displayName;
     String profileImageURL;
+    String userKey;
+    String instanceID;
     long registeredDate;
     int type;
 
@@ -44,15 +46,42 @@ public class UserInfo {
         return profileImageURL;
     }
 
+    public String getInstanceID() {
+        return instanceID;
+    }
+
+    public String getUserKey() {
+        return userKey;
+    }
+
+    public void setUserKey(String userKey) {
+        this.userKey = userKey;
+    }
+
     public int getType() {
         return type;
+    }
+
+    public void setType(int type) {
+        this.type = type;
     }
 
     public long getRegisteredDate() {
         return registeredDate;
     }
 
-    public void setType(int type) {
-        this.type = type;
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        UserInfo userInfo = (UserInfo) o;
+
+        return getUserKey().equals(userInfo.getUserKey());
+    }
+
+    @Override
+    public int hashCode() {
+        return getUserKey().hashCode();
     }
 }

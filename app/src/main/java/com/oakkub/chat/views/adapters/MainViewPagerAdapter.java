@@ -5,6 +5,7 @@ import android.support.v4.app.FragmentManager;
 
 import com.oakkub.chat.fragments.FriendsFragment;
 import com.oakkub.chat.fragments.MainActivityFragment;
+import com.oakkub.chat.fragments.RoomListFragment;
 
 import javax.inject.Inject;
 
@@ -27,7 +28,7 @@ public class MainViewPagerAdapter extends SmartFragmentStatePagerAdapter {
 
             case 0:
 
-                return MainActivityFragment.newInstance();
+                return RoomListFragment.newInstance();
 
             case 1:
 

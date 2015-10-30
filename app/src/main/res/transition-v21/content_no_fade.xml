@@ -1,0 +1,12 @@
+<transitionSet xmlns:android="http://schemas.android.com/apk/res/android"
+    android:duration="@android:integer/config_longAnimTime">
+
+    <fade android:fadingMode="fade_in_out">
+        <targets>
+            <target android:excludeId="@android:id/statusBarBackground" />
+            <target android:excludeId="@android:id/navigationBarBackground" />
+            <target android:excludeId="@android:id/content" />
+        </targets>
+    </fade>
+
+</transitionSet>

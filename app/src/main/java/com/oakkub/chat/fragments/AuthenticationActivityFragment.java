@@ -1,8 +1,8 @@
 package com.oakkub.chat.fragments;
 
 import android.content.Intent;
-import android.support.v4.app.Fragment;
 import android.os.Bundle;
+import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -20,10 +20,12 @@ import com.oakkub.chat.R;
 import com.oakkub.chat.activities.LoginActivity;
 import com.oakkub.chat.activities.MainActivity;
 import com.oakkub.chat.managers.AppController;
+import com.oakkub.chat.models.GoogleInstanceID;
 import com.oakkub.chat.models.UserInfo;
+import com.oakkub.chat.services.GCMRegistrationIntentService;
 import com.oakkub.chat.utils.FirebaseUtil;
+import com.oakkub.chat.utils.PrefsUtil;
 import com.oakkub.chat.utils.TextUtil;
-import com.oakkub.chat.utils.Util;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -33,17 +35,18 @@ import javax.inject.Named;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
+import de.greenrobot.event.EventBus;
+import de.greenrobot.event.Subscribe;
 
 /**
  * A placeholder fragment containing a simple view.
  */
 public class AuthenticationActivityFragment extends Fragment {
 
-    private static final String TAG = AuthenticationActivityFragment.class.getSimpleName();
     public static final String PROVIDER = "provider";
     public static final String PASSWORD = "password";
     public static final String EMAIL = "email";
-
+    private static final String TAG = AuthenticationActivityFragment.class.getSimpleName();
     @Bind(R.id.login_process_root_view)
     RelativeLayout rootView;
     @Bind(R.id.logging_in_text_view)
@@ -89,6 +92,20 @@ public class AuthenticationActivityFragment extends Fragment {
         setViews();
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+
+        EventBus.getDefault().register(this);
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+
+        EventBus.getDefault().unregister(this);
+    }
+
     private void setViews() {
 
         rootView.setBackgroundColor(ContextCompat.getColor(getActivity(), getBackgroundColor()));
@@ -116,6 +133,8 @@ public class AuthenticationActivityFragment extends Fragment {
 
         final String token = intent.getStringExtra(TextUtil.TOKEN);
 
+        Log.e(TAG, token);
+
         firebase.authWithOAuthToken(provider, token,
                 new AuthenticationResultHandler());
     }
@@ -134,10 +153,15 @@ public class AuthenticationActivityFragment extends Fragment {
         firebaseUserInfo.child(authData.getUid()).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-                // user not logged in before, there is no data.
-                if (dataSnapshot.getValue() == null) saveUserData();
-                // user already logged in, we don't have to save data.
-                else loginSuccess();
+                if (dataSnapshot.getValue() == null ||
+                        PrefsUtil.shouldUpdateInstanceId(getActivity())) {
+                    /*user not logged in before, there is no data.
+                      or instance id should be updated*/
+                    saveUserData();
+                } else {
+                    // user already logged in, we don't have to save data.
+                    saveGCMInstanceID();
+                }
             }
 
             @Override
@@ -152,7 +176,8 @@ public class AuthenticationActivityFragment extends Fragment {
 
         Map<String, Object> userInfo = getUserInfo(authData);
 
-        firebaseUserInfo.child(authData.getUid()).setValue(userInfo, new Firebase.CompletionListener() {
+        firebaseUserInfo.child(authData.getUid()).setValue(userInfo,
+                new Firebase.CompletionListener() {
             @Override
             public void onComplete(FirebaseError firebaseError, Firebase firebase) {
 
@@ -162,9 +187,17 @@ public class AuthenticationActivityFragment extends Fragment {
                     return;
                 }
 
-                loginSuccess();
+                saveGCMInstanceID();
             }
         });
+    }
+
+    private void saveGCMInstanceID() {
+
+        Intent gcmInstanceIDService = new Intent(getActivity().getApplicationContext(), GCMRegistrationIntentService.class);
+        gcmInstanceIDService.setAction(GCMRegistrationIntentService.LOGIN_ACTION);
+
+        getActivity().startService(gcmInstanceIDService);
     }
 
     private Map<String, Object> getUserInfo(AuthData authData) {
@@ -185,6 +218,15 @@ public class AuthenticationActivityFragment extends Fragment {
         userInfo.put(UserInfo.REGISTERED_DATE, System.currentTimeMillis());
 
         return userInfo;
+    }
+
+    @Subscribe
+    public void onEvent(GoogleInstanceID googleInstanceID) {
+        if (googleInstanceID == null) {
+            backToLoginActivity(getString(R.string.error_message_network));
+        } else {
+            loginSuccess();
+        }
     }
 
     private void loginSuccess() {
@@ -212,17 +254,12 @@ public class AuthenticationActivityFragment extends Fragment {
 
     private void backToLoginActivity(String errorMessage) {
 
-        Intent backToLoginActivityIntent;
+        Intent backToLoginActivityIntent = new Intent(getActivity().getApplicationContext(), LoginActivity.class);
 
-        if (FirebaseUtil.isEmailLogin(provider)) {
-            backToLoginActivityIntent = new Intent(getActivity().getApplicationContext(), LoginActivity.class);
-        } else {
-            backToLoginActivityIntent = Util.intentClearActivity(getActivity().getApplicationContext(), LoginActivity.class);
-        }
-
+        backToLoginActivityIntent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
         backToLoginActivityIntent.putExtra(LoginActivity.LOGIN_FAILED, errorMessage);
         startActivity(backToLoginActivityIntent);
-        getActivity().overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
+        finishActivity();
     }
 
     private void handleFirebaseError(FirebaseError firebaseError) {

@@ -15,14 +15,17 @@ import android.view.animation.Animation;
 import android.widget.TextView;
 
 import com.firebase.client.Firebase;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GoogleApiAvailability;
 import com.oakkub.chat.R;
 import com.oakkub.chat.managers.AppComponent;
 import com.oakkub.chat.managers.AppController;
 import com.oakkub.chat.managers.Font;
 import com.oakkub.chat.utils.FirebaseUtil;
-import com.oakkub.chat.views.widgets.ViewPagerCommunicator;
+import com.oakkub.chat.utils.GoogleUtil;
 import com.oakkub.chat.utils.TextUtil;
 import com.oakkub.chat.views.adapters.LoginViewPagerAdapter;
+import com.oakkub.chat.views.widgets.viewpager.ViewPagerCommunicator;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -36,9 +39,8 @@ import butterknife.ButterKnife;
 public class LoginActivity extends AppCompatActivity implements ViewPagerCommunicator {
 
     public static final String LOGIN_FAILED = "loginFailed";
-
+    private static final String TAG = LoginActivity.class.getSimpleName();
     private static final String SNACK_BAR_SHOWED_STATE = "snackBarShowedState";
-
     @Bind(R.id.login_root_view)
     CoordinatorLayout rootView;
     @Bind(R.id.application_name_textview)
@@ -58,8 +60,8 @@ public class LoginActivity extends AppCompatActivity implements ViewPagerCommuni
 
         AppController.getComponent(this).inject(this);
 
-        if (firebase.getAuth() != null) {
-            goToMainActivity();
+        if (checkGooglePlayServices()) {
+            checkAuthentication();
         }
 
         if (savedInstanceState != null) {
@@ -71,11 +73,19 @@ public class LoginActivity extends AppCompatActivity implements ViewPagerCommuni
 
         if (!isErrorSnackBarShowed) {
             loginFailed(getIntent());
-            isErrorSnackBarShowed = true;
         }
 
         setupView();
         setupAnimation(savedInstanceState);
+    }
+
+    private void checkAuthentication() {
+        try {
+            if (firebase.getAuth() != null && firebase.getAuth().getUid() != null) {
+                goToMainActivity();
+            }
+        } catch (NullPointerException e) {
+        }
     }
 
     private void loginFailed(Intent intent) {
@@ -114,8 +124,8 @@ public class LoginActivity extends AppCompatActivity implements ViewPagerCommuni
 
         Intent mainIntent = new Intent(this, MainActivity.class);
         mainIntent.setAction(MainActivity.LOGIN_SUCCESS_ACTION);
+        mainIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(mainIntent);
-        finish();
         overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
 
     }
@@ -123,6 +133,8 @@ public class LoginActivity extends AppCompatActivity implements ViewPagerCommuni
     @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
+
+        Log.e(TAG, "onNewIntent");
 
         loginFailed(intent);
     }
@@ -145,6 +157,31 @@ public class LoginActivity extends AppCompatActivity implements ViewPagerCommuni
         if (viewPager.getCurrentItem() != 0) setCurrentItem(0);
         else super.onBackPressed();
 
+    }
+
+    private boolean checkGooglePlayServices() {
+        GoogleApiAvailability googleApiAvailability = GoogleApiAvailability.getInstance();
+        final int resultCode = googleApiAvailability.isGooglePlayServicesAvailable(this);
+
+        if (resultCode != ConnectionResult.SUCCESS) {
+
+            if (googleApiAvailability.isUserResolvableError(resultCode)) {
+
+                googleApiAvailability.getErrorDialog(this, resultCode,
+                        GoogleUtil.REQUEST_CODE_UPDATE_GOOGLE_PLAY)
+                        .show();
+            } else {
+
+                try {
+                    throw new Exception("This device is not support");
+                } catch (Exception e) {
+                    Log.e(TAG, e.getMessage());
+                    return false;
+                }
+            }
+        }
+
+        return true;
     }
 
     private void generateFacebookKeyHash() {

@@ -29,7 +29,6 @@ public class GridAutoFitLayoutManager extends GridLayoutManager {
 
         if (columnWidth <= 0) {
             columnWidth = (int) context.getResources().getDimension(R.dimen.spacing_larger);
-            Log.e("COLUMN WIDTH", String.valueOf(columnWidth));
         }
         return columnWidth;
     }

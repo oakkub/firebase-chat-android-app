@@ -1,12 +1,14 @@
 package com.oakkub.chat.views.adapters;
 
 import android.net.Uri;
+import android.support.v4.view.ViewCompat;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -14,6 +16,7 @@ import android.widget.TextView;
 import com.facebook.drawee.view.SimpleDraweeView;
 import com.oakkub.chat.R;
 import com.oakkub.chat.models.UserInfo;
+import com.oakkub.chat.utils.TransitionUtil;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
@@ -22,7 +25,7 @@ import butterknife.OnClick;
 /**
  * Created by OaKKuB on 10/26/2015.
  */
-public class FriendListAdapter extends RecyclerViewAdapter<UserInfo> {
+public class FriendListAdapter extends RecyclerViewAdapter<UserInfo, RecyclerView.ViewHolder> {
 
     private static final int FRIEND_TYPE = 0;
     private static final int ADD_FRIEND_TYPE = 1;
@@ -38,7 +41,7 @@ public class FriendListAdapter extends RecyclerViewAdapter<UserInfo> {
     @Override
     public int getItemViewType(int position) {
 
-        final UserInfo userInfo = adapterList.get(position);
+        final UserInfo userInfo = items.get(position);
 
         if (userInfo == null) {
 
@@ -99,15 +102,23 @@ public class FriendListAdapter extends RecyclerViewAdapter<UserInfo> {
         if (holder instanceof FriendHolder ||
             holder instanceof AddFriendHolder) {
 
-            final UserInfo userInfo = adapterList.get(position);
+            final UserInfo userInfo = items.get(position);
 
             if (holder instanceof FriendHolder) {
                 final FriendHolder friendHolder = (FriendHolder) holder;
 
                 final String profileImageURI = userInfo.getProfileImageURL();
                 friendHolder.friendProfileImage.setImageURI(Uri.parse(profileImageURI));
+                /*Glide.with(friendHolder.itemView.getContext())
+                        .load(profileImageURI)
+                        .centerCrop()
+                        .crossFade()
+                        .into(friendHolder.friendProfileImage);*/
 
                 friendHolder.friendName.setText(userInfo.getDisplayName());
+
+                ViewCompat.setTransitionName(friendHolder.friendProfileImage,
+                        TransitionUtil.SHARED_TRANSITION + position);
 
             } else {
                 final AddFriendHolder addFriendHolder = (AddFriendHolder) holder;
@@ -122,14 +133,28 @@ public class FriendListAdapter extends RecyclerViewAdapter<UserInfo> {
 
     }
 
-    class FriendHolder extends RecyclerView.ViewHolder {
+    public interface OnClickListener {
+        void onClick(View view, RecyclerView.ViewHolder viewHolder, int position);
+    }
 
-        @Bind(R.id.friendProfileRoot)
-        LinearLayout friendProfileRoot;
+    static class ProgressBarHolder extends RecyclerView.ViewHolder {
+
+        @Bind(R.id.progressBar)
+        ProgressBar loading;
+
+        public ProgressBarHolder(View itemView) {
+            super(itemView);
+
+            ButterKnife.bind(this, itemView);
+        }
+    }
+
+    public class FriendHolder extends RecyclerView.ViewHolder {
 
         @Bind(R.id.friendProfileImageView)
-        SimpleDraweeView friendProfileImage;
-
+        public ImageView friendProfileImage;
+        @Bind(R.id.friendProfileRoot)
+        LinearLayout friendProfileRoot;
         @Bind(R.id.friendNameTextView)
         TextView friendName;
 
@@ -141,11 +166,11 @@ public class FriendListAdapter extends RecyclerViewAdapter<UserInfo> {
 
         @OnClick(R.id.friendProfileRoot)
         public void onClick(View view) {
-            onClickListener.onClick(view, adapterList.get(getAdapterPosition()), getAdapterPosition());
+            onClickListener.onClick(itemView, this, getAdapterPosition());
         }
     }
 
-    class AddFriendHolder extends RecyclerView.ViewHolder {
+    public class AddFriendHolder extends RecyclerView.ViewHolder {
 
         @Bind(R.id.addFriendProfileRoot)
         CardView addFriendProfileRoot;
@@ -165,27 +190,11 @@ public class FriendListAdapter extends RecyclerViewAdapter<UserInfo> {
             ButterKnife.bind(this, itemView);
         }
 
-        @OnClick(R.id.addFriendProfileRoot)
-        public void onClick(View view) {
-            onClickListener.onClick(view, adapterList.get(getAdapterPosition()), getAdapterPosition());
+        @OnClick(R.id.addFriendButton)
+        public void onAddFriendClick(View view) {
+            onClickListener.onClick(itemView, this, getAdapterPosition());
         }
 
-    }
-
-    static class ProgressBarHolder extends RecyclerView.ViewHolder {
-
-        @Bind(R.id.progressBar)
-        ProgressBar loading;
-
-        public ProgressBarHolder(View itemView) {
-            super(itemView);
-
-            ButterKnife.bind(this, itemView);
-        }
-    }
-
-    public interface OnClickListener {
-        void onClick(View view, UserInfo userInfo, int position);
     }
 
 }

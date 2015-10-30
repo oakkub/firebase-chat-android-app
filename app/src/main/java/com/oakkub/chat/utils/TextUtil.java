@@ -1,5 +1,9 @@
 package com.oakkub.chat.utils;
 
+import android.content.Context;
+
+import com.oakkub.chat.R;
+
 import java.util.regex.Pattern;
 
 /**
@@ -32,5 +36,22 @@ public class TextUtil {
         final Pattern emailPattern = Pattern.compile(emailRegex);
 
         return emailPattern.matcher(email).matches();
+    }
+
+    public static String getPrivateRoomKey(Context context, final String userId, final String friendId) {
+        return userId.compareTo(friendId) <= 0 ?
+                context.getString(R.string.private_room_key, userId, friendId)
+                :
+                context.getString(R.string.private_room_key, friendId, userId);
+    }
+
+    public static String getPath(String... strings) {
+        final int capacity = strings.length;
+        StringBuilder builder = new StringBuilder(capacity);
+
+        for (int i = 0; i < capacity; i++) {
+            builder.append(strings[i]).append(i == capacity - 1 ? "" : "/");
+        }
+        return builder.toString();
     }
 }

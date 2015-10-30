@@ -2,6 +2,7 @@ package com.oakkub.chat.managers;
 
 import android.app.Application;
 import android.content.Context;
+import android.support.multidex.MultiDex;
 
 import com.facebook.FacebookSdk;
 import com.facebook.drawee.backends.pipeline.Fresco;
@@ -15,6 +16,10 @@ public class AppController extends Application {
 
     private AppComponent appComponent;
 
+    public static AppComponent getComponent(Context context) {
+        return ((AppController) context.getApplicationContext()).appComponent;
+    }
+
     @Override
     public void onCreate() {
         super.onCreate();
@@ -22,6 +27,8 @@ public class AppController extends Application {
         FacebookSdk.sdkInitialize(this);
         Firebase.setAndroidContext(this);
         Fresco.initialize(this);
+
+        MultiDex.install(this);
 
         initDependencyInjector();
     }
@@ -32,10 +39,6 @@ public class AppController extends Application {
                 .appControllerModule(new AppControllerModule(this))
                 .build();
 
-    }
-
-    public static AppComponent getComponent(Context context) {
-        return ((AppController) context.getApplicationContext()).appComponent;
     }
 
 }

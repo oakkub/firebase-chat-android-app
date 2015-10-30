@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:fresco="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/room_root"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_margin="@dimen/spacing_small"
+    android:clickable="true"
+    android:focusable="true"
+    android:orientation="horizontal">
+
+    <com.facebook.drawee.view.SimpleDraweeView
+        android:id="@+id/room_profile_image_view"
+        android:layout_width="@dimen/spacing_bigger"
+        android:layout_height="@dimen/spacing_bigger"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_centerVertical="true"
+        fresco:roundAsCircle="true" />
+
+    <TextView
+        android:id="@+id/room_name_text_view"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/room_profile_image_view"
+        android:layout_alignParentTop="true"
+        android:layout_alignStart="@+id/room_profile_image_view" />
+
+    <TextView
+        android:id="@+id/room_latest_message_text_view"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/room_profile_image_view"
+        android:layout_alignParentBottom="true"
+        android:layout_alignStart="@+id/room_profile_image_view"
+        android:layout_alignTop="@+id/room_name_text_view"
+        android:textColor="@color/whiteGray" />
+
+    <TextView
+        android:id="@+id/room_latest_message_time_text_view"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentRight="true"
+        android:layout_centerVertical="true" />
+
+</RelativeLayout>

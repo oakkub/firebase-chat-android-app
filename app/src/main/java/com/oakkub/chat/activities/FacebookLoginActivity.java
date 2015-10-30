@@ -16,7 +16,6 @@ public class FacebookLoginActivity extends AppCompatActivity {
 
     @Override
     public void onBackPressed() {
-
         FacebookLoginActivityFragment facebookLoginActivityFragment = (FacebookLoginActivityFragment)
                 getSupportFragmentManager().findFragmentById(R.id.logging_in_fragment);
 
@@ -24,9 +23,6 @@ public class FacebookLoginActivity extends AppCompatActivity {
             if (facebookLoginActivityFragment.getAction().equals(FacebookLoginActivityFragment.LOGIN_ACTION)) {
                 super.onBackPressed();
             }
-            return;
         }
-
-        super.onBackPressed();
     }
 }

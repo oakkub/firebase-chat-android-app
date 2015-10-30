@@ -8,8 +8,8 @@
     tools:context=".MainActivity" >
 
     <android.support.design.widget.AppBarLayout
-        android:layout_height="wrap_content"
         android:layout_width="match_parent"
+        android:layout_height="wrap_content"
         android:background="@color/colorPrimary"
         android:theme="@style/AppTheme.AppBarOverlay" >
 
@@ -22,17 +22,17 @@
 
         <android.support.design.widget.TabLayout
             android:id="@+id/main_tablayout"
+            style="@style/TabLayoutStyle"
             android:layout_width="match_parent"
             android:layout_height="?attr/listPreferredItemHeight"
             app:layout_anchor="@id/main_toolbar"
             app:layout_anchorGravity="bottom"
-            app:tabMode="fixed"
             app:tabGravity="fill"
-            style="@style/TabLayoutStyle" />
+            app:tabMode="fixed" />
 
     </android.support.design.widget.AppBarLayout>
 
-    <com.oakkub.chat.views.widgets.ViewPager
+    <com.oakkub.chat.views.widgets.viewpager.ViewPager
         android:id="@+id/viewpager"
         android:layout_width="match_parent"
         android:layout_height="match_parent"

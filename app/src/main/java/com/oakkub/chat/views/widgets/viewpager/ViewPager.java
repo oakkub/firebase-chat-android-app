@@ -1,4 +1,4 @@
-package com.oakkub.chat.views.widgets;
+package com.oakkub.chat.views.widgets.viewpager;
 
 import android.content.Context;
 import android.os.Parcel;
@@ -20,7 +20,7 @@ public class ViewPager extends android.support.v4.view.ViewPager {
         super(context, attrs);
     }
 
-    public int getPreviousItem() {
+    public int getPreviousPosition() {
         return previousItem;
     }
 
@@ -58,6 +58,17 @@ public class ViewPager extends android.support.v4.view.ViewPager {
 
     private static class SavedState extends BaseSavedState {
 
+        public static final Creator<SavedState> CREATOR = new Creator<SavedState>() {
+            @Override
+            public SavedState createFromParcel(Parcel source) {
+                return new SavedState(source);
+            }
+
+            @Override
+            public SavedState[] newArray(int size) {
+                return new SavedState[size];
+            }
+        };
         private int visibility;
         private int previousItem;
 
@@ -79,18 +90,6 @@ public class ViewPager extends android.support.v4.view.ViewPager {
             out.writeInt(visibility);
             out.writeInt(previousItem);
         }
-
-        public static final Creator<SavedState> CREATOR = new Creator<SavedState>() {
-            @Override
-            public SavedState createFromParcel(Parcel source) {
-                return new SavedState(source);
-            }
-
-            @Override
-            public SavedState[] newArray(int size) {
-                return new SavedState[size];
-            }
-        };
     }
 
 }

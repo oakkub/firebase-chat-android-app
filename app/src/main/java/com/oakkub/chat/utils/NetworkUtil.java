@@ -3,9 +3,9 @@ package com.oakkub.chat.utils;
 import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
-import android.util.Log;
 
 import com.oakkub.chat.managers.AppController;
+import com.squareup.okhttp.MediaType;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -14,6 +14,14 @@ import java.net.UnknownHostException;
  * Created by OaKKuB on 10/21/2015.
  */
 public class NetworkUtil {
+
+    public static final String HEADER_CONTENT_TYPE = "Content-Type";
+    public static final String HEADER_AUTHORIZATION = "Authorization";
+
+    public static final String JSON_CONTENT_TYPE = "application/json";
+
+    public static final MediaType MEDIA_TYPE_JSON
+            = MediaType.parse(JSON_CONTENT_TYPE);
 
     public static boolean isNetworkConnected(Context context) {
 

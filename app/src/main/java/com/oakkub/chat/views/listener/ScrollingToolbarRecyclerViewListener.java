@@ -1,9 +1,8 @@
 package com.oakkub.chat.views.listener;
 
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 
-import com.oakkub.chat.views.widgets.ToolbarCommunicator;
+import com.oakkub.chat.views.widgets.toolbar.ToolbarCommunicator;
 
 /**
  * Created by OaKKuB on 10/15/2015.

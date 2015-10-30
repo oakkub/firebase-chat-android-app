@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="true"
+    android:orientation="vertical"
+    tools:context="com.oakkub.chat.activities.PrivateChatRoomActivity">
+
+    <include layout="@layout/simple_toolbar" />
+
+    <FrameLayout
+        android:id="@+id/private_chat_room_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_gravity="clip_vertical" />
+
+</LinearLayout>

@@ -1,9 +1,9 @@
 package com.oakkub.chat.fragments;
 
 import android.content.Intent;
+import android.os.Bundle;
 import android.os.Handler;
 import android.support.v4.app.Fragment;
-import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -33,12 +33,10 @@ import butterknife.ButterKnife;
  */
 public class FacebookLoginActivityFragment extends Fragment implements FacebookCallback<LoginResult> {
 
-    private static final String TAG = FacebookLoginActivityFragment.class.getSimpleName();
-
     public static final String LOGIN_ACTION = "com.oakkub.chat.fragments.FacebookLoginActivityFragment.LOGIN_ACTION";
     public static final String LOGOUT_ACTION = "com.oakkub.chat.fragments.FacebookLoginActivityFragment.LOGOUT_ACTION";
     public static final int RC_FACEBOOK = 2000;
-
+    private static final String TAG = FacebookLoginActivityFragment.class.getSimpleName();
     @Bind(R.id.login_process_root_view)
     RelativeLayout rootView;
     @Bind(R.id.logging_in_text_view)
@@ -149,7 +147,7 @@ public class FacebookLoginActivityFragment extends Fragment implements FacebookC
         authenticationIntent.putExtra(TextUtil.TOKEN, token);
 
         startActivity(authenticationIntent);
-        finishActivity();
+        getActivity().overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
     }
 
     private void finishActivity() {

@@ -1,6 +1,7 @@
 package com.oakkub.chat.modules;
 
 import android.content.Context;
+import android.support.v7.widget.DefaultItemAnimator;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 
@@ -22,29 +23,41 @@ public class AnimationModule {
     @PerApp
     @Named(AnimateUtil.SCALE_ALPHA)
     @Provides
-    Animation scaleAlphaAnimation(Context context) {
+    Animation provideScaleAlphaAnimation(Context context) {
         return AnimationUtils.loadAnimation(context, R.anim.scale_alpha);
     }
 
     @PerApp
     @Named(AnimateUtil.ALPHA)
     @Provides
-    Animation alphaAnimation(Context context) {
+    Animation provideAlphaAnimation(Context context) {
         return AnimationUtils.loadAnimation(context, R.anim.alpha);
     }
 
     @PerApp
     @Named(AnimateUtil.SCALE_UP)
     @Provides
-    Animation scaleUpAnimation(Context context) {
+    Animation provideScaleUpAnimation(Context context) {
         return AnimationUtils.loadAnimation(context, R.anim.scale_up);
     }
 
     @PerApp
     @Named(AnimateUtil.SCALE_DOWN)
     @Provides
-    Animation scaleDownAnimation(Context context) {
+    Animation provideScaleDownAnimation(Context context) {
         return AnimationUtils.loadAnimation(context, R.anim.scale_down);
+    }
+
+    @Provides
+    DefaultItemAnimator provideSimpleItemAnimator() {
+        DefaultItemAnimator itemAnimator = new DefaultItemAnimator();
+
+        itemAnimator.setChangeDuration(1000);
+        itemAnimator.setMoveDuration(700);
+        itemAnimator.setRemoveDuration(500);
+        itemAnimator.setAddDuration(500);
+
+        return itemAnimator;
     }
 
 }

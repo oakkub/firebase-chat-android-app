@@ -1,5 +1,6 @@
 package com.oakkub.chat.utils;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Resources;
@@ -54,7 +55,19 @@ public class Util {
         if (currentFocusView != null) currentFocusView.clearFocus();
     }
 
-    public static void hideSoftKeyboard(AppCompatActivity activity) {
+    public static void showSoftKeyboard(Activity activity) {
+
+        View currentFocus = activity.getCurrentFocus();
+
+        if (currentFocus != null) {
+
+            InputMethodManager inputMethodManager = AppController.getComponent(activity).inputMethodManager();
+            inputMethodManager.showSoftInput(currentFocus, InputMethodManager.SHOW_IMPLICIT);
+        }
+
+    }
+
+    public static void hideSoftKeyboard(Activity activity) {
 
         View currentFocus = activity.getCurrentFocus();
 

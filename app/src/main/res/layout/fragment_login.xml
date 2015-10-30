@@ -5,47 +5,44 @@
     android:id="@+id/login_layout"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:padding="@dimen/spacing_smaller"
     android:divider="@drawable/spacer_medium"
-    android:showDividers="middle"
     android:gravity="center"
     android:orientation="vertical"
+    android:padding="@dimen/spacing_smaller"
+    android:showDividers="middle"
     tools:context="com.oakkub.chat.fragments.LoginActivityFragment" >
 
     <Button
         android:id="@+id/login_with_email_button"
+        style="@style/DefaultButtonStyle"
         android:layout_width="@dimen/spacing_giant"
         android:layout_height="@dimen/spacing_bigger"
-        android:text="@string/create_account"
         android:layout_marginTop="@dimen/spacing_small"
-        style="@style/DefaultButtonStyle"
-        android:background="@drawable/rounded_square_transparent_button" />
+        android:background="@drawable/rounded_square_transparent_button"
+        android:text="@string/create_account" />
 
     <TextView
         android:id="@+id/or_header_textview"
+        style="@style/TextViewHeaderStyle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/or"
-        android:textAllCaps="true"
         android:layout_margin="@dimen/spacing_small"
         android:fontFamily="sans-serif-light"
-        style="@style/TextViewHeaderStyle" />
+        android:text="@string/or"
+        android:textAllCaps="true" />
 
-    <Button
+    <com.google.android.gms.common.SignInButton
         android:id="@+id/google_login_button"
         android:layout_width="@dimen/spacing_giant"
-        android:layout_height="@dimen/spacing_bigger"
-        android:text="@string/login_with_google"
-        android:background="@drawable/google_sign_in_button"
-        style="@style/GoogleButtonStyle" />
+        android:layout_height="wrap_content" />
 
     <Button
         android:id="@+id/facebook_login_button"
+        style="@style/FacebookButtonStyle"
         android:layout_width="@dimen/spacing_giant"
         android:layout_height="@dimen/spacing_bigger"
-        android:text="@string/login_with_facebook"
         android:background="@drawable/facebook_login_button"
-        style="@style/FacebookButtonStyle" />
+        android:text="@string/login_with_facebook" />
 
 
 </LinearLayout>
