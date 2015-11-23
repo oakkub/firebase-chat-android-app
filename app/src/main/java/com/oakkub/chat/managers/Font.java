@@ -10,7 +10,7 @@ import java.util.Hashtable;
  */
 public class Font {
 
-    private static Hashtable<String, Typeface> fontCache = new Hashtable<>();
+    private static Hashtable<String, Typeface> fontCache = new Hashtable<>(1);
 
     public static Typeface get(Context context, String fontName) {
 

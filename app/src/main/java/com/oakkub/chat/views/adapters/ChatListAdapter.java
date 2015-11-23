@@ -37,11 +37,14 @@ public class ChatListAdapter extends RecyclerViewAdapter<Message, RecyclerView.V
     public int getItemViewType(int position) {
         Message message = items.get(position);
 
-        if (message.getSentBy().equals(myId)) {
-            return MY_MESSAGE_TYPE;
+        if (message != null) {
+            if (message.getSentBy().equals(myId)) return MY_MESSAGE_TYPE;
+            else return FRIEND_MESSAGE_TYPE;
         } else {
-            return FRIEND_MESSAGE_TYPE;
+            if (loadMore) return LOAD_MORE_TYPE;
         }
+
+        return super.getItemViewType(position);
     }
 
     @Override
@@ -57,6 +60,10 @@ public class ChatListAdapter extends RecyclerViewAdapter<Message, RecyclerView.V
 
                 view = inflateLayout(parent, LAYOUT[MY_MESSAGE_TYPE]);
                 return new MyMessageHolder(view);
+
+            case LOAD_MORE_TYPE:
+
+                return getProgressBarHolder(parent);
 
             default:
                 return null;
@@ -88,7 +95,8 @@ public class ChatListAdapter extends RecyclerViewAdapter<Message, RecyclerView.V
     }
 
     private void onBindFriendMessageHolder(FriendMessageHolder holder, Message message, int position) {
-        final Message previousMessage = getItem(position == 0 ? 0 : position - 1);
+        final Message previousMessage = getItem(position + 1);
+        if (previousMessage == null) return;
 
         if (!previousMessage.getSentBy().equals(message.getSentBy())) {
             holder.friendProfileImage.setVisibility(View.VISIBLE);

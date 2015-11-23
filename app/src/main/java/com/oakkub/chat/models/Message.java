@@ -9,6 +9,8 @@ public class Message {
     String roomId;
     String message;
     String sentBy;
+    String imagePath;
+    String thumbnailPath;
     long sentWhen = System.currentTimeMillis();
 
     public Message() {
@@ -30,6 +32,14 @@ public class Message {
 
     public String getMessage() {
         return message;
+    }
+
+    public String getImagePath() {
+        return imagePath;
+    }
+
+    public String getThumbnailPath() {
+        return thumbnailPath;
     }
 
     public long getSentWhen() {

@@ -71,16 +71,16 @@
 
         <service android:name=".activities.GoogleLoginActivity$GetGoogleTokenService" />
 
-        <!-- Private Chat Activity -->
         <activity
             android:name=".activities.PrivateChatRoomActivity"
             android:label="@string/title_activity_private_chat_room"
             android:parentActivityName=".activities.MainActivity"
-            android:windowSoftInputMode="adjustResize">
+            android:windowSoftInputMode="stateAlwaysHidden|adjustResize">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.oakkub.chat.activities.MainActivity" />
         </activity>
+        <!-- Private Chat Activity -->
 
         <!-- GCM -->
         <receiver

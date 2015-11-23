@@ -14,6 +14,7 @@ public class GridAutoFitLayoutManager extends GridLayoutManager {
 
     private int columnWidth;
     private boolean columnWidthChanged = true;
+    private boolean debug = false;
 
     public GridAutoFitLayoutManager(Context context, int columnWidth) {
         super(context, 1);
@@ -46,11 +47,13 @@ public class GridAutoFitLayoutManager extends GridLayoutManager {
         if (columnWidthChanged && columnWidth > 0) {
 
             final int totalSpace = getTotalSpace();
-            Log.e("TOTAL SPACE", String.valueOf(totalSpace));
             final int spanCount = Math.max(1, totalSpace / columnWidth);
-            Log.e("SPAN COUNT", String.format("%d / %d = %d", totalSpace, columnWidth, spanCount));
             setSpanCount(spanCount);
 
+            if (debug) {
+                Log.e("TOTAL SPACE", String.valueOf(totalSpace));
+                Log.e("SPAN COUNT", String.format("%d / %d = %d", totalSpace, columnWidth, spanCount));
+            }
             columnWidthChanged = false;
         }
 
@@ -58,8 +61,11 @@ public class GridAutoFitLayoutManager extends GridLayoutManager {
     }
 
     private int getTotalSpace() {
-        Log.e("TOTALSPACE VERTICAL", String.format("Width:%d, PaddingLeft:%d, PaddingRight:%d", getWidth(), getPaddingLeft(), getPaddingRight()));
-        Log.e("TOTALSPACE HORIZONTAL", String.format("Width:%d, PaddingTop:%d, PaddingBottom:%d", getWidth(), getPaddingTop(), getPaddingBottom()));
+        if (debug) {
+            Log.e("TOTALSPACE VERTICAL", String.format("Width:%d, PaddingLeft:%d, PaddingRight:%d", getWidth(), getPaddingLeft(), getPaddingRight()));
+            Log.e("TOTALSPACE HORIZONTAL", String.format("Width:%d, PaddingTop:%d, PaddingBottom:%d", getHeight(), getPaddingTop(), getPaddingBottom()));
+        }
+
         if (getOrientation() == VERTICAL) return getWidth() - getPaddingLeft() - getPaddingRight();
         else return getHeight() - getPaddingTop() - getPaddingBottom();
     }

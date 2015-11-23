@@ -177,7 +177,7 @@ public class AddFriendActivityFragment extends Fragment
     private void reverseFriendData(GapList<UserInfo> recommendedFriendList) {
         if (recommendedFriendList.size() > 0) {
             Collections.reverse(recommendedFriendList);
-            addFriendListAdapter.addAll(recommendedFriendList);
+            addFriendListAdapter.addLastAll(recommendedFriendList);
         }
     }
 
@@ -210,7 +210,7 @@ public class AddFriendActivityFragment extends Fragment
         if (!friendKey.equals(authData.getUid()) && !isAlreadyFriend(friendKey)) {
 
             UserInfo friendUserInfo = getUserInfo(dataSnapshot, friendKey);
-            addFriendListAdapter.add(friendUserInfo);
+            addFriendListAdapter.addLast(friendUserInfo);
         }
     }
 
@@ -298,7 +298,7 @@ public class AddFriendActivityFragment extends Fragment
     }
 
     private void postFriendDataToServer(UserInfo friendUserInfo, boolean removeFriend, boolean hasListener) {
-        // removeFriend flag use for check if we gonna add friend or remove friend from server
+        // removeFriend flag use for check if we gonna addLast friend or remove friend from server
         final Map<String, Object> friendKey = getFriendKey(friendUserInfo, removeFriend);
         firebaseUserFriends.updateChildren(friendKey, hasListener ? this : null);
     }

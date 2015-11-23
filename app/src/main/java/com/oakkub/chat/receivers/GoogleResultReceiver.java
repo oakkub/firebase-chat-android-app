@@ -3,7 +3,7 @@ package com.oakkub.chat.receivers;
 import android.annotation.SuppressLint;
 import android.os.Bundle;
 import android.os.Handler;
-import android.support.v4.os.ResultReceiver;
+import android.os.ResultReceiver;
 
 /**
  * Created by OaKKuB on 10/18/2015.

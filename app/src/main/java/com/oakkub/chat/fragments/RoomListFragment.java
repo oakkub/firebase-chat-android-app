@@ -176,7 +176,7 @@ public class RoomListFragment extends Fragment {
                 room.setName(friendInfo.getDisplayName());
                 room.setRoomImagePath(friendInfo.getProfileImageURL());
 
-                roomListAdapter.add(room);
+                roomListAdapter.addLast(room);
             }
 
             @Override

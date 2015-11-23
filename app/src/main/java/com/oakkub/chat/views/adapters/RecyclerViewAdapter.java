@@ -5,9 +5,15 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.oakkub.chat.R;
+import com.wang.avi.AVLoadingIndicatorView;
+
 import org.magicwerk.brownies.collections.GapList;
 
 import java.util.List;
+
+import butterknife.Bind;
+import butterknife.ButterKnife;
 
 /**
  * Created by OaKKuB on 10/28/2015.
@@ -21,11 +27,16 @@ public abstract class RecyclerViewAdapter<I, VH extends RecyclerView.ViewHolder>
     protected boolean loadMore;
     protected boolean noInternet;
 
+    @Override
+    public int getItemCount() {
+        return items.size();
+    }
+
     public View inflateLayout(ViewGroup parent, int layoutId) {
         return LayoutInflater.from(parent.getContext()).inflate(layoutId, parent, false);
     }
 
-    public void add(I item) {
+    public void addLast(I item) {
         items.add(item);
         notifyItemInserted(items.size() - 1);
     }
@@ -40,9 +51,14 @@ public abstract class RecyclerViewAdapter<I, VH extends RecyclerView.ViewHolder>
         notifyItemInserted(0);
     }
 
-    public void addAll(List<I> list) {
+    public void addLastAll(List<I> list) {
         items.addAll(list);
         notifyItemRangeInserted(items.size() - 1, list.size());
+    }
+
+    public void addFirstAll(List<I> list) {
+        items.addAll(0, list);
+        notifyItemRangeInserted(0, list.size());
     }
 
     public boolean replace(I item) {
@@ -77,6 +93,10 @@ public abstract class RecyclerViewAdapter<I, VH extends RecyclerView.ViewHolder>
         return null;
     }
 
+    public boolean removeLast() {
+        return items.removeLast() != null;
+    }
+
     public void removeAll() {
         final int itemCount = items.size();
 
@@ -94,18 +114,41 @@ public abstract class RecyclerViewAdapter<I, VH extends RecyclerView.ViewHolder>
         return items.indexOf(item);
     }
 
+    public I getLastItem() {
+        return items.peekLast();
+    }
+
+    public I getFirstItem() {
+        return items.peekFirst();
+    }
+
     public void addProgressBar() {
-        add(null);
+        noInternet = false;
         loadMore = true;
+        addLast(null);
     }
 
     public void addNoInternet() {
-        add(null);
         noInternet = true;
+        loadMore = false;
+        addLast(null);
     }
 
-    @Override
-    public int getItemCount() {
-        return items.size();
+    public ProgressBarHolder getProgressBarHolder(ViewGroup parent) {
+        View view = inflateLayout(parent, R.layout.load_more_progress_bar);
+        return new ProgressBarHolder(view);
+    }
+
+    public static class ProgressBarHolder extends RecyclerView.ViewHolder {
+
+        @Bind(R.id.simple_progress_bar)
+        AVLoadingIndicatorView loadingView;
+
+        public ProgressBarHolder(View itemView) {
+            super(itemView);
+            ButterKnife.bind(this, itemView);
+
+        }
+
     }
 }

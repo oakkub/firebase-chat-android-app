@@ -8,19 +8,18 @@ import android.support.v7.widget.RecyclerView;
  */
 public abstract class InfiniteScrollListener extends RecyclerView.OnScrollListener {
 
-    private static final int VISIBLE_THRESHOLD = 5;
+    private static final int VISIBLE_THRESHOLD = 4;
 
     private LinearLayoutManager layoutManager;
 
     private int previousItemCount;
     private int page;
     private boolean isLoadMore;
+    private boolean noMoreData;
 
     /**
-     * For recyclerview,
+     * For RecyclerView,
      * Only LinearLayoutManager and GridLayoutManager can use this scroll listener.
-     *
-     * @param layoutManager only LinearLayoutManager and GridLayoutManager.
      */
     public InfiniteScrollListener(LinearLayoutManager layoutManager) {
         this.layoutManager = layoutManager;
@@ -28,19 +27,25 @@ public abstract class InfiniteScrollListener extends RecyclerView.OnScrollListen
 
     @Override
     public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
-        final int itemCount = layoutManager.getItemCount();
+        if (noMoreData) return;
+
+        final int totalItem = layoutManager.getItemCount();
         final int lastVisibleItemPosition = layoutManager.findLastVisibleItemPosition();
 
-        if (previousItemCount < itemCount) {
-            previousItemCount = itemCount;
+        if (totalItem > previousItemCount) {
+            // if totalItem is greater than previousItemCount = new item inserted.
+            previousItemCount = totalItem;
             isLoadMore = true;
         }
 
-        if (isLoadMore && lastVisibleItemPosition <= (itemCount - VISIBLE_THRESHOLD)) {
-            // load more
+        if (isLoadMore && lastVisibleItemPosition >= (totalItem - VISIBLE_THRESHOLD)) {
             isLoadMore = false;
             onLoadMore(++page);
         }
+    }
+
+    public void noMoreData() {
+        noMoreData = true;
     }
 
     public abstract void onLoadMore(int page);

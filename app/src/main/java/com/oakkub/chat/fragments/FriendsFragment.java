@@ -158,7 +158,7 @@ public class FriendsFragment extends Fragment
         final String friendKey = dataSnapshot.getKey();
 
         UserInfo friendUserInfo = getFriendUserInfo(dataSnapshot, friendKey);
-        friendListAdapter.add(friendUserInfo);
+        friendListAdapter.addLast(friendUserInfo);
     }
 
     private UserInfo getFriendUserInfo(DataSnapshot dataSnapshot, String friendKey) {

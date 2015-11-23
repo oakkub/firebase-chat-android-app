@@ -1,6 +1,5 @@
 package com.oakkub.chat.activities;
 
-import android.accounts.Account;
 import android.app.IntentService;
 import android.content.Context;
 import android.content.Intent;
@@ -310,12 +309,8 @@ public class GoogleLoginActivity extends AppCompatActivity
             String email = intent.getStringExtra(EXTRA_EMAIL);
             String scopes = "oauth2:" + intent.getStringExtra(EXTRA_SCOPES);
 
-            Account account = new Account(email, GoogleAuthUtil.GOOGLE_ACCOUNT_TYPE);
-
-            Log.e(TAG, scopes);
-
             try {
-                final String token = GoogleAuthUtil.getToken(getApplicationContext(), account, scopes);
+                final String token = GoogleAuthUtil.getToken(getApplicationContext(), email, scopes);
                 GoogleLoginInfo googleLoginInfo = new GoogleLoginInfo(token);
 
                 Log.e(TAG, token);

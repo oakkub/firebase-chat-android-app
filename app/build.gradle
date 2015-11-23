@@ -63,7 +63,7 @@ dependencies {
 
     compile 'org.parceler:parceler-api:1.0.3'
 
-    compile 'com.wang.avi:library:1.0.0'
+    compile 'com.wang.avi:library:1.0.1'
     compile 'com.nineoldandroids:library:2.4.0'
 
     compile 'org.magicwerk:brownies-collections:0.9.11'
