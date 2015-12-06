@@ -4,7 +4,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
-import android.support.v7.app.AppCompatActivity;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -35,10 +34,6 @@ public class EmailLoginFragment extends Fragment
         implements View.OnClickListener,
                     EditText.OnEditorActionListener {
 
-    private static final String TAG = LoginActivityFragment.class.getSimpleName();
-    private static final String PACKAGE_NAME = LoginActivityFragment.class.getPackage().getName() + "/";
-    private static final String ACTION = TAG + PACKAGE_NAME + "ACTION";
-
     /* Email login view */
     @Bind(R.id.email_edittext)
     EditText emailEditText;
@@ -55,39 +50,16 @@ public class EmailLoginFragment extends Fragment
     @Inject
     Lazy<SharedPreferences.Editor> editor;
 
-    public static EmailLoginFragment newInstance() {
-
-        Bundle args = new Bundle();
-        args.putString(ACTION, ACTION);
-
-        EmailLoginFragment emailLoginFragment = new EmailLoginFragment();
-        emailLoginFragment.setArguments(args);
-
-        return emailLoginFragment;
-    }
-
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         AppController.getComponent(getActivity()).inject(this);
-
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-
-        Bundle args = getArguments();
-
-        if (args == null) {
-            getActivity().finish();
-        } else {
-            if (!args.getString(ACTION).equals(ACTION)) {
-                getActivity().finish();
-            }
-        }
-
         View rootView = inflater.inflate(R.layout.email_login_fragment, container, false);
         ButterKnife.bind(this, rootView);
 
@@ -114,7 +86,7 @@ public class EmailLoginFragment extends Fragment
 
             case EditorInfo.IME_ACTION_DONE:
 
-                Util.hideSoftKeyboard((AppCompatActivity) getActivity());
+                Util.hideSoftKeyboard(getActivity());
                 loginWithEmail();
 
                 return true;
@@ -146,7 +118,7 @@ public class EmailLoginFragment extends Fragment
 
     private void goToRegisterActivity() {
 
-        Intent intent = new Intent(getActivity().getApplicationContext(), RegisterActivity.class);
+        Intent intent = new Intent(getActivity(), RegisterActivity.class);
         startActivity(intent);
         getActivity().overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
     }
@@ -178,7 +150,7 @@ public class EmailLoginFragment extends Fragment
 
     private void beginAuthentication(String email, String password) {
 
-        Intent authenticationIntent = new Intent(getActivity().getApplicationContext(), AuthenticationActivity.class);
+        Intent authenticationIntent = new Intent(getActivity(), AuthenticationActivity.class);
         authenticationIntent.putExtra(AuthenticationActivityFragment.PROVIDER, TextUtil.EMAIL_PROVIDER);
         authenticationIntent.putExtra(AuthenticationActivityFragment.EMAIL, email);
         authenticationIntent.putExtra(AuthenticationActivityFragment.PASSWORD, password);

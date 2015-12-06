@@ -9,9 +9,76 @@
 
     <include layout="@layout/simple_toolbar" />
 
-    <FrameLayout
-        android:id="@+id/private_chat_room_container"
+    <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent">
+
+        <android.support.v7.widget.RecyclerView
+            android:id="@+id/private_chat_message_recycler_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_above="@+id/private_chat_message_message_input_container"
+            android:scrollbars="vertical" />
+
+        <RelativeLayout
+            android:id="@+id/private_chat_message_message_input_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:layout_marginBottom="@dimen/spacing_small"
+            android:layout_marginEnd="@dimen/spacing_small"
+            android:layout_marginLeft="@dimen/spacing_small"
+            android:layout_marginRight="@dimen/spacing_small"
+            android:layout_marginStart="@dimen/spacing_small"
+            android:background="@drawable/rounded_square_background">
+
+            <EditText
+                android:id="@+id/private_chat_message_edit_text"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_centerVertical="true"
+                android:layout_toLeftOf="@+id/private_chat_message_button"
+                android:layout_toStartOf="@+id/private_chat_message_button"
+                android:clickable="true"
+                android:hint="@string/hint.message.enter_text_here"
+                android:inputType="textAutoCorrect|textAutoComplete" />
+
+            <Button
+                android:id="@+id/private_chat_message_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentEnd="true"
+                android:layout_alignParentRight="true"
+                android:text="@string/messenger_send_button_text" />
+
+        </RelativeLayout>
+
+        <com.oakkub.chat.views.widgets.MyLinearLayout xmlns:AVLoadingIndicatorView="http://schemas.android.com/apk/res-auto"
+            android:id="@+id/loading_messages_layout"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:divider="@drawable/spacer_medium"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:showDividers="middle">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="sans-serif-light"
+                android:text="@string/loading_messages"
+                android:textSize="@dimen/spacing_big" />
+
+            <com.wang.avi.AVLoadingIndicatorView
+                android:id="@+id/progress_bar_login"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                AVLoadingIndicatorView:indicator="BallTrianglePath"
+                AVLoadingIndicatorView:indicator_color="@color/colorAccent" />
+
+        </com.oakkub.chat.views.widgets.MyLinearLayout>
+
+    </RelativeLayout>
 
 </LinearLayout>

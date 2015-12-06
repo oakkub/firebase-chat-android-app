@@ -76,5 +76,6 @@
     <string name="chat">Chat</string>
     <string name="title_activity_private_chat_room">PrivateChatRoomActivity</string>
     <string name="hint.message.enter_text_here">Enter text here...</string>
+    <string name="loading_messages">Loading messages...</string>
 
 </resources>

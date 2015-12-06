@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.util.Log;
 
+import com.firebase.client.AuthData;
 import com.firebase.client.Firebase;
 import com.firebase.client.FirebaseError;
 import com.google.android.gms.gcm.GcmPubSub;
@@ -62,12 +63,13 @@ public class GCMRegistrationIntentService extends IntentService {
     private void sendRegistrationTokenToServer(Intent intent, String token) {
         // store instanceID in our server, if we have.
         Firebase firebase = AppController.getComponent(this).firebase();
+        AuthData authData = firebase.getAuth();
 
-        if (firebase.getAuth() != null) {
+        if (authData != null) {
 
             Firebase tokenFirebase = firebase.child(FirebaseUtil.KEY_USERS)
                     .child(FirebaseUtil.KEY_USERS_USER_INFO)
-                    .child(firebase.getAuth().getUid());
+                    .child(authData.getUid());
 
             sendTokenToFirebase(tokenFirebase, intent, token);
         }

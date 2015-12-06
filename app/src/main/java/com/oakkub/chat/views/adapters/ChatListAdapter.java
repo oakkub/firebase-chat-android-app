@@ -2,33 +2,24 @@ package com.oakkub.chat.views.adapters;
 
 import android.net.Uri;
 import android.support.v7.widget.RecyclerView;
+import android.util.SparseArray;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.TextView;
 
-import com.facebook.drawee.view.SimpleDraweeView;
 import com.oakkub.chat.R;
 import com.oakkub.chat.models.Message;
-
-import java.util.Map;
-
-import butterknife.Bind;
-import butterknife.ButterKnife;
+import com.oakkub.chat.views.adapters.viewholders.FriendMessageHolder;
+import com.oakkub.chat.views.adapters.viewholders.MyMessageHolder;
 
 public class ChatListAdapter extends RecyclerViewAdapter<Message, RecyclerView.ViewHolder> {
 
     public static final int FRIEND_MESSAGE_TYPE = 0;
     public static final int MY_MESSAGE_TYPE = 1;
 
-    private static int[] LAYOUT = {
-            R.layout.friend_message_list,
-            R.layout.my_message_list
-    };
-
     private final String myId;
-    private final Map<String, String> friendProfileImageList;
+    private final SparseArray<String> friendProfileImageList;
 
-    public ChatListAdapter(String myId, Map<String, String> friendProfileImageList) {
+    public ChatListAdapter(String myId, SparseArray<String> friendProfileImageList) {
         this.myId = myId;
         this.friendProfileImageList = friendProfileImageList;
     }
@@ -53,12 +44,12 @@ public class ChatListAdapter extends RecyclerViewAdapter<Message, RecyclerView.V
 
             case FRIEND_MESSAGE_TYPE:
 
-                View view = inflateLayout(parent, LAYOUT[FRIEND_MESSAGE_TYPE]);
+                View view = inflateLayout(parent, R.layout.friend_message_list);
                 return new FriendMessageHolder(view);
 
             case MY_MESSAGE_TYPE:
 
-                view = inflateLayout(parent, LAYOUT[MY_MESSAGE_TYPE]);
+                view = inflateLayout(parent, R.layout.my_message_list);
                 return new MyMessageHolder(view);
 
             case LOAD_MORE_TYPE:
@@ -72,21 +63,19 @@ public class ChatListAdapter extends RecyclerViewAdapter<Message, RecyclerView.V
 
     @Override
     public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
-
         Message message = items.get(position);
-        bindHolder(message, holder, position);
+        if (message != null) {
+            bindHolder(message, holder, position);
+        }
     }
 
     private void bindHolder(Message message, RecyclerView.ViewHolder holder, int position) {
-        if (message != null && holder != null) {
+        if (holder instanceof MyMessageHolder) {
 
-            if (holder instanceof MyMessageHolder) {
+            onBindMyMessageHolder((MyMessageHolder) holder, message);
+        } else if (holder instanceof FriendMessageHolder) {
 
-                onBindMyMessageHolder((MyMessageHolder) holder, message);
-            } else if (holder instanceof FriendMessageHolder) {
-
-                onBindFriendMessageHolder((FriendMessageHolder) holder, message, position);
-            }
+            onBindFriendMessageHolder((FriendMessageHolder) holder, message);
         }
     }
 
@@ -94,46 +83,21 @@ public class ChatListAdapter extends RecyclerViewAdapter<Message, RecyclerView.V
         holder.message.setText(message.getMessage());
     }
 
-    private void onBindFriendMessageHolder(FriendMessageHolder holder, Message message, int position) {
-        final Message previousMessage = getItem(position + 1);
-        if (previousMessage == null) return;
+    private void onBindFriendMessageHolder(FriendMessageHolder holder, Message message) {
+        holder.message.setText(message.getMessage());
 
-        if (!previousMessage.getSentBy().equals(message.getSentBy())) {
+        if (message.isShowImage()) {
             holder.friendProfileImage.setVisibility(View.VISIBLE);
-
-            holder.friendProfileImage.setImageURI(
-                    Uri.parse(friendProfileImageList.get(message.getSentBy())));
+            setImage(holder, message);
         } else {
             holder.friendProfileImage.setVisibility(View.INVISIBLE);
         }
-
-        holder.message.setText(message.getMessage());
     }
 
-    public static class FriendMessageHolder extends RecyclerView.ViewHolder {
-
-        @Bind(R.id.friend_message_profile_image_view)
-        SimpleDraweeView friendProfileImage;
-
-        @Bind(R.id.friend_message_text_view)
-        TextView message;
-
-        public FriendMessageHolder(View itemView) {
-            super(itemView);
-            ButterKnife.bind(this, itemView);
-        }
-
+    private void setImage(FriendMessageHolder holder, Message message) {
+        holder.friendProfileImage.setVisibility(View.VISIBLE);
+        holder.friendProfileImage.setImageURI(
+                Uri.parse(friendProfileImageList.get(message.getSentBy().hashCode())));
     }
 
-    public static class MyMessageHolder extends RecyclerView.ViewHolder {
-
-        @Bind(R.id.my_message_text_view)
-        TextView message;
-
-        public MyMessageHolder(View itemView) {
-            super(itemView);
-            ButterKnife.bind(this, itemView);
-        }
-
-    }
 }

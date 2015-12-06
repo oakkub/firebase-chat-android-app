@@ -1,8 +1,11 @@
 package com.oakkub.chat.models;
 
+import org.parceler.Parcel;
+
 /**
  * Created by OaKKuB on 11/10/2015.
  */
+@Parcel
 public class Room {
 
     String roomId;
@@ -19,7 +22,6 @@ public class Room {
 
     public Room(String type) {
         this.type = type;
-
         created = System.currentTimeMillis();
     }
 
@@ -27,7 +29,7 @@ public class Room {
         return name;
     }
 
-    public void setName(String name) {
+    public void setRoomName(String name) {
         this.name = name;
     }
 

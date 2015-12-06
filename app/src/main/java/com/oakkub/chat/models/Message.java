@@ -1,8 +1,11 @@
 package com.oakkub.chat.models;
 
+import org.parceler.Parcel;
+
 /**
  * Created by OaKKuB on 11/13/2015.
  */
+@Parcel
 public class Message {
 
     String messageKey;
@@ -11,6 +14,7 @@ public class Message {
     String sentBy;
     String imagePath;
     String thumbnailPath;
+    boolean showImage;
     long sentWhen = System.currentTimeMillis();
 
     public Message() {
@@ -24,6 +28,14 @@ public class Message {
 
     public String getRoomId() {
         return roomId;
+    }
+
+    public String getMessageKey() {
+        return messageKey;
+    }
+
+    public void setMessageKey(String messageKey) {
+        this.messageKey = messageKey;
     }
 
     public String getSentBy() {
@@ -42,12 +54,16 @@ public class Message {
         return thumbnailPath;
     }
 
-    public long getSentWhen() {
-        return sentWhen;
+    public boolean isShowImage() {
+        return showImage;
     }
 
-    public void setMessageKey(String messageKey) {
-        this.messageKey = messageKey;
+    public void setShowImage(boolean showImage) {
+        this.showImage = showImage;
+    }
+
+    public long getSentWhen() {
+        return sentWhen;
     }
 
     @Override

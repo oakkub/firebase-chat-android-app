@@ -1,7 +1,11 @@
 package com.oakkub.chat.views.widgets.recyclerview;
 
+import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+
+import icepick.Icepick;
+import icepick.State;
 
 /**
  * Created by OaKKuB on 11/5/2015.
@@ -10,12 +14,16 @@ public abstract class InfiniteScrollListener extends RecyclerView.OnScrollListen
 
     private static final int VISIBLE_THRESHOLD = 4;
 
-    private LinearLayoutManager layoutManager;
+    @State
+    int previousItemCount;
+    @State
+    int page;
+    @State
+    boolean isLoadMore;
+    @State
+    boolean noMoreData;
 
-    private int previousItemCount;
-    private int page;
-    private boolean isLoadMore;
-    private boolean noMoreData;
+    private LinearLayoutManager layoutManager;
 
     /**
      * For RecyclerView,
@@ -44,8 +52,24 @@ public abstract class InfiniteScrollListener extends RecyclerView.OnScrollListen
         }
     }
 
+    public void onSaveInstanceState(Bundle outState) {
+        Icepick.saveInstanceState(this, outState);
+    }
+
+    public void onRestoreInstanceState(Bundle savedInstanceState) {
+        Icepick.restoreInstanceState(this, savedInstanceState);
+    }
+
+    public void setLoadMore(boolean isLoadMore) {
+        this.isLoadMore = isLoadMore;
+    }
+
     public void noMoreData() {
         noMoreData = true;
+    }
+
+    public boolean isNoMoreData() {
+        return noMoreData;
     }
 
     public abstract void onLoadMore(int page);

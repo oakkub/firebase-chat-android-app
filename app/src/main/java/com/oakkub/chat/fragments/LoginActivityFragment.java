@@ -3,7 +3,7 @@ package com.oakkub.chat.fragments;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
+import android.support.annotation.Nullable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,22 +13,18 @@ import com.google.android.gms.common.SignInButton;
 import com.oakkub.chat.R;
 import com.oakkub.chat.activities.FacebookLoginActivity;
 import com.oakkub.chat.activities.GoogleLoginActivity;
-import com.oakkub.chat.activities.LoginActivity;
 import com.oakkub.chat.utils.NetworkUtil;
 import com.oakkub.chat.utils.Util;
 import com.oakkub.chat.views.widgets.viewpager.ViewPagerCommunicator;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
+import icepick.State;
 
 /**
  * A placeholder fragment containing a simple view.
  */
-public class LoginActivityFragment extends Fragment implements View.OnClickListener {
-
-    private static final String TAG = LoginActivityFragment.class.getSimpleName();
-    private static final String PACKAGE_NAME = LoginActivityFragment.class.getPackage().getName() + "/";
-    private static final String IN_VIEWPAGER = PACKAGE_NAME + TAG + "IN_VIEWPAGER";
+public class LoginActivityFragment extends BaseFragment implements View.OnClickListener {
 
     @Bind(R.id.login_with_email_button)
     Button loginWithEmailButton;
@@ -40,39 +36,15 @@ public class LoginActivityFragment extends Fragment implements View.OnClickListe
     /* Facebook view */
     @Bind(R.id.facebook_login_button)
     Button facebookButton;
-
-    private Context context;
+    @State
+    boolean firstTime = true;
     private ViewPagerCommunicator viewPagerCommunicator;
-
-    private boolean firstTime = true;
-
-    public static LoginActivityFragment newInstance() {
-
-        Bundle args = new Bundle();
-        args.putString(IN_VIEWPAGER, IN_VIEWPAGER);
-
-        LoginActivityFragment loginActivityFragment = new LoginActivityFragment();
-        loginActivityFragment.setArguments(args);
-
-        return loginActivityFragment;
-    }
 
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
-        this.context = context;
 
         viewPagerCommunicator = (ViewPagerCommunicator) getActivity();
-    }
-
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-
-        checkArguments();
-
-        setRetainInstance(true);
-
     }
 
     @Override
@@ -82,45 +54,13 @@ public class LoginActivityFragment extends Fragment implements View.OnClickListe
         View rootView = inflater.inflate(R.layout.fragment_login, container, false);
         ButterKnife.bind(this, rootView);
 
-        setView();
-
         return rootView;
     }
 
     @Override
-    public void onActivityCreated(Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-
-        checkAction();
-
-    }
-
-    private void checkArguments() {
-
-        Bundle args = getArguments();
-        if (args == null) {
-            getActivity().finish();
-        } else {
-            if (!args.getString(IN_VIEWPAGER).equals(IN_VIEWPAGER)) {
-                getActivity().finish();
-            }
-        }
-    }
-
-    private void checkAction() {
-
-        Intent intent = getActivity().getIntent();
-        if (intent.getAction() != null) {
-
-            if (getActivity().getIntent().getAction().equals(LoginActivity.LOGIN_FAILED)) {
-
-                if (firstTime) {
-                    Util.showSnackBar(getView(), getString(R.string.error_message_login));
-                    firstTime = false;
-                }
-            }
-        }
-
+    public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        setView();
     }
 
     private void setView() {
@@ -130,7 +70,6 @@ public class LoginActivityFragment extends Fragment implements View.OnClickListe
         facebookButton.setOnClickListener(this);
 
         googleLoginButton.setSize(SignInButton.SIZE_WIDE);
-
     }
 
     /* Google method */
@@ -140,17 +79,17 @@ public class LoginActivityFragment extends Fragment implements View.OnClickListe
 
     /* Facebook method */
     private void loginWithFacebook() {
-        goToLogin(FacebookLoginActivity.class, FacebookLoginActivityFragment.LOGIN_ACTION);
+        goToLogin(FacebookLoginActivity.class, FacebookLoginActivity.LOGIN_ACTION);
     }
 
     private void goToLogin(Class<?> cls, String action) {
 
-        if (!NetworkUtil.isNetworkConnected(context)) {
+        if (!NetworkUtil.isNetworkConnected(getActivity())) {
             Util.showSnackBar(getView(), getString(R.string.error_message_internet_connection));
             return;
         }
 
-        Intent goToLogin = new Intent(context, cls);
+        Intent goToLogin = new Intent(getActivity(), cls);
         goToLogin.setAction(action);
         startActivity(goToLogin);
         getActivity().overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
@@ -183,4 +122,10 @@ public class LoginActivityFragment extends Fragment implements View.OnClickListe
 
     }
 
+    @Override
+    public void onDetach() {
+        super.onDetach();
+
+        viewPagerCommunicator = null;
+    }
 }

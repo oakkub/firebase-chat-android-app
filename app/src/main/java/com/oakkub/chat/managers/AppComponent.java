@@ -13,6 +13,7 @@ import com.firebase.client.Firebase;
 import com.oakkub.chat.activities.FriendDetailActivity;
 import com.oakkub.chat.activities.LoginActivity;
 import com.oakkub.chat.activities.MainActivity;
+import com.oakkub.chat.activities.PrivateChatRoomActivity;
 import com.oakkub.chat.dagger.PerApp;
 import com.oakkub.chat.fragments.AddFriendActivityFragment;
 import com.oakkub.chat.fragments.AuthenticationActivityFragment;
@@ -51,6 +52,8 @@ public interface AppComponent {
 
     void inject(LoginActivity loginActivity);
     void inject(MainActivity mainActivity);
+
+    void inject(PrivateChatRoomActivity privateChatRoomActivity);
 
     void inject(FriendDetailActivity friendDetailActivity);
     void inject(AuthenticationActivityFragment authenticationActivityFragment);

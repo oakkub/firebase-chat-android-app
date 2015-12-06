@@ -26,9 +26,7 @@ public class Base64Util {
         bitmap.compress(Bitmap.CompressFormat.JPEG, 75, byteArrayOutputStream);
         byte[] byteArray = byteArrayOutputStream.toByteArray();
 
-        String base64 = Base64.encodeToString(byteArray, Base64.URL_SAFE);
-
-        return base64;
+        return Base64.encodeToString(byteArray, Base64.URL_SAFE);
     }
 
     public static String base64ToDataURI(String base64) {

@@ -40,9 +40,8 @@ import butterknife.Bind;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import dagger.Lazy;
-import icepick.State;
 
-public class FriendDetailActivity extends BaseActivity {
+public class FriendDetailActivity extends AppCompatActivity {
 
     public static final String EXTRA_INFO = "FriendDetailActivity:friendInfo";
     public static final String TRANSITION_PROFILE_IMAGE = "transition:profileImage";
@@ -71,7 +70,6 @@ public class FriendDetailActivity extends BaseActivity {
     @Named(FirebaseUtil.NAMED_USER_INFO)
     Lazy<Firebase> currentUserFirebase;
 
-    @State
     UserInfo friendInfo;
 
     public static void launch(AppCompatActivity activity, View imageView, UserInfo friendInfo) {

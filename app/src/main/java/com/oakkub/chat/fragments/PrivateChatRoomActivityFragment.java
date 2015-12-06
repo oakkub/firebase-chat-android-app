@@ -3,61 +3,35 @@ package com.oakkub.chat.fragments;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.Handler;
-import android.support.v4.app.Fragment;
-import android.support.v7.widget.DefaultItemAnimator;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
+import android.support.annotation.Nullable;
 import android.util.Log;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.Button;
-import android.widget.EditText;
+import android.util.SparseArray;
 
 import com.firebase.client.ChildEventListener;
 import com.firebase.client.DataSnapshot;
 import com.firebase.client.Firebase;
 import com.firebase.client.FirebaseError;
 import com.firebase.client.ValueEventListener;
-import com.oakkub.chat.R;
 import com.oakkub.chat.managers.AppController;
+import com.oakkub.chat.managers.OnInfiniteScrollListener;
 import com.oakkub.chat.models.Message;
 import com.oakkub.chat.utils.FirebaseUtil;
-import com.oakkub.chat.views.adapters.ChatListAdapter;
-import com.oakkub.chat.views.widgets.recyclerview.InfiniteScrollListener;
-import com.oakkub.chat.views.widgets.toolbar.ToolbarCommunicator;
 
-import org.magicwerk.brownies.collections.GapList;
-
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
 import javax.inject.Inject;
 import javax.inject.Named;
 
-import butterknife.Bind;
-import butterknife.ButterKnife;
-import butterknife.OnClick;
-
-public class PrivateChatRoomActivityFragment extends Fragment implements ChildEventListener {
+public class PrivateChatRoomActivityFragment extends BaseFragment implements ChildEventListener {
 
     public static final String EXTRA_ROOM_ID = "extra:roomId";
     public static final String EXTRA_FRIEND_ID = "extra:friendId";
     public static final String EXTRA_FRIEND_NAME = "extra:friendName";
     public static final String EXTRA_FRIEND_PROFILE = "extra:friendProfile";
-    private static final int MESSAGE_ITEM_LIMIT = 20;
-    private static final int POSITION_OFFSET_TO_SCROLL = 1;
     private static final String TAG = PrivateChatRoomActivityFragment.class.getSimpleName();
-    @Bind(R.id.private_chat_message_recycler_view)
-    RecyclerView messageList;
-
-    @Bind(R.id.private_chat_message_edit_text)
-    EditText messageText;
-
-    @Bind(R.id.private_chat_message_button)
-    Button sendMessageButton;
-
+    private static final int DOWNLOAD_MESSAGE_ITEM_LIMIT = 20;
     @Inject
     @Named(FirebaseUtil.NAMED_MESSAGES)
     Firebase messagesFirebase;
@@ -70,35 +44,102 @@ public class PrivateChatRoomActivityFragment extends Fragment implements ChildEv
     @Named(FirebaseUtil.NAMED_USER_ROOMS)
     Firebase userRoomFirebase;
 
-    private ToolbarCommunicator toolbarCommunicator;
-    private ChatListAdapter chatListAdapter;
-    private LinearLayoutManager linearLayoutManager;
-    private InfiniteScrollListener infiniteScrollListener;
-
     private String myId;
     private String roomId;
     private String friendId;
-    private String friendDisplayName;
     private String friendProfileImage;
+    private String latestMessageKey = "";
 
     private boolean isMessageSending;
+    private boolean isLoadMoreFailed;
+    private boolean isLoadMoreNoData;
+
+    private long latestSentWhenMessage;
+
+    private SparseArray<String> friendsId;
+    private ArrayList<Message> oldMessages;
+    private ArrayList<Message> newMessages;
+    private MessageRequestListener messageRequestListener;
+    private OnInfiniteScrollListener onInfiniteScrollListener;
 
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
 
-        toolbarCommunicator = (ToolbarCommunicator) getActivity();
+        messageRequestListener = (MessageRequestListener) getActivity();
+        onInfiniteScrollListener = (OnInfiniteScrollListener) getActivity();
     }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         AppController.getComponent(getActivity()).inject(this);
-
+        getDataFromIntent();
         setRetainInstance(true);
 
-        getDataFromIntent();
+        myId = messagesFirebase.getAuth().getUid();
+    }
+
+    @Override
+    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+
+        if (isMessageRequestAvailable()) {
+            messageRequestListener.onAdapterInitialized(myId, getFriendsImages());
+
+            if (newMessages != null) {
+                messageRequestListener.onNewMessage(newMessages);
+                newMessages = null;
+            }
+
+            if (oldMessages != null) {
+                messageRequestListener.onOldMessage(oldMessages);
+                oldMessages = null;
+            }
+        }
+
+        if (isLoadMoreFailedAvailable()) {
+            if (isLoadMoreFailed) {
+                onInfiniteScrollListener.onLoadMoreFailed();
+                isLoadMoreFailed = false;
+            }
+
+            if (isLoadMoreNoData) {
+                onInfiniteScrollListener.onNoMoreOlderData();
+                isLoadMoreNoData = false;
+            }
+        }
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+
+        initFirebaseMessage();
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+
+        messagesFirebase.removeEventListener(this);
+    }
+
+    private boolean isMessageRequestAvailable() {
+        return messageRequestListener != null;
+    }
+
+    private boolean isLoadMoreFailedAvailable() {
+        return onInfiniteScrollListener != null;
+    }
+
+    private SparseArray<String> getFriendsImages() {
+        if (friendsId != null) return friendsId;
+
+        friendsId = new SparseArray<>();
+        friendsId.put(friendId.hashCode(), friendProfileImage);
+
+        return friendsId;
     }
 
     private void getDataFromIntent() {
@@ -106,164 +147,98 @@ public class PrivateChatRoomActivityFragment extends Fragment implements ChildEv
 
         roomId = intent.getStringExtra(EXTRA_ROOM_ID);
         friendId = intent.getStringExtra(EXTRA_FRIEND_ID);
-        friendDisplayName = intent.getStringExtra(EXTRA_FRIEND_NAME);
         friendProfileImage = intent.getStringExtra(EXTRA_FRIEND_PROFILE);
     }
 
-    @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
+    public void loadItemMore(long oldestSentTime) {
+        messagesFirebase
+                .child(roomId)
+                .orderByChild(FirebaseUtil.CHILD_SENT_WHEN)
+                .endAt(oldestSentTime)
+                .limitToLast(DOWNLOAD_MESSAGE_ITEM_LIMIT)
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
 
-        View rootView = inflater.inflate(R.layout.fragment_private_chat_room, container, false);
-        ButterKnife.bind(this, rootView);
+                        ArrayList<Message> messageList = createMessageList(dataSnapshot);
+                        addOlderMessages(messageList, dataSnapshot);
+                        messageList.remove(0);
 
-        return rootView;
-    }
+                        if (isMessageRequestAvailable()) {
+                            messageRequestListener.onOldMessage(messageList);
+                        } else {
+                            oldMessages = messageList;
+                        }
+                    }
 
-    @Override
-    public void onViewCreated(View view, Bundle savedInstanceState) {
-        super.onViewCreated(view, savedInstanceState);
+                    @Override
+                    public void onCancelled(FirebaseError firebaseError) {
+                        Log.e(TAG, "Cannot load more: " + firebaseError.getMessage());
 
-        toolbarCommunicator.setTitle(friendDisplayName);
-
-        if (savedInstanceState == null) {
-            setRecyclerViewAdapter();
-            addFirebaseBindToRoomId();
-        }
-
-        setRecyclerView();
-        setInfiniteScroll();
-    }
-
-    private void scrollToFirstPosition(final boolean smoothScroll, long delayed) {
-        final int position = chatListAdapter.getItemCount() - 1;
-
-        if (position >= 0) {
-
-            new Handler().postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    scroll(0, smoothScroll);
-                }
-            }, delayed);
-
-        }
-    }
-
-    private void scroll(int position, boolean smoothScroll) {
-        if (smoothScroll) {
-            messageList.smoothScrollToPosition(position);
-        } else {
-            messageList.scrollToPosition(position);
-        }
-    }
-
-    private void setRecyclerView() {
-        DefaultItemAnimator itemAnimator =
-                AppController.getComponent(getActivity()).defaultItemAnimator();
-        linearLayoutManager = new LinearLayoutManager(getActivity(), LinearLayoutManager.VERTICAL, true);
-
-        messageList.setHasFixedSize(true);
-        messageList.setItemAnimator(itemAnimator);
-        messageList.setLayoutManager(linearLayoutManager);
-        messageList.setAdapter(chatListAdapter);
+                        if (isLoadMoreFailedAvailable()) {
+                            onInfiniteScrollListener.onLoadMoreFailed();
+                        } else {
+                            isLoadMoreFailed = true;
+                        }
+                    }
+                });
 
     }
 
-    private void setInfiniteScroll() {
-        infiniteScrollListener = new InfiniteScrollListener(linearLayoutManager) {
-            @Override
-            public void onLoadMore(final int page) {
-                Message lastMessage = chatListAdapter.getLastItem();
-                if (lastMessage == null) return;
-
-                chatListAdapter.addProgressBar();
-
-                messagesFirebase
-                        .child(roomId)
-                        .orderByChild(FirebaseUtil.CHILD_SENT_WHEN)
-                        .endAt(lastMessage.getSentWhen())
-                        .limitToLast(MESSAGE_ITEM_LIMIT)
-                        .addListenerForSingleValueEvent(new ValueEventListener() {
-                            @Override
-                            public void onDataChange(DataSnapshot dataSnapshot) {
-                                chatListAdapter.removeLast();
-
-                                GapList<Message> messageList = createMessageList(dataSnapshot);
-                                messageList = getLoadMoreMessages(messageList, dataSnapshot);
-                                checkDuplicateMessage(messageList);
-
-                                chatListAdapter.addLastAll(messageList);
-                            }
-
-                            @Override
-                            public void onCancelled(FirebaseError firebaseError) {
-
-                            }
-                        });
-
-
-            }
-        };
-
-        messageList.addOnScrollListener(infiniteScrollListener);
-    }
-
-    private GapList<Message> createMessageList(DataSnapshot dataSnapshot) {
+    private ArrayList<Message> createMessageList(DataSnapshot dataSnapshot) {
         final int count = (int) dataSnapshot.getChildrenCount();
-        GapList<Message> messageList = new GapList<>(count);
+        ArrayList<Message> messageList = new ArrayList<>(count);
 
-        if (count < MESSAGE_ITEM_LIMIT) {
-            infiniteScrollListener.noMoreData();
+        if (count < DOWNLOAD_MESSAGE_ITEM_LIMIT) {
+            if (isLoadMoreFailedAvailable()) {
+                onInfiniteScrollListener.onNoMoreOlderData();
+            } else {
+                isLoadMoreNoData = true;
+            }
         }
 
         return messageList;
     }
 
-    private GapList<Message> getLoadMoreMessages(GapList<Message> messages, DataSnapshot dataSnapshot) {
+    private void addOlderMessages(ArrayList<Message> messageList, DataSnapshot dataSnapshot) {
         for (DataSnapshot postSnapshot : dataSnapshot.getChildren()) {
             Message message = getMessage(postSnapshot);
-            messages.addFirst(message);
-        }
-        return messages;
-    }
-
-    private void checkDuplicateMessage(GapList<Message> messageList) {
-        if (messageList.getFirst().getRoomId().equals(chatListAdapter.getLastItem().getRoomId())) {
-            messageList.removeFirst();
+            messageList.add(0, message);
         }
     }
 
-    private void setRecyclerViewAdapter() {
-        myId = messagesFirebase.getAuth().getUid();
-
-        HashMap<String, String> friendImageMap = new HashMap<>();
-        friendImageMap.put(friendId, friendProfileImage);
-
-        chatListAdapter = new ChatListAdapter(myId, friendImageMap);
+    private void removeDuplicateMessages(ArrayList<Message> messageList, Message lastMessage) {
+        for (int i = 0, size = messageList.size(); i < size; i++) {
+            if (messageList.get(i).equals(lastMessage)) {
+                messageList.remove(i);
+                break;
+            }
+        }
     }
 
-    private void addFirebaseBindToRoomId() {
-        messagesFirebase
-                .child(roomId)
-                .limitToLast(MESSAGE_ITEM_LIMIT)
-                .addChildEventListener(this);
+    private void initFirebaseMessage() {
+        if (latestSentWhenMessage <= 0) {
+            messagesFirebase.child(roomId)
+                    .limitToLast(DOWNLOAD_MESSAGE_ITEM_LIMIT)
+                    .addChildEventListener(this);
+        } else {
+            messagesFirebase.child(roomId)
+                    .orderByChild(FirebaseUtil.CHILD_SENT_WHEN)
+                    .startAt(latestSentWhenMessage)
+                    .addChildEventListener(this);
+        }
     }
 
-    @OnClick(R.id.private_chat_message_button)
-    public void onSendButtonClick() {
+    public void onSendButtonClick(String messageText) {
         if (!isMessageSending) isMessageSending = true;
         else return;
 
-        final String message = messageText.getText().toString().trim();
-        if (message.length() == 0) {
+        if (messageText.length() == 0) {
             isMessageSending = false;
             return;
         }
 
-        sendMessage(message);
-        scrollToFirstPosition(false, 100);
-        messageText.setText("");
+        sendMessage(messageText);
     }
 
     private void sendMessage(final String messageText) {
@@ -274,7 +249,7 @@ public class PrivateChatRoomActivityFragment extends Fragment implements ChildEv
             public void onComplete(FirebaseError firebaseError, Firebase firebase) {
                 if (firebaseError != null) {
                     Log.e(TAG, firebaseError.getMessage());
-                    chatListAdapter.remove(message);
+                    messageRequestListener.onRemoveMessage(message);
                 }
 
                 updateRoomInfo(message, false);
@@ -295,7 +270,7 @@ public class PrivateChatRoomActivityFragment extends Fragment implements ChildEv
     }
 
     private Map<String, Object> getMessageMap(Message message, boolean itemRemoveUpdate) {
-        Map<String, Object> messageMap = new HashMap<>(1);
+        Map<String, Object> messageMap = new HashMap<>(3);
         messageMap.put(FirebaseUtil.CHILD_LATEST_MESSAGE_TIME, message.getSentWhen());
         messageMap.put(FirebaseUtil.CHILD_LATEST_MESSAGE, message.getMessage());
         messageMap.put(FirebaseUtil.CHILD_LATEST_MESSAGE_USER, itemRemoveUpdate ? message.getSentBy() : myId);
@@ -330,28 +305,29 @@ public class PrivateChatRoomActivityFragment extends Fragment implements ChildEv
         return message;
     }
 
-    private void scrollToFirstPositionIfNeeded() {
-        // check if the list visible position of item is close or equal to the last item.
-        // if is it, then scroll to last position
-        // if not, TODO notify user that we have new message
-
-        if (isCloseToFirstPosition()) {
-            scrollToFirstPosition(true, 0);
+    private void sendNewMessage(Message message) {
+        if (isMessageRequestAvailable()) {
+            messageRequestListener.onNewMessage(message);
+        } else {
+            if (newMessages == null) {
+                newMessages = new ArrayList<>();
+            }
+            newMessages.add(message);
         }
     }
 
     @Override
     public void onChildAdded(DataSnapshot dataSnapshot, String previousChildKey) {
+        if (latestMessageKey.equals(dataSnapshot.getKey())) return;
         Message message = getMessage(dataSnapshot);
-        chatListAdapter.addFirst(message);
 
-        scrollToFirstPositionIfNeeded();
+        latestSentWhenMessage = message.getSentWhen();
+        latestMessageKey = message.getMessageKey();
+        sendNewMessage(message);
     }
 
     @Override
     public void onChildChanged(DataSnapshot dataSnapshot, String previousChildKey) {
-        Message message = getMessage(dataSnapshot);
-        chatListAdapter.replace(message);
     }
 
     @Override
@@ -367,13 +343,23 @@ public class PrivateChatRoomActivityFragment extends Fragment implements ChildEv
     }
 
     @Override
-    public void onDestroy() {
-        super.onDestroy();
+    public void onDetach() {
+        super.onDetach();
 
-        messagesFirebase.removeEventListener(this);
+        messageRequestListener = null;
+        onInfiniteScrollListener = null;
     }
 
-    private boolean isCloseToFirstPosition() {
-        return linearLayoutManager.findFirstVisibleItemPosition() <= POSITION_OFFSET_TO_SCROLL;
+    public interface MessageRequestListener {
+        void onNewMessage(Message newMessage);
+
+        void onNewMessage(ArrayList<Message> newMessages);
+
+        void onOldMessage(ArrayList<Message> oldMessages);
+
+        void onRemoveMessage(Message message);
+
+        void onAdapterInitialized(String myId, SparseArray<String> friendId);
     }
+
 }

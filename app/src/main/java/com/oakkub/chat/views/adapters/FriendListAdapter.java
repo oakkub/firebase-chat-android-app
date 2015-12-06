@@ -31,8 +31,6 @@ public class FriendListAdapter extends RecyclerViewAdapter<UserInfo, RecyclerVie
     private static final int ADD_FRIEND_TYPE = 1;
 
     private OnClickListener onClickListener;
-    private boolean loadMore;
-    private boolean noInternet;
 
     public void setOnClickListener(OnClickListener onClickListener) {
         this.onClickListener = onClickListener;

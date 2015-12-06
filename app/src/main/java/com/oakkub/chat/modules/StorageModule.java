@@ -1,8 +1,8 @@
 package com.oakkub.chat.modules;
 
 import android.app.Application;
-import android.content.Context;
 import android.content.SharedPreferences;
+import android.preference.PreferenceManager;
 
 import com.oakkub.chat.dagger.PerApp;
 
@@ -15,12 +15,10 @@ import dagger.Provides;
 @Module
 public class StorageModule {
 
-    private static final String DEFAULT_PREF = "default_pref";
-
     @PerApp
     @Provides
     SharedPreferences provideSharedPreference(Application application) {
-        return application.getSharedPreferences(DEFAULT_PREF, Context.MODE_PRIVATE);
+        return PreferenceManager.getDefaultSharedPreferences(application);
     }
 
     @PerApp

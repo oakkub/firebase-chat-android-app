@@ -4,12 +4,6 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v4.app.Fragment;
-import android.support.v4.content.ContextCompat;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.RelativeLayout;
-import android.widget.TextView;
 
 import com.facebook.AccessToken;
 import com.facebook.AccessTokenTracker;
@@ -18,34 +12,34 @@ import com.facebook.FacebookCallback;
 import com.facebook.FacebookException;
 import com.facebook.login.LoginManager;
 import com.facebook.login.LoginResult;
-import com.oakkub.chat.R;
 import com.oakkub.chat.activities.AuthenticationActivity;
+import com.oakkub.chat.activities.FacebookLoginActivity;
 import com.oakkub.chat.utils.TextUtil;
 import com.oakkub.chat.utils.Util;
 
 import java.util.Arrays;
-
-import butterknife.Bind;
-import butterknife.ButterKnife;
 
 /**
  * A placeholder fragment containing a simple view.
  */
 public class FacebookLoginActivityFragment extends Fragment implements FacebookCallback<LoginResult> {
 
-    public static final String LOGIN_ACTION = "com.oakkub.chat.fragments.FacebookLoginActivityFragment.LOGIN_ACTION";
-    public static final String LOGOUT_ACTION = "com.oakkub.chat.fragments.FacebookLoginActivityFragment.LOGOUT_ACTION";
     public static final int RC_FACEBOOK = 2000;
-    private static final String TAG = FacebookLoginActivityFragment.class.getSimpleName();
-    @Bind(R.id.login_process_root_view)
-    RelativeLayout rootView;
-    @Bind(R.id.logging_in_text_view)
-    TextView loggingTextView;
 
     private CallbackManager callbackManager;
     private AccessTokenTracker accessTokenTracker;
 
     private String action;
+
+    public static FacebookLoginActivityFragment newInstance(String action) {
+        Bundle args = new Bundle();
+        args.putString(FacebookLoginActivity.ACTION, action);
+
+        FacebookLoginActivityFragment facebookLoginActivityFragment = new FacebookLoginActivityFragment();
+        facebookLoginActivityFragment.setArguments(args);
+
+        return facebookLoginActivityFragment;
+    }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -56,20 +50,11 @@ public class FacebookLoginActivityFragment extends Fragment implements FacebookC
         checkAction();
         setupFacebook();
 
-        if (action.equals(LOGIN_ACTION)) performLogin();
+        action = getArguments().getString(FacebookLoginActivity.ACTION);
+
+        if (action == null) finishActivity();
+        else if (action.equals(FacebookLoginActivity.LOGIN_ACTION)) performLogin();
         else performLogout();
-    }
-
-    @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
-
-        View rootView = inflater.inflate(R.layout.login_process, container, false);
-        ButterKnife.bind(this, rootView);
-
-        setViews();
-
-        return rootView;
     }
 
     private void setupFacebook() {
@@ -95,7 +80,8 @@ public class FacebookLoginActivityFragment extends Fragment implements FacebookC
         action = getActivity().getIntent().getAction();
 
         if (action == null) finishActivity();
-        else if (action.equals(LOGIN_ACTION) || action.equals(LOGOUT_ACTION)) return;
+        else if (action.equals(FacebookLoginActivity.LOGIN_ACTION) ||
+                action.equals(FacebookLoginActivity.LOGOUT_ACTION)) return;
         else finishActivity();
     }
 
@@ -125,18 +111,6 @@ public class FacebookLoginActivityFragment extends Fragment implements FacebookC
         finishActivity();
     }
 
-    private void setViews() {
-
-        rootView.setBackgroundColor(ContextCompat.getColor(getActivity(), R.color.darkBlue));
-
-        if (action.equals(LOGIN_ACTION)) {
-            loggingTextView.setText(getString(R.string.logging_in_with_facebook));
-        } else {
-            loggingTextView.setText(getString(R.string.logging_out_with_facebook));
-        }
-
-    }
-
     private void beginAuthentication(String token) {
 
         Intent authenticationIntent =
@@ -144,7 +118,7 @@ public class FacebookLoginActivityFragment extends Fragment implements FacebookC
                         AuthenticationActivity.class);
         authenticationIntent.putExtra(AuthenticationActivityFragment.PROVIDER,
                                         TextUtil.FACEBOOK_PROVIDER);
-        authenticationIntent.putExtra(TextUtil.TOKEN, token);
+        authenticationIntent.putExtra(AuthenticationActivityFragment.TOKEN, token);
 
         startActivity(authenticationIntent);
         getActivity().overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
@@ -183,7 +157,4 @@ public class FacebookLoginActivityFragment extends Fragment implements FacebookC
         }
     }
 
-    public String getAction() {
-        return action;
-    }
 }

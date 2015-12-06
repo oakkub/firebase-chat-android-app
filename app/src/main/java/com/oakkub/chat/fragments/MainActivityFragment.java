@@ -1,6 +1,5 @@
 package com.oakkub.chat.fragments;
 
-import android.content.Context;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
@@ -11,7 +10,6 @@ import android.view.ViewGroup;
 
 import com.oakkub.chat.R;
 import com.oakkub.chat.views.adapters.ListAdapter;
-import com.oakkub.chat.views.widgets.toolbar.ToolbarCommunicator;
 
 import java.util.Arrays;
 
@@ -20,27 +18,11 @@ import java.util.Arrays;
  */
 public class MainActivityFragment extends Fragment {
 
-    private ToolbarCommunicator toolbarCommunicator;
-
     public static MainActivityFragment newInstance() {
 
         MainActivityFragment fragment = new MainActivityFragment();
 
         return fragment;
-    }
-
-    @Override
-    public void onAttach(Context context) {
-        super.onAttach(context);
-
-        toolbarCommunicator = (ToolbarCommunicator) getActivity();
-    }
-
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-
-        setRetainInstance(true);
     }
 
     @Override

@@ -8,17 +8,14 @@ import android.os.Bundle;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.Snackbar;
 import android.support.v4.view.ViewPager;
-import android.support.v7.app.AppCompatActivity;
 import android.util.Base64;
 import android.util.Log;
-import android.view.animation.Animation;
 import android.widget.TextView;
 
 import com.firebase.client.Firebase;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.oakkub.chat.R;
-import com.oakkub.chat.managers.AppComponent;
 import com.oakkub.chat.managers.AppController;
 import com.oakkub.chat.managers.Font;
 import com.oakkub.chat.utils.FirebaseUtil;
@@ -35,12 +32,13 @@ import javax.inject.Named;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
+import icepick.State;
 
-public class LoginActivity extends AppCompatActivity implements ViewPagerCommunicator {
+public class LoginActivity extends BaseActivity implements ViewPagerCommunicator {
 
     public static final String LOGIN_FAILED = "loginFailed";
     private static final String TAG = LoginActivity.class.getSimpleName();
-    private static final String SNACK_BAR_SHOWED_STATE = "snackBarShowedState";
+
     @Bind(R.id.login_root_view)
     CoordinatorLayout rootView;
     @Bind(R.id.application_name_textview)
@@ -52,11 +50,14 @@ public class LoginActivity extends AppCompatActivity implements ViewPagerCommuni
     @Named(FirebaseUtil.NAMED_ROOT)
     Firebase firebase;
 
-    private boolean isErrorSnackBarShowed;
+    @State
+    boolean isErrorSnackBarShowed;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_login);
+        ButterKnife.bind(this);
 
         AppController.getComponent(this).inject(this);
 
@@ -64,19 +65,11 @@ public class LoginActivity extends AppCompatActivity implements ViewPagerCommuni
             checkAuthentication();
         }
 
-        if (savedInstanceState != null) {
-            isErrorSnackBarShowed = savedInstanceState.getBoolean(SNACK_BAR_SHOWED_STATE, false);
-        }
-
-        setContentView(R.layout.activity_login);
-        ButterKnife.bind(this);
-
         if (!isErrorSnackBarShowed) {
             loginFailed(getIntent());
         }
 
         setupView();
-        setupAnimation(savedInstanceState);
     }
 
     private void checkAuthentication() {
@@ -105,25 +98,9 @@ public class LoginActivity extends AppCompatActivity implements ViewPagerCommuni
         viewPager.setAdapter(loginViewPagerAdapter);
     }
 
-    private void setupAnimation(Bundle onSavedInstanceState) {
-
-        if (onSavedInstanceState == null) {
-
-            AppComponent appComponent = AppController.getComponent(this);
-
-            Animation alphaScaleAnim = appComponent.scaleAlphaAnimation();
-            applicationNameTextView.startAnimation(alphaScaleAnim);
-
-            Animation alphaAnim = appComponent.alphaAnimation();
-            alphaAnim.setStartOffset(alphaScaleAnim.getDuration() + 100);
-            viewPager.startAnimation(alphaAnim);
-        }
-    }
-
     private void goToMainActivity() {
 
         Intent mainIntent = new Intent(this, MainActivity.class);
-        mainIntent.setAction(MainActivity.LOGIN_SUCCESS_ACTION);
         mainIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(mainIntent);
         overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
@@ -133,17 +110,7 @@ public class LoginActivity extends AppCompatActivity implements ViewPagerCommuni
     @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
-
-        Log.e(TAG, "onNewIntent");
-
         loginFailed(intent);
-    }
-
-    @Override
-    protected void onSaveInstanceState(Bundle outState) {
-        super.onSaveInstanceState(outState);
-
-        outState.putBoolean(SNACK_BAR_SHOWED_STATE, isErrorSnackBarShowed);
     }
 
     @Override
@@ -157,6 +124,14 @@ public class LoginActivity extends AppCompatActivity implements ViewPagerCommuni
         if (viewPager.getCurrentItem() != 0) setCurrentItem(0);
         else super.onBackPressed();
 
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+
+        applicationNameTextView.clearAnimation();
+        viewPager.clearAnimation();
     }
 
     private boolean checkGooglePlayServices() {
@@ -175,7 +150,6 @@ public class LoginActivity extends AppCompatActivity implements ViewPagerCommuni
                 try {
                     throw new Exception("This device is not support");
                 } catch (Exception e) {
-                    Log.e(TAG, e.getMessage());
                     return false;
                 }
             }

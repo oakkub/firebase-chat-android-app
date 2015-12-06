@@ -27,8 +27,7 @@ import com.oakkub.chat.utils.Util;
 import com.oakkub.chat.views.adapters.FriendListAdapter;
 import com.oakkub.chat.views.dialogs.BottomSheetDialog;
 
-import org.magicwerk.brownies.collections.GapList;
-
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -63,7 +62,7 @@ public class AddFriendActivityFragment extends Fragment
     private AuthData authData;
 
     private FriendListAdapter addFriendListAdapter;
-    private GapList<String> friendKeyList;
+    private ArrayList<String> friendKeyList;
 
     private UserInfo myUserInfo;
     private int selectedFriendPosition = -1;
@@ -78,7 +77,7 @@ public class AddFriendActivityFragment extends Fragment
         setRetainInstance(true);
 
         addFriendListAdapter = new FriendListAdapter();
-        friendKeyList = new GapList<>();
+        friendKeyList = new ArrayList<>();
 
         getUserFriend();
     }
@@ -155,8 +154,8 @@ public class AddFriendActivityFragment extends Fragment
         final String uid = authData.getUid();
 
         // -1 because we don't need to store out info (owner id).
-        GapList<UserInfo> recommendedFriendList =
-                new GapList<>((int) dataSnapshot.getChildrenCount() - 1);
+        ArrayList<UserInfo> recommendedFriendList =
+                new ArrayList<>((int) dataSnapshot.getChildrenCount() - 1);
 
         for (DataSnapshot childrenSnapshot : dataSnapshot.getChildren()) {
             final String friendKey = childrenSnapshot.getKey();
@@ -174,7 +173,7 @@ public class AddFriendActivityFragment extends Fragment
         reverseFriendData(recommendedFriendList);
     }
 
-    private void reverseFriendData(GapList<UserInfo> recommendedFriendList) {
+    private void reverseFriendData(ArrayList<UserInfo> recommendedFriendList) {
         if (recommendedFriendList.size() > 0) {
             Collections.reverse(recommendedFriendList);
             addFriendListAdapter.addLastAll(recommendedFriendList);

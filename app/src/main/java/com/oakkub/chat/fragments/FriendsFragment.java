@@ -1,7 +1,7 @@
 package com.oakkub.chat.fragments;
 
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
+import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.RecyclerView;
@@ -9,7 +9,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.firebase.client.AuthData;
 import com.firebase.client.DataSnapshot;
 import com.firebase.client.Firebase;
 import com.firebase.client.FirebaseError;
@@ -22,17 +21,19 @@ import com.oakkub.chat.models.UserInfo;
 import com.oakkub.chat.utils.FirebaseUtil;
 import com.oakkub.chat.views.adapters.FriendListAdapter;
 
-import org.magicwerk.brownies.collections.GapList;
+import java.util.ArrayList;
 
 import javax.inject.Inject;
 import javax.inject.Named;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
+import icepick.State;
 
-public class FriendsFragment extends Fragment
+public class FriendsFragment extends BaseFragment
         implements FriendListAdapter.OnClickListener {
 
+    private static final String FRIEND_LIST_STATE = "state:friendList";
     private static final String TAG = FriendsFragment.class.getSimpleName();
 
     @Bind(R.id.friendsRecyclerView)
@@ -46,17 +47,16 @@ public class FriendsFragment extends Fragment
     @Named(FirebaseUtil.NAMED_USER_FRIENDS)
     Firebase firebaseUserFriends;
 
-    private AuthData authData;
+    @State
+    boolean fetchingFriends;
 
-    private GapList<String> friendKeyList;
+    @State
+    ArrayList<String> friendKeyList;
+
     private FriendListAdapter friendListAdapter;
-
-    private boolean gettingFriendList;
 
     public static FriendsFragment newInstance() {
         FriendsFragment fragment = new FriendsFragment();
-        Bundle args = new Bundle();
-        fragment.setArguments(args);
         return fragment;
     }
 
@@ -65,10 +65,9 @@ public class FriendsFragment extends Fragment
         super.onCreate(savedInstanceState);
         AppController.getComponent(getActivity()).inject(this);
 
-        setRetainInstance(true);
-
-        friendKeyList = new GapList<>();
-
+        if (savedInstanceState == null) {
+            friendKeyList = new ArrayList<>();
+        }
         setFriendListAdapter();
     }
 
@@ -90,10 +89,17 @@ public class FriendsFragment extends Fragment
     }
 
     @Override
-    public void onActivityCreated(Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        friendListAdapter.onSaveInstanceState(FRIEND_LIST_STATE, outState);
+    }
 
-        authData = firebaseUserFriends.getAuth();
+    @Override
+    public void onViewStateRestored(@Nullable Bundle savedInstanceState) {
+        super.onViewStateRestored(savedInstanceState);
+        if (savedInstanceState == null) return;
+
+        friendListAdapter.onRestoreInstanceState(FRIEND_LIST_STATE, savedInstanceState);
     }
 
     private void setRecyclerView() {
@@ -113,11 +119,8 @@ public class FriendsFragment extends Fragment
         friendListAdapter.setOnClickListener(this);
     }
 
-    public void getUserFriends() {
-        if (gettingFriendList) return;
-        else gettingFriendList = true;
-
-        firebaseUserFriends.child(authData.getUid())
+    public void getUserFriends(String myId) {
+        firebaseUserFriends.child(myId)
                 .addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
@@ -126,7 +129,6 @@ public class FriendsFragment extends Fragment
 
                     @Override
                     public void onCancelled(FirebaseError firebaseError) {
-                        gettingFriendList = false;
                     }
                 });
     }
@@ -135,8 +137,10 @@ public class FriendsFragment extends Fragment
         for (DataSnapshot childrenDataSnapshot : dataSnapshot.getChildren()) {
             final String friendKey = childrenDataSnapshot.getKey();
 
-            friendKeyList.add(friendKey);
-            getFriends(friendKey);
+            if (!friendKeyList.contains(friendKey)) {
+                friendKeyList.add(friendKey);
+                getFriends(friendKey);
+            }
         }
     }
 
@@ -178,7 +182,6 @@ public class FriendsFragment extends Fragment
 
         FriendDetailActivity.launch((AppCompatActivity) getActivity(),
                 friendHolder.friendProfileImage, friendInfo);
-
     }
 
 }

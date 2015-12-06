@@ -6,7 +6,6 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v4.content.ContextCompat;
-import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
@@ -37,11 +36,12 @@ import butterknife.Bind;
 import butterknife.ButterKnife;
 import de.greenrobot.event.EventBus;
 import de.greenrobot.event.Subscribe;
+import icepick.State;
 
 /**
  * Created by OaKKuB on 10/16/2015.
  */
-public class GoogleLoginActivity extends AppCompatActivity
+public class GoogleLoginActivity extends BaseActivity
         implements GoogleApiClient.OnConnectionFailedListener,
                    GoogleApiClient.ConnectionCallbacks {
 
@@ -51,9 +51,6 @@ public class GoogleLoginActivity extends AppCompatActivity
 
     private static final int REQUEST_CODE_SOLVING_ERROR = 1001;
     private static final String DIALOG_ERROR = "dialog_error";
-    private static final String STATE_RESOLVING_ERROR = "state_resolving_error";
-    private static final String STATE_FIRST_TIME = "state_first_time";
-    private static final String STATE_ACTION = "action";
     private static final String PROFILE_SCOPE = "https://www.googleapis.com/auth/userinfo.profile";
     private static final String EMAIL_SCOPE = "https://www.googleapis.com/auth/userinfo.email";
 
@@ -62,12 +59,14 @@ public class GoogleLoginActivity extends AppCompatActivity
     @Bind(R.id.logging_in_text_view)
     TextView loggingInTextView;
 
+    @State
+    boolean isResolvingError;
+
+    @State
+    String action;
+
     private GoogleSignInOptions googleSignInOptions;
     private GoogleApiClient googleApiClient;
-
-    private boolean isResolvingError;
-    private boolean isFirstTime = true;
-    private String action;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -75,7 +74,7 @@ public class GoogleLoginActivity extends AppCompatActivity
         setContentView(R.layout.login_process);
         ButterKnife.bind(this);
 
-        restoreVariableState(savedInstanceState);
+        getDataFromIntent(savedInstanceState);
 
         setViews();
 
@@ -96,17 +95,9 @@ public class GoogleLoginActivity extends AppCompatActivity
 
     }
 
-    private void restoreVariableState(Bundle savedInstanceState) {
-
-        Intent intent = getIntent();
-        if (intent != null) {
-            action = intent.getAction();
-        }
-
-        if (savedInstanceState != null) {
-            isResolvingError = savedInstanceState.getBoolean(STATE_RESOLVING_ERROR, false);
-            isFirstTime = savedInstanceState.getBoolean(STATE_FIRST_TIME, false);
-        }
+    private void getDataFromIntent(Bundle savedInstanceState) {
+        if (savedInstanceState != null) return;
+        action = getIntent().getAction();
     }
 
     private GoogleSignInOptions buildGoogleSignOptions() {
@@ -128,14 +119,6 @@ public class GoogleLoginActivity extends AppCompatActivity
             Intent signInIntent = Auth.GoogleSignInApi.getSignInIntent(googleApiClient);
             startActivityForResult(signInIntent, RC_GOOGLE);
         }
-    }
-
-    @Override
-    protected void onSaveInstanceState(Bundle outState) {
-        super.onSaveInstanceState(outState);
-        outState.putBoolean(STATE_RESOLVING_ERROR, isResolvingError);
-        outState.putBoolean(STATE_FIRST_TIME, isFirstTime);
-        outState.putString(STATE_ACTION, action);
     }
 
     @Override
@@ -258,7 +241,7 @@ public class GoogleLoginActivity extends AppCompatActivity
 
             Intent authenticateIntent = Util.intentClearActivity(this, AuthenticationActivity.class);
             authenticateIntent.putExtra(AuthenticationActivityFragment.PROVIDER, TextUtil.GOOGLE_PROVIDER);
-            authenticateIntent.putExtra(TextUtil.TOKEN, googleLoginInfo.token);
+            authenticateIntent.putExtra(AuthenticationActivityFragment.TOKEN, googleLoginInfo.token);
 
             startActivity(authenticateIntent);
             overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);

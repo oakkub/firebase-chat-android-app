@@ -16,9 +16,12 @@ public class MainViewPagerAdapter extends SmartFragmentStatePagerAdapter {
 
     private static final int TOTAL_ITEM = 3;
 
+    private String myId;
+
     @Inject
-    public MainViewPagerAdapter(FragmentManager fragmentManager) {
+    public MainViewPagerAdapter(FragmentManager fragmentManager, String myId) {
         super(fragmentManager);
+        this.myId = myId;
     }
 
     @Override
@@ -28,7 +31,7 @@ public class MainViewPagerAdapter extends SmartFragmentStatePagerAdapter {
 
             case 0:
 
-                return RoomListFragment.newInstance();
+                return RoomListFragment.newInstance(myId);
 
             case 1:
 
@@ -45,7 +48,7 @@ public class MainViewPagerAdapter extends SmartFragmentStatePagerAdapter {
 
     @Override
     public CharSequence getPageTitle(int position) {
-        return "Page: " + position;
+        return String.valueOf(position);
     }
 
     @Override

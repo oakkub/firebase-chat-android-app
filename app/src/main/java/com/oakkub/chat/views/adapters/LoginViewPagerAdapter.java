@@ -26,10 +26,10 @@ public class LoginViewPagerAdapter extends SmartFragmentStatePagerAdapter {
         switch (position) {
 
             case 0:
-                return LoginActivityFragment.newInstance();
+                return new LoginActivityFragment();
 
             case 1:
-                return EmailLoginFragment.newInstance();
+                return new EmailLoginFragment();
 
         }
 

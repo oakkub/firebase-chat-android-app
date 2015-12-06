@@ -6,7 +6,6 @@ import android.graphics.drawable.TransitionDrawable;
 import android.os.Bundle;
 import android.support.design.widget.TabLayout;
 import android.support.v4.content.ContextCompat;
-import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
@@ -34,13 +33,13 @@ import javax.inject.Named;
 import butterknife.Bind;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
+import icepick.State;
 
-public class MainActivity extends AppCompatActivity implements
+public class MainActivity extends BaseActivity implements
         ToolbarCommunicator, ViewPager.OnPageChangeListener {
 
-    public static final String LOGIN_SUCCESS_ACTION = "com.oakkub.chat.activities.MainActivity.LOGIN_SUCCESS_ACTION";
     private static final String TAG = MainActivity.class.getSimpleName();
-    private static final int[] FAB_DRAWABLES = {R.drawable.ic_sms_24dp, R.drawable.ic_person_add_24dp};
+
     @Bind(R.id.main_toolbar)
     Toolbar toolbar;
     @Bind(R.id.main_tablayout)
@@ -58,7 +57,11 @@ public class MainActivity extends AppCompatActivity implements
     @Named(FirebaseUtil.NAMED_ONLINE_USERS)
     Firebase onlineUserFirebase;
 
-    private AuthData authData;
+    @State
+    String myId;
+
+    @State
+    String provider;
 
     private MainViewPagerAdapter mainViewPagerAdapter;
 
@@ -67,47 +70,44 @@ public class MainActivity extends AppCompatActivity implements
         super.onCreate(savedInstanceState);
 
         AppController.getComponent(this).inject(this);
-        checkAction();
-        checkAuthentication();
+        checkAuthentication(savedInstanceState);
 
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
 
         setToolbar();
-        setupPager();
+        setupViewPager();
 
         if (savedInstanceState == null) {
             setupFirebaseComponent();
         }
     }
 
-    private void checkAction() {
-        Intent intent = getIntent();
-        if (intent != null) {
-            if (!intent.getAction().equals(LOGIN_SUCCESS_ACTION)) {
-                finish();
-            }
-        } else {
-            finish();
-        }
-    }
-
-    private void checkAuthentication() {
-        authData = connectionFirebase.getAuth();
+    private void checkAuthentication(Bundle savedInstanceState) {
+        AuthData authData = connectionFirebase.getAuth();
 
         if (authData == null) {
             Intent loginIntent = new Intent(this, LoginActivity.class);
             loginIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
             startActivity(loginIntent);
+        } else {
+            initValues(savedInstanceState, authData);
         }
     }
 
-    private void setupPager() {
+    private void initValues(Bundle savedInstanceState, AuthData authData) {
+        if (savedInstanceState == null) {
+            myId = authData.getUid();
+            provider = authData.getProvider();
+        }
+    }
 
-        mainViewPagerAdapter = new MainViewPagerAdapter(getSupportFragmentManager());
+    private void setupViewPager() {
+        mainViewPagerAdapter = new MainViewPagerAdapter(getSupportFragmentManager(), myId);
+
         viewPager.setAdapter(mainViewPagerAdapter);
-        viewPager.addOnPageChangeListener(this);
         tabLayout.setupWithViewPager(viewPager);
+        viewPager.addOnPageChangeListener(this);
     }
 
     @Override
@@ -131,13 +131,17 @@ public class MainActivity extends AppCompatActivity implements
 
     private void onPageSelectedFabAnimation(int position) {
         // change fab image, according to the selected position of viewpager
-        if (position < mainViewPagerAdapter.getCount() - 1 &&
-                position < FAB_DRAWABLES.length) {
+        if (position < mainViewPagerAdapter.getCount() - 1) {
 
-            if (viewPager.getPreviousPosition() < FAB_DRAWABLES.length) {
+            int[] fabDrawables = {
+                    R.drawable.ic_sms_24dp,
+                    R.drawable.ic_person_add_24dp
+            };
+
+            if (viewPager.getPreviousPosition() < fabDrawables.length) {
                 Drawable[] layers = new Drawable[] {
                         fab.getDrawable(),
-                        ContextCompat.getDrawable(this, FAB_DRAWABLES[position])
+                        ContextCompat.getDrawable(this, fabDrawables[position])
                 };
 
                 TransitionDrawable transitionDrawable = new TransitionDrawable(layers);
@@ -146,7 +150,7 @@ public class MainActivity extends AppCompatActivity implements
                 transitionDrawable.startTransition(200);
             } else {
 
-                fab.setImageDrawable(ContextCompat.getDrawable(this, FAB_DRAWABLES[position]));
+                fab.setImageDrawable(ContextCompat.getDrawable(this, fabDrawables[position]));
             }
         }
     }
@@ -189,7 +193,7 @@ public class MainActivity extends AppCompatActivity implements
 
                 if (connected) {
 
-                    Firebase currentOnlineUser = onlineUserFirebase.child(authData.getUid());
+                    Firebase currentOnlineUser = onlineUserFirebase.child(myId);
 
                     currentOnlineUser.child(FirebaseUtil.CHILD_ONLINE).onDisconnect().setValue(Boolean.FALSE);
                     currentOnlineUser.child(FirebaseUtil.CHILD_ONLINE).setValue(Boolean.TRUE);
@@ -269,31 +273,23 @@ public class MainActivity extends AppCompatActivity implements
 
     }
 
-    @Override
-    protected void onSaveInstanceState(Bundle outState) {
-        super.onSaveInstanceState(outState);
-    }
-
     private void performLogout() {
 
-        if (authData != null) {
+        if (FirebaseUtil.isFacebookLogin(provider)) {
 
-            if (FirebaseUtil.isFacebookLogin(authData.getProvider())) {
+            logout(FacebookLoginActivity.class,
+                    FacebookLoginActivity.LOGOUT_ACTION,
+                    FacebookLoginActivityFragment.RC_FACEBOOK);
 
-                logout(FacebookLoginActivity.class,
-                        FacebookLoginActivityFragment.LOGOUT_ACTION,
-                        FacebookLoginActivityFragment.RC_FACEBOOK);
+        } else if (FirebaseUtil.isGoogleLogin(provider)) {
 
-            } else if (FirebaseUtil.isGoogleLogin(authData.getProvider())) {
+            logout(GoogleLoginActivity.class,
+                    GoogleLoginActivity.ACTION_LOGOUT,
+                    GoogleLoginActivity.RC_GOOGLE);
 
-                logout(GoogleLoginActivity.class,
-                        GoogleLoginActivity.ACTION_LOGOUT,
-                        GoogleLoginActivity.RC_GOOGLE);
+        } else if (FirebaseUtil.isEmailLogin(provider)) {
 
-            } else if (FirebaseUtil.isEmailLogin(authData.getProvider())) {
-
-                firebaseUnAuthenticate();
-            }
+            firebaseUnAuthenticate();
         }
     }
 
@@ -317,9 +313,9 @@ public class MainActivity extends AppCompatActivity implements
         FriendsFragment friendsFragment =
                 (FriendsFragment) mainViewPagerAdapter.getRegisteredFragment(position);
 
+        // if null, it's in the same page.
         if (friendsFragment != null) {
-            // get friend list
-            friendsFragment.getUserFriends();
+            friendsFragment.getUserFriends(myId);
         }
     }
 
@@ -334,10 +330,10 @@ public class MainActivity extends AppCompatActivity implements
 
     private void firebaseLogout() {
 
-        onlineUserFirebase.child(authData.getUid())
+        onlineUserFirebase.child(myId)
                 .child(FirebaseUtil.CHILD_ONLINE)
                 .setValue(Boolean.FALSE);
-        onlineUserFirebase.child(authData.getUid())
+        onlineUserFirebase.child(myId)
                 .child(FirebaseUtil.CHILD_LAST_ONLINE)
                 .setValue(System.currentTimeMillis());
 

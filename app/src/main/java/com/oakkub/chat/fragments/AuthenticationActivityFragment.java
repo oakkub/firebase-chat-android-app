@@ -3,13 +3,7 @@ package com.oakkub.chat.fragments;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
-import android.support.v4.content.ContextCompat;
 import android.util.Log;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.RelativeLayout;
-import android.widget.TextView;
 
 import com.firebase.client.AuthData;
 import com.firebase.client.DataSnapshot;
@@ -25,7 +19,6 @@ import com.oakkub.chat.models.UserInfo;
 import com.oakkub.chat.services.GCMRegistrationIntentService;
 import com.oakkub.chat.utils.FirebaseUtil;
 import com.oakkub.chat.utils.PrefsUtil;
-import com.oakkub.chat.utils.TextUtil;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -33,8 +26,6 @@ import java.util.Map;
 import javax.inject.Inject;
 import javax.inject.Named;
 
-import butterknife.Bind;
-import butterknife.ButterKnife;
 import de.greenrobot.event.EventBus;
 import de.greenrobot.event.Subscribe;
 
@@ -43,14 +34,12 @@ import de.greenrobot.event.Subscribe;
  */
 public class AuthenticationActivityFragment extends Fragment {
 
-    public static final String PROVIDER = "provider";
-    public static final String PASSWORD = "password";
-    public static final String EMAIL = "email";
+    public static final String PROVIDER = "extra:provider";
+    public static final String PASSWORD = "extra:password";
+    public static final String EMAIL = "extra:email";
+    public static final String TOKEN = "extra:token";
+
     private static final String TAG = AuthenticationActivityFragment.class.getSimpleName();
-    @Bind(R.id.login_process_root_view)
-    RelativeLayout rootView;
-    @Bind(R.id.logging_in_text_view)
-    TextView loggingTextView;
 
     @Inject
     @Named(FirebaseUtil.NAMED_ROOT)
@@ -62,34 +51,36 @@ public class AuthenticationActivityFragment extends Fragment {
 
     private AuthData authData;
 
-    private String provider;
+    public static AuthenticationActivityFragment newInstance(String provider, String token) {
+        Bundle args = new Bundle();
+        args.putString(PROVIDER, provider);
+        args.putString(TOKEN, token);
+
+        return initFragment(args);
+    }
+
+    public static AuthenticationActivityFragment newInstance(String provider, String email, String password) {
+        Bundle args = new Bundle();
+        args.putString(EMAIL, email);
+        args.putString(PASSWORD, password);
+
+        return initFragment(args);
+    }
+
+    private static AuthenticationActivityFragment initFragment(Bundle args) {
+        AuthenticationActivityFragment authenticationActivityFragment = new AuthenticationActivityFragment();
+        authenticationActivityFragment.setArguments(args);
+
+        return authenticationActivityFragment;
+    }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         setRetainInstance(true);
-
         AppController.getComponent(getActivity()).inject(this);
-
         beginAuthentication();
-    }
-
-    @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
-
-        View rootView = inflater.inflate(R.layout.login_process, container, false);
-        ButterKnife.bind(this, rootView);
-
-        return rootView;
-    }
-
-    @Override
-    public void onViewCreated(View view, Bundle savedInstanceState) {
-        super.onViewCreated(view, savedInstanceState);
-
-        setViews();
     }
 
     @Override
@@ -106,43 +97,27 @@ public class AuthenticationActivityFragment extends Fragment {
         EventBus.getDefault().unregister(this);
     }
 
-    private void setViews() {
-
-        rootView.setBackgroundColor(ContextCompat.getColor(getActivity(), getBackgroundColor()));
-
-        loggingTextView.setText(getString(R.string.authenticating_user));
-
-    }
-
-    private int getBackgroundColor() {
-        if (FirebaseUtil.isGoogleLogin(provider)) return R.color.tomato;
-        else if (FirebaseUtil.isFacebookLogin(provider)) return R.color.darkBlue;
-        else return R.color.colorPrimary;
-    }
-
     private void beginAuthentication() {
-        Intent intent = getActivity().getIntent();
+        Bundle args = getArguments();
 
-        provider = intent.getStringExtra(PROVIDER);
-
-        if (FirebaseUtil.isEmailLogin(provider)) authenticateWithEmail(intent);
-        else authenticateWithToken(intent);
+        if (args.containsKey(EMAIL) && args.containsKey(PASSWORD)) authenticateWithEmail(args);
+        else if (args.containsKey(TOKEN)) authenticateWithToken(args);
+        else finishActivity();
     }
 
-    private void authenticateWithToken(Intent intent) {
+    private void authenticateWithToken(Bundle args) {
 
-        final String token = intent.getStringExtra(TextUtil.TOKEN);
-
-        Log.e(TAG, token);
+        final String token = args.getString(TOKEN);
+        final String provider = args.getString(PROVIDER);
 
         firebase.authWithOAuthToken(provider, token,
                 new AuthenticationResultHandler());
     }
 
-    private void authenticateWithEmail(Intent intent) {
+    private void authenticateWithEmail(Bundle args) {
 
-        final String email = intent.getStringExtra(EMAIL);
-        final String password = intent.getStringExtra(PASSWORD);
+        final String email = args.getString(EMAIL);
+        final String password = args.getString(PASSWORD);
 
         firebase.authWithPassword(email, password,
                 new AuthenticationResultHandler());
@@ -206,12 +181,12 @@ public class AuthenticationActivityFragment extends Fragment {
 
         final String email = String.valueOf(providerData.get(FirebaseUtil.PROVIDER_EMAIL));
         final String profileImageURL = String.valueOf(providerData.get(FirebaseUtil.PROVIDER_PROFILE_IMAGE));
-        final String displayName = FirebaseUtil.isFirebaseLogin(provider) ?
+        final String displayName = providerData.get(FirebaseUtil.PROVIDER_DISPLAY_NAME) == null ?
                 email.split("@")[0]
                 :
                 String.valueOf(providerData.get(FirebaseUtil.PROVIDER_DISPLAY_NAME));
 
-        Map<String, Object> userInfo = new HashMap<>();
+        Map<String, Object> userInfo = new HashMap<>(4);
         userInfo.put(UserInfo.EMAIL, email);
         userInfo.put(UserInfo.DISPLAY_NAME, displayName);
         userInfo.put(UserInfo.PROFILE_IMAGE_URL, profileImageURL);
@@ -232,7 +207,6 @@ public class AuthenticationActivityFragment extends Fragment {
     private void loginSuccess() {
 
         Intent intent = new Intent(getContext(), MainActivity.class);
-        intent.setAction(MainActivity.LOGIN_SUCCESS_ACTION);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);
         finishActivity();
@@ -254,7 +228,7 @@ public class AuthenticationActivityFragment extends Fragment {
 
     private void backToLoginActivity(String errorMessage) {
 
-        Intent backToLoginActivityIntent = new Intent(getActivity().getApplicationContext(), LoginActivity.class);
+        Intent backToLoginActivityIntent = new Intent(getActivity(), LoginActivity.class);
 
         backToLoginActivityIntent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
         backToLoginActivityIntent.putExtra(LoginActivity.LOGIN_FAILED, errorMessage);
@@ -319,8 +293,8 @@ public class AuthenticationActivityFragment extends Fragment {
         public void onAuthenticationError(FirebaseError firebaseError) {
             Log.e(TAG, String.valueOf(firebaseError.getMessage()));
 
-            handleFirebaseError(firebaseError);
             unAuthenticateWithFirebase();
+            handleFirebaseError(firebaseError);
         }
     }
 
