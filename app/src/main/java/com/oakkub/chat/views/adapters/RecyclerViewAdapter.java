@@ -139,6 +139,27 @@ public abstract class RecyclerViewAdapter<I extends Object, VH extends RecyclerV
         }
     }
 
+    public int moveItem(I item, int destinationPosition) {
+        final int index = findPosition(item);
+
+        if (index >= 1) {
+            I itemToBeMoved = items.remove(index);
+            items.add(destinationPosition, itemToBeMoved);
+
+            notifyItemMoved(index, destinationPosition);
+        }
+
+        return index;
+    }
+
+    public void moveItemAndReplace(I item, int destinationPosition) {
+        final int index = moveItem(item, destinationPosition);
+
+        if (index >= 0) {
+            replace(item);
+        }
+    }
+
     public I getItem(int position) {
         if (position >= getItemCount()) return null;
         else return items.get(position);

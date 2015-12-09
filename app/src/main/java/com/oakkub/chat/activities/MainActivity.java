@@ -108,6 +108,7 @@ public class MainActivity extends BaseActivity implements
         viewPager.setAdapter(mainViewPagerAdapter);
         tabLayout.setupWithViewPager(viewPager);
         viewPager.addOnPageChangeListener(this);
+        viewPager.setOffscreenPageLimit(2);
     }
 
     @Override

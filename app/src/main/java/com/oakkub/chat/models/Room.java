@@ -37,8 +37,16 @@ public class Room {
         return latestMessage;
     }
 
+    public void setLatestMessage(String latestMessage) {
+        this.latestMessage = latestMessage;
+    }
+
     public String getLatestMessageUser() {
         return latestMessageUser;
+    }
+
+    public void setLatestMessageUser(String latestMessageUser) {
+        this.latestMessageUser = latestMessageUser;
     }
 
     public String getType() {
@@ -51,6 +59,10 @@ public class Room {
 
     public long getLatestMessageTime() {
         return latestMessageTime;
+    }
+
+    public void setLatestMessageTime(long latestMessageTime) {
+        this.latestMessageTime = latestMessageTime;
     }
 
     public String getRoomId() {

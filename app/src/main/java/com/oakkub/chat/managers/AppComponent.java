@@ -20,6 +20,7 @@ import com.oakkub.chat.fragments.AuthenticationActivityFragment;
 import com.oakkub.chat.fragments.EmailLoginFragment;
 import com.oakkub.chat.fragments.FriendsFragment;
 import com.oakkub.chat.fragments.PrivateChatRoomActivityFragment;
+import com.oakkub.chat.fragments.RoomListFetchingFragment;
 import com.oakkub.chat.fragments.RoomListFragment;
 import com.oakkub.chat.modules.AnimationModule;
 import com.oakkub.chat.modules.AppControllerModule;
@@ -64,6 +65,8 @@ public interface AppComponent {
     void inject(PrivateChatRoomActivityFragment privateChatRoomActivityFragment);
 
     void inject(RoomListFragment roomListFragment);
+
+    void inject(RoomListFetchingFragment roomListFetchingFragment);
 
     Application application();
     Context context();

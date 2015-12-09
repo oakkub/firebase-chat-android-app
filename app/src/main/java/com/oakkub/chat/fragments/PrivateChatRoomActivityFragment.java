@@ -32,6 +32,7 @@ public class PrivateChatRoomActivityFragment extends BaseFragment implements Chi
     public static final String EXTRA_FRIEND_PROFILE = "extra:friendProfile";
     private static final String TAG = PrivateChatRoomActivityFragment.class.getSimpleName();
     private static final int DOWNLOAD_MESSAGE_ITEM_LIMIT = 20;
+
     @Inject
     @Named(FirebaseUtil.NAMED_MESSAGES)
     Firebase messagesFirebase;
