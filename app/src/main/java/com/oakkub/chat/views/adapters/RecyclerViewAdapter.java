@@ -21,7 +21,7 @@ import icepick.State;
 /**
  * Created by OaKKuB on 10/28/2015.
  */
-public abstract class RecyclerViewAdapter<I extends Object, VH extends RecyclerView.ViewHolder> extends RecyclerView.Adapter {
+public abstract class RecyclerViewAdapter<I> extends RecyclerView.Adapter {
 
     protected static final int LOAD_MORE_TYPE = 100;
     protected static final int NO_INTERNET_TYPE = 101;
@@ -142,7 +142,7 @@ public abstract class RecyclerViewAdapter<I extends Object, VH extends RecyclerV
     public int moveItem(I item, int destinationPosition) {
         final int index = findPosition(item);
 
-        if (index >= 1) {
+        if (index != destinationPosition) {
             I itemToBeMoved = items.remove(index);
             items.add(destinationPosition, itemToBeMoved);
 
@@ -174,7 +174,7 @@ public abstract class RecyclerViewAdapter<I extends Object, VH extends RecyclerV
     }
 
     public I getFirstItem() {
-        if (0 >= getItemCount()) return null;
+        if (isEmpty()) return null;
         else return items.get(0);
     }
 

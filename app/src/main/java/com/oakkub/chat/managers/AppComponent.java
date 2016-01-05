@@ -13,12 +13,15 @@ import com.firebase.client.Firebase;
 import com.oakkub.chat.activities.FriendDetailActivity;
 import com.oakkub.chat.activities.LoginActivity;
 import com.oakkub.chat.activities.MainActivity;
+import com.oakkub.chat.activities.NewMessagesActivity;
 import com.oakkub.chat.activities.PrivateChatRoomActivity;
 import com.oakkub.chat.dagger.PerApp;
 import com.oakkub.chat.fragments.AddFriendActivityFragment;
 import com.oakkub.chat.fragments.AuthenticationActivityFragment;
 import com.oakkub.chat.fragments.EmailLoginFragment;
+import com.oakkub.chat.fragments.FriendsFetchingFragment;
 import com.oakkub.chat.fragments.FriendsFragment;
+import com.oakkub.chat.fragments.NewMessagesFragment;
 import com.oakkub.chat.fragments.PrivateChatRoomActivityFragment;
 import com.oakkub.chat.fragments.RoomListFetchingFragment;
 import com.oakkub.chat.fragments.RoomListFragment;
@@ -53,6 +56,7 @@ public interface AppComponent {
 
     void inject(LoginActivity loginActivity);
     void inject(MainActivity mainActivity);
+    void inject(NewMessagesActivity newMessagesActivity);
 
     void inject(PrivateChatRoomActivity privateChatRoomActivity);
 
@@ -66,7 +70,10 @@ public interface AppComponent {
 
     void inject(RoomListFragment roomListFragment);
 
+    void inject(FriendsFetchingFragment friendsFetchingFragment);
     void inject(RoomListFetchingFragment roomListFetchingFragment);
+
+    void inject(NewMessagesFragment newMessagesFragment);
 
     Application application();
     Context context();

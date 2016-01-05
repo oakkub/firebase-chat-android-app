@@ -2,7 +2,6 @@ package com.oakkub.chat.services;
 
 import android.app.IntentService;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.util.Log;
 
 import com.oakkub.chat.R;
@@ -37,14 +36,11 @@ public class GCMNotificationService extends IntentService {
 
     @Override
     protected void onHandleIntent(Intent intent) {
-        SharedPreferences prefs = AppController.getComponent(this).sharedPreferences();
 
-        final String token = prefs.getString(GoogleUtil.PREFS_TOKEN, "");
+        final String token = intent.getStringExtra(TO);
         final String title = intent.getStringExtra(TITLE);
         final String message = intent.getStringExtra(MESSAGE);
         final String profileImageURL = intent.getStringExtra(PROFILE_URL);
-
-        if (token.equals("")) return;
 
         postAddFriendGCMRequest(token, title, message, profileImageURL);
     }
@@ -56,7 +52,6 @@ public class GCMNotificationService extends IntentService {
 
         RequestBody requestBody =
                 RequestBody.create(NetworkUtil.MEDIA_TYPE_JSON, gcmBody.toString());
-
         Request request = initGCMRequest(requestBody);
 
         try {
@@ -80,16 +75,6 @@ public class GCMNotificationService extends IntentService {
         return gcmBodyJson;
     }
 
-    private Request initGCMRequest(RequestBody requestBody) {
-        return new Request.Builder()
-                .url(GoogleUtil.GCM_SEND_URL)
-                .header(NetworkUtil.HEADER_CONTENT_TYPE, NetworkUtil.JSON_CONTENT_TYPE)
-                .header(NetworkUtil.HEADER_AUTHORIZATION,
-                        String.format("key=%s", getString(R.string.google_api_key)))
-                .post(requestBody)
-                .build();
-    }
-
     private JSONObject getDataJson(String title, String message, String profileImageURL) throws JSONException {
         JSONObject dataJSON = new JSONObject();
 
@@ -98,6 +83,16 @@ public class GCMNotificationService extends IntentService {
         dataJSON.put(PROFILE_URL, profileImageURL);
 
         return dataJSON;
+    }
+
+    private Request initGCMRequest(RequestBody requestBody) {
+        return new Request.Builder()
+                .url(GoogleUtil.GCM_SEND_URL)
+                .header(NetworkUtil.HEADER_CONTENT_TYPE, NetworkUtil.JSON_CONTENT_TYPE)
+                .header(NetworkUtil.HEADER_AUTHORIZATION,
+                       "key=" + getString(R.string.google_api_key))
+                .post(requestBody)
+                .build();
     }
 
     private void checkGCMResponse(Response response) {

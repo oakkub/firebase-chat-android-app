@@ -37,8 +37,8 @@ public abstract class InfiniteScrollListener extends RecyclerView.OnScrollListen
     public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
         if (noMoreData) return;
 
-        final int totalItem = layoutManager.getItemCount();
-        final int lastVisibleItemPosition = layoutManager.findLastVisibleItemPosition();
+        int totalItem = layoutManager.getItemCount();
+        int lastVisibleItemPosition = layoutManager.findLastVisibleItemPosition();
 
         if (totalItem > previousItemCount) {
             // if totalItem is greater than previousItemCount = new item inserted.

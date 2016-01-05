@@ -92,7 +92,7 @@ public class BottomSheetDialog extends DialogFragment implements View.OnClickLis
     }
 
     private Dialog createDialog(View view) {
-        final Dialog bottomSheetDialog = new Dialog(getActivity(), R.style.MaterialDialogSheet);
+        Dialog bottomSheetDialog = new Dialog(getActivity(), R.style.MaterialDialogSheet);
 
         bottomSheetDialog.setContentView(view);
         bottomSheetDialog.setCancelable(true);

@@ -25,6 +25,7 @@ public class FirebaseUtil {
     public static final String KEY_USERS_USER_INFO = "userInfo";
     public static final String KEY_USERS_USER_FRIENDS = "userFriends";
     public static final String KEY_USERS_USER_ROOMS = "userRooms";
+    public static final String KEY_USERS_USER_GROUP_ROOMS = "userGroupRooms";
     public static final String KEY_ONLINE_USER = "onlineUsers";
     public static final String KEY_TYPING_USER = "typingUsers";
     public static final String KEY_CONNECTION = ".info/connected";
@@ -38,6 +39,7 @@ public class FirebaseUtil {
     public static final String CHILD_LAST_ONLINE = "lastOnline";
     public static final String CHILD_REGISTERED_DATE = "registeredDate";
     public static final String CHILD_DISPLAY_NAME = "displayName";
+    public static final String CHILD_PROFILE_IMAGE_URL = "profileImageURL";
     public static final String CHILD_USER_PRIVATE_ROOMS = "userPrivateRooms";
     public static final String CHILD_USER_GROUP_ROOMS = "userGroupRooms";
     public static final String CHILD_ROOM_CREATED = "created";
@@ -76,5 +78,18 @@ public class FirebaseUtil {
 
     public static boolean isEmailLogin(String provider) {
         return provider.equals(TextUtil.EMAIL_PROVIDER);
+    }
+
+    public static String privateRoomFriendKey(String myId, String roomKey) {
+        // example of room id : chat_facebook:232194892384_google:4545646456445
+        String[] splitString = roomKey.split("_");
+
+        for (int i = 1, size = splitString.length; i < size; i++) {
+            if (!splitString[i].equals(myId)) {
+                return splitString[i];
+            }
+        }
+
+        return "";
     }
 }

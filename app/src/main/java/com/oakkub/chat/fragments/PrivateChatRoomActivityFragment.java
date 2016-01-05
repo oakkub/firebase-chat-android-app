@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.v4.app.FragmentActivity;
 import android.util.Log;
 import android.util.SparseArray;
 
@@ -15,7 +16,10 @@ import com.firebase.client.ValueEventListener;
 import com.oakkub.chat.managers.AppController;
 import com.oakkub.chat.managers.OnInfiniteScrollListener;
 import com.oakkub.chat.models.Message;
+import com.oakkub.chat.models.UserInfo;
 import com.oakkub.chat.utils.FirebaseUtil;
+import com.oakkub.chat.utils.TextUtil;
+import com.oakkub.chat.views.widgets.toolbar.ToolbarCommunicator;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -24,12 +28,16 @@ import java.util.Map;
 import javax.inject.Inject;
 import javax.inject.Named;
 
+import dagger.Lazy;
+
 public class PrivateChatRoomActivityFragment extends BaseFragment implements ChildEventListener {
 
+    public static final String EXTRA_MY_ID = "extra:myId";
     public static final String EXTRA_ROOM_ID = "extra:roomId";
     public static final String EXTRA_FRIEND_ID = "extra:friendId";
-    public static final String EXTRA_FRIEND_NAME = "extra:friendName";
+    public static final String EXTRA_ROOM_NAME = "extra:friendName";
     public static final String EXTRA_FRIEND_PROFILE = "extra:friendProfile";
+    public static final String EXTRA_ROOM_IMAGE = "extra:roomImage";
     private static final String TAG = PrivateChatRoomActivityFragment.class.getSimpleName();
     private static final int DOWNLOAD_MESSAGE_ITEM_LIMIT = 20;
 
@@ -38,37 +46,67 @@ public class PrivateChatRoomActivityFragment extends BaseFragment implements Chi
     Firebase messagesFirebase;
 
     @Inject
-    @Named(FirebaseUtil.NAMED_ROOMS)
+    @Named(FirebaseUtil.NAMED_ROOMS_INFO)
     Firebase roomFirebase;
 
     @Inject
     @Named(FirebaseUtil.NAMED_USER_ROOMS)
     Firebase userRoomFirebase;
 
+    @Inject
+    @Named(FirebaseUtil.NAMED_USER_INFO)
+    Lazy<Firebase> userInfoFirebase;
+
+    @Inject
+    @Named(FirebaseUtil.NAMED_ROOMS_MEMBERS)
+    Lazy<Firebase> roomMembersFirebase;
+
     private String myId;
     private String roomId;
-    private String friendId;
-    private String friendProfileImage;
+    private String roomName;
     private String latestMessageKey = "";
 
+    private String privateFriendInstanceId;
+    private String groupNewMemberKey;
+
     private boolean isMessageSending;
+
     private boolean isLoadMoreFailed;
     private boolean isLoadMoreNoData;
+    private long latestMessageSentWhen;
 
-    private long latestSentWhenMessage;
+    private int totalGroupMember;
+    private SparseArray<String> friendImages;
 
-    private SparseArray<String> friendsId;
+    private SparseArray<String> friendDisplayNames;
+    private SparseArray<String> friendInfoKeyList;
+    private SparseArray<UserInfo> friendInfoList;
+    private ArrayList<String> userIdInRoom;
+
+    private ArrayList<String> profileImagesInRoom;
     private ArrayList<Message> oldMessages;
+
     private ArrayList<Message> newMessages;
+    private HashMap<String, Object> updatedRoomMap;
+
     private MessageRequestListener messageRequestListener;
+
     private OnInfiniteScrollListener onInfiniteScrollListener;
+    private ToolbarCommunicator toolbarCommunicator;
+
+    private boolean isPrivateRoom;
+    private boolean groupFirstTime = true;
+
+    private boolean isGroupRoomFirebaseInit;
 
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
 
-        messageRequestListener = (MessageRequestListener) getActivity();
-        onInfiniteScrollListener = (OnInfiniteScrollListener) getActivity();
+        FragmentActivity activity = getActivity();
+        messageRequestListener = (MessageRequestListener) activity;
+        onInfiniteScrollListener = (OnInfiniteScrollListener) activity;
+        toolbarCommunicator = (ToolbarCommunicator) activity;
     }
 
     @Override
@@ -78,15 +116,38 @@ public class PrivateChatRoomActivityFragment extends BaseFragment implements Chi
         getDataFromIntent();
         setRetainInstance(true);
 
-        myId = messagesFirebase.getAuth().getUid();
+        updatedRoomMap = new HashMap<>();
+        friendInfoKeyList = new SparseArray<>();
     }
 
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
 
+        setToolbarTitleFromFriendNameByRoomId();
+
+        if (isToolbarCommunicatorAvailable()) {
+
+            if (roomName != null) {
+                toolbarCommunicator.setTitle(roomName);
+            }
+        }
+
         if (isMessageRequestAvailable()) {
-            messageRequestListener.onAdapterInitialized(myId, getFriendsImages());
+
+            if (isPrivateRoom) {
+                messageRequestListener.onPrivateRoomReady(myId, initPrivateFriendInfo());
+            } else {
+                // fetch all room member
+                fetchFriendsInfo();
+            }
+
+            if (groupNewMemberKey != null) {
+                messageRequestListener.onNewGroupMember(myId,
+                        friendImages.get(groupNewMemberKey.hashCode()),
+                        friendDisplayNames.get(groupNewMemberKey.hashCode()));
+                groupNewMemberKey = null;
+            }
 
             if (newMessages != null) {
                 messageRequestListener.onNewMessage(newMessages);
@@ -97,6 +158,7 @@ public class PrivateChatRoomActivityFragment extends BaseFragment implements Chi
                 messageRequestListener.onOldMessage(oldMessages);
                 oldMessages = null;
             }
+
         }
 
         if (isLoadMoreFailedAvailable()) {
@@ -112,19 +174,7 @@ public class PrivateChatRoomActivityFragment extends BaseFragment implements Chi
         }
     }
 
-    @Override
-    public void onStart() {
-        super.onStart();
-
-        initFirebaseMessage();
-    }
-
-    @Override
-    public void onPause() {
-        super.onPause();
-
-        messagesFirebase.removeEventListener(this);
-    }
+    private boolean isToolbarCommunicatorAvailable() { return toolbarCommunicator != null; }
 
     private boolean isMessageRequestAvailable() {
         return messageRequestListener != null;
@@ -134,22 +184,242 @@ public class PrivateChatRoomActivityFragment extends BaseFragment implements Chi
         return onInfiniteScrollListener != null;
     }
 
-    private SparseArray<String> getFriendsImages() {
-        if (friendsId != null) return friendsId;
+    @Override
+    public void onStart() {
+        super.onStart();
 
-        friendsId = new SparseArray<>();
-        friendsId.put(friendId.hashCode(), friendProfileImage);
+        if (isPrivateRoom) {
+            initFirebaseMessage();
+        }
+    }
 
-        return friendsId;
+    @Override
+    public void onPause() {
+        super.onPause();
+
+        if (isPrivateRoom) {
+            messagesFirebase.removeEventListener(this);
+        }
+    }
+
+    private SparseArray<String> initPrivateFriendInfo() {
+        if (friendImages != null) return friendImages;
+
+        friendImages = new SparseArray<>();
+        friendImages.put(userIdInRoom.get(0).hashCode(), profileImagesInRoom.get(0));
+
+        return friendImages;
+    }
+
+    private void fetchFriendsInfo() {
+        if (friendInfoKeyList.size() > 0) {
+            messageRequestListener.onGroupRoomReady(myId, friendImages, friendDisplayNames);
+            return;
+        }
+
+        initGroupRoomVariables();
+        fetchTotalGroupMember();
+    }
+
+    private void initGroupRoomVariables() {
+        if (friendImages == null) {
+            friendImages = new SparseArray<>();
+        }
+
+        if (friendDisplayNames == null) {
+            friendDisplayNames = new SparseArray<>();
+        }
+
+        if (friendInfoList == null) {
+            friendInfoList = new SparseArray<>();
+        }
+    }
+
+    private void fetchTotalGroupMember() {
+        roomMembersFirebase.get().child(roomId)
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                        totalGroupMember = (int) dataSnapshot.getChildrenCount();
+
+                        if (groupFirstTime) {
+                            fetchFriendInfoGroupMember();
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(FirebaseError firebaseError) {}
+                });
+    }
+
+    private void fetchFriendInfoGroupMember() {
+        roomMembersFirebase.get().child(roomId)
+                .addChildEventListener(roomMembersChildEventListener);
+    }
+
+    private ChildEventListener roomMembersChildEventListener = new ChildEventListener() {
+        @Override
+        public void onChildAdded(DataSnapshot dataSnapshot, String previousChildKey) {
+            getMemberInfo(dataSnapshot);
+        }
+        @Override
+        public void onChildChanged(DataSnapshot dataSnapshot, String previousChildKey) {
+
+        }
+        @Override
+        public void onChildRemoved(DataSnapshot dataSnapshot) {
+            totalGroupMember -= 1;
+        }
+        @Override
+        public void onChildMoved(DataSnapshot dataSnapshot, String previousChildKey) {}
+        @Override
+        public void onCancelled(FirebaseError firebaseError) {}
+    };
+
+    private void getMemberInfo(DataSnapshot dataSnapshot) {
+        final String memberKey = dataSnapshot.getKey();
+        final int memberKeyHashcode = memberKey.hashCode();
+
+        userInfoFirebase.get().child(memberKey).keepSynced(true);
+        userInfoFirebase.get().child(memberKey)
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                        if (groupFirstTime) groupFirstTime = true;
+                        onMemberInfoFetched(memberKey, memberKeyHashcode, dataSnapshot);
+                    }
+
+                    @Override
+                    public void onCancelled(FirebaseError firebaseError) {
+
+                    }
+                });
+    }
+
+    private void onMemberInfoFetched(String memberKey, int memberKeyHashcode, DataSnapshot dataSnapshot) {
+        friendInfoKeyList.put(memberKeyHashcode, memberKey);
+
+        UserInfo friendInfo = dataSnapshot.getValue(UserInfo.class);
+        friendInfoList.put(memberKeyHashcode, friendInfo);
+        friendImages.put(memberKeyHashcode, friendInfo.getProfileImageURL());
+        friendDisplayNames.put(memberKeyHashcode, friendInfo.getDisplayName());
+
+        boolean isNewMember = totalGroupMember < friendInfoList.size();
+
+        friendInfoNewMember(isNewMember, memberKey, friendInfo);
+        allFriendInfoFetched();
+    }
+
+    private void friendInfoNewMember(boolean isNewMember, String memberKey, UserInfo friendInfo) {
+        if (isNewMember && isGroupRoomFirebaseInit) {
+            totalGroupMember += 1;
+
+            if (isMessageRequestAvailable()) {
+                messageRequestListener.onNewGroupMember(memberKey,
+                        friendInfo.getProfileImageURL(), friendInfo.getDisplayName());
+            } else {
+                groupNewMemberKey = memberKey;
+            }
+        }
+    }
+
+    private void allFriendInfoFetched() {
+        if (friendInfoList.size() == totalGroupMember && !isGroupRoomFirebaseInit) {
+            if (isMessageRequestAvailable()) {
+                messageRequestListener.onGroupRoomReady(myId, friendImages, friendDisplayNames);
+            }
+
+            if (!isGroupRoomFirebaseInit) {
+                // initialize firebase for group room here,
+                // since we don't know when all of our friend info will be fetched.
+                initFirebaseMessage();
+                isGroupRoomFirebaseInit = true;
+            }
+        }
+    }
+
+    private void fetchGroupMemberKey(DataSnapshot dataSnapshot) {
+        if (dataSnapshot.hasChildren()) {
+
+            for (DataSnapshot children : dataSnapshot.getChildren()) {
+
+                String groupMemberKey = children.getValue(String.class);
+                final int groupMemberHashCode = groupMemberKey.hashCode();
+                friendInfoKeyList.put(groupMemberHashCode, groupMemberKey);
+
+                userInfoFirebase.get().child(groupMemberKey)
+                        .addListenerForSingleValueEvent(new ValueEventListener() {
+                            @Override
+                            public void onDataChange(DataSnapshot dataSnapshot) {
+                                UserInfo friendInfo = dataSnapshot.getValue(UserInfo.class);
+                                friendImages.put(groupMemberHashCode, friendInfo.getProfileImageURL());
+                                friendDisplayNames.put(groupMemberHashCode, friendInfo.getDisplayName());
+
+                                if (friendImages.size() == totalGroupMember) {
+                                    if(isMessageRequestAvailable()) {
+                                        messageRequestListener.onGroupRoomReady(myId, friendImages, friendDisplayNames);
+                                    } else {
+
+                                    }
+                                }
+                            }
+
+                            @Override
+                            public void onCancelled(FirebaseError firebaseError) {}
+                        });
+            }
+        }
     }
 
     private void getDataFromIntent() {
         Intent intent = getActivity().getIntent();
 
+        myId = intent.getStringExtra(EXTRA_MY_ID);
         roomId = intent.getStringExtra(EXTRA_ROOM_ID);
-        friendId = intent.getStringExtra(EXTRA_FRIEND_ID);
-        friendProfileImage = intent.getStringExtra(EXTRA_FRIEND_PROFILE);
+        roomName = intent.getStringExtra(EXTRA_ROOM_NAME);
+        profileImagesInRoom = intent.getStringArrayListExtra(EXTRA_FRIEND_PROFILE);
+        userIdInRoom = intent.getStringArrayListExtra(EXTRA_FRIEND_ID);
+
+        isPrivateRoom = userIdInRoom != null && profileImagesInRoom != null;
     }
+
+    private void setTitleToolbar(String title) {
+        if (isToolbarCommunicatorAvailable()) {
+            toolbarCommunicator.setTitle(title);
+        } else {
+            roomName = title;
+        }
+    }
+
+    public void setToolbarTitleFromFriendNameByRoomId() {
+        if (roomName != null) {
+            setTitleToolbar(roomName);
+            return;
+        }
+
+        String friendKey = FirebaseUtil.privateRoomFriendKey(myId, roomId);
+
+        userInfoFirebase.get().child(friendKey).keepSynced(true);
+        userInfoFirebase.get().child(friendKey)
+                .addListenerForSingleValueEvent(privateFriendInfoValueEventListener);
+    }
+
+    private ValueEventListener privateFriendInfoValueEventListener = new ValueEventListener() {
+        @Override
+        public void onDataChange(DataSnapshot dataSnapshot) {
+            UserInfo friendInfo = dataSnapshot.getValue(UserInfo.class);
+
+            roomName = friendInfo.getDisplayName();
+            setTitleToolbar(roomName);
+
+            privateFriendInstanceId = friendInfo.getInstanceID();
+        }
+
+        @Override
+        public void onCancelled(FirebaseError firebaseError) {
+
+        }
+    };
 
     public void loadItemMore(long oldestSentTime) {
         messagesFirebase
@@ -218,14 +488,14 @@ public class PrivateChatRoomActivityFragment extends BaseFragment implements Chi
     }
 
     private void initFirebaseMessage() {
-        if (latestSentWhenMessage <= 0) {
+        if (latestMessageSentWhen <= 0) {
             messagesFirebase.child(roomId)
                     .limitToLast(DOWNLOAD_MESSAGE_ITEM_LIMIT)
                     .addChildEventListener(this);
         } else {
             messagesFirebase.child(roomId)
                     .orderByChild(FirebaseUtil.CHILD_SENT_WHEN)
-                    .startAt(latestSentWhenMessage)
+                    .startAt(latestMessageSentWhen)
                     .addChildEventListener(this);
         }
     }
@@ -261,13 +531,22 @@ public class PrivateChatRoomActivityFragment extends BaseFragment implements Chi
 
     private void updateRoomInfo(Message message, boolean itemRemoveUpdate) {
         Map<String, Object> latestMessageMap = getMessageMap(message, itemRemoveUpdate);
-        notifyNewMessageToRoom(message.getSentWhen());
-
         roomFirebase.child(roomId).updateChildren(latestMessageMap);
+
+        updateMessageSentWhen(message.getSentWhen());
+        userRoomFirebase.updateChildren(updatedRoomMap);
     }
 
-    private void notifyNewMessageToRoom(long sentWhen) {
-        userRoomFirebase.child(friendId).child(roomId).setValue(sentWhen);
+    private void updateMessageSentWhen(long sentWhen) {
+        updatedRoomMap.put(TextUtil.getPath(myId, roomId), sentWhen);
+
+        if (isPrivateRoom) {
+            updatedRoomMap.put(TextUtil.getPath(userIdInRoom.get(0), roomId), sentWhen);
+        } else {
+            for (int i = 0, size = friendInfoKeyList.size(); i < size; i++) {
+                updatedRoomMap.put(TextUtil.getPath(friendInfoKeyList.valueAt(i), roomId), sentWhen);
+            }
+        }
     }
 
     private Map<String, Object> getMessageMap(Message message, boolean itemRemoveUpdate) {
@@ -322,7 +601,7 @@ public class PrivateChatRoomActivityFragment extends BaseFragment implements Chi
         if (latestMessageKey.equals(dataSnapshot.getKey())) return;
         Message message = getMessage(dataSnapshot);
 
-        latestSentWhenMessage = message.getSentWhen();
+        latestMessageSentWhen = message.getSentWhen();
         latestMessageKey = message.getMessageKey();
         sendNewMessage(message);
     }
@@ -349,18 +628,26 @@ public class PrivateChatRoomActivityFragment extends BaseFragment implements Chi
 
         messageRequestListener = null;
         onInfiniteScrollListener = null;
+        toolbarCommunicator = null;
+    }
+
+    @Override
+    public void onDestroy() {
+        if (!isPrivateRoom) {
+            roomMembersFirebase.get().child(roomId).removeEventListener(roomMembersChildEventListener);
+        }
+
+        super.onDestroy();
     }
 
     public interface MessageRequestListener {
         void onNewMessage(Message newMessage);
-
         void onNewMessage(ArrayList<Message> newMessages);
-
         void onOldMessage(ArrayList<Message> oldMessages);
-
         void onRemoveMessage(Message message);
-
-        void onAdapterInitialized(String myId, SparseArray<String> friendId);
+        void onPrivateRoomReady(String myId, SparseArray<String> friendId);
+        void onGroupRoomReady(String myId, SparseArray<String> friendProfileImageList, SparseArray<String> friendDisplayNameList);
+        void onNewGroupMember(String newMemberId, String newMemberProfileImage, String newMemberDisplayName);
     }
 
 }

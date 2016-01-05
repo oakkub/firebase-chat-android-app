@@ -14,7 +14,7 @@ public class Message {
     String sentBy;
     String imagePath;
     String thumbnailPath;
-    boolean showImage;
+    boolean showImage = true;
     long sentWhen = System.currentTimeMillis();
 
     public Message() {
@@ -24,6 +24,11 @@ public class Message {
         this.roomId = roomId;
         this.message = message;
         this.sentBy = sentBy;
+    }
+
+    public Message(String roomId, String message, String sentBy, long sentWhen) {
+        this(roomId, message, sentBy);
+        this.sentWhen = sentWhen;
     }
 
     public String getRoomId() {

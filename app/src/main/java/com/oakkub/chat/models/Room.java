@@ -29,24 +29,12 @@ public class Room {
         return name;
     }
 
-    public void setRoomName(String name) {
-        this.name = name;
-    }
-
     public String getLatestMessage() {
         return latestMessage;
     }
 
-    public void setLatestMessage(String latestMessage) {
-        this.latestMessage = latestMessage;
-    }
-
     public String getLatestMessageUser() {
         return latestMessageUser;
-    }
-
-    public void setLatestMessageUser(String latestMessageUser) {
-        this.latestMessageUser = latestMessageUser;
     }
 
     public String getType() {
@@ -61,6 +49,18 @@ public class Room {
         return latestMessageTime;
     }
 
+    public void setLatestMessage(String latestMessage) {
+        this.latestMessage = latestMessage;
+    }
+
+    public void setLatestMessageUser(String latestMessageUser) {
+        this.latestMessageUser = latestMessageUser;
+    }
+
+    public void setRoomName(String name) {
+        this.name = name;
+    }
+
     public void setLatestMessageTime(long latestMessageTime) {
         this.latestMessageTime = latestMessageTime;
     }
@@ -69,17 +69,18 @@ public class Room {
         return roomId;
     }
 
-    public void setRoomId(String roomId) {
-        this.roomId = roomId;
-    }
-
     public String getImagePath() {
         return imagePath;
+    }
+
+    public void setRoomId(String roomId) {
+        this.roomId = roomId;
     }
 
     public void setRoomImagePath(String imagePath) {
         this.imagePath = imagePath;
     }
+
 
     @Override
     public boolean equals(Object o) {
@@ -89,11 +90,24 @@ public class Room {
         Room room = (Room) o;
 
         return roomId.equals(room.roomId);
-
     }
 
     @Override
     public int hashCode() {
         return roomId.hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return "Room{" +
+                "roomId='" + roomId + '\'' +
+                ", name='" + name + '\'' +
+                ", imagePath='" + imagePath + '\'' +
+                ", latestMessage='" + latestMessage + '\'' +
+                ", latestMessageUser='" + latestMessageUser + '\'' +
+                ", type='" + type + '\'' +
+                ", latestMessageTime=" + latestMessageTime +
+                ", created=" + created +
+                '}';
     }
 }

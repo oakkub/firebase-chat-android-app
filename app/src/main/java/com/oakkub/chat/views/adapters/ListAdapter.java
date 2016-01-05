@@ -7,22 +7,30 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.oakkub.chat.R;
+import com.oakkub.chat.views.adapters.presenter.OnAdapterItemClick;
 
 import java.util.ArrayList;
-import java.util.List;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
+import butterknife.OnClick;
+import butterknife.OnLongClick;
 
 /**
  * Created by OaKKuB on 10/15/2015.
  */
-public class ListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
+public class ListAdapter extends RecyclerViewMultipleSelectionAdapter<String> {
 
-    private List<String> list = new ArrayList<>();
+    private OnAdapterItemClick onAdapterItemClick;
 
-    public ListAdapter(List<String> list) {
-        this.list = list;
+    public ListAdapter(ArrayList<String> list, OnAdapterItemClick onAdapterItemClick) {
+        super();
+        this.onAdapterItemClick = onAdapterItemClick;
+        items = list;
+    }
+
+    public void setOnAdapterItemClick(OnAdapterItemClick onAdapterItemClick) {
+        this.onAdapterItemClick = onAdapterItemClick;
     }
 
     @Override
@@ -30,7 +38,7 @@ public class ListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
         View itemView = LayoutInflater.from(parent.getContext()).inflate(R.layout.list, parent, false);
 
-        return new ViewHolder(itemView);
+        return new ViewHolder(itemView, onAdapterItemClick);
     }
 
     @Override
@@ -38,15 +46,12 @@ public class ListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
         if (holder instanceof ViewHolder) {
 
-            ((ViewHolder) holder).list.setText(list.get(position));
+            ViewHolder h = (ViewHolder) holder;
 
+            h.list.setText(String.valueOf(items.get(position)));
+            h.backgroundOverlay.setVisibility(isSelected(position) ? View.VISIBLE : View.GONE);
         }
 
-    }
-
-    @Override
-    public int getItemCount() {
-        return list.size();
     }
 
     static class ViewHolder extends RecyclerView.ViewHolder {
@@ -54,9 +59,26 @@ public class ListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         @Bind(R.id.list_textview)
         TextView list;
 
-        public ViewHolder(View itemView) {
+        @Bind(R.id.background_overlay)
+        View backgroundOverlay;
+
+        private OnAdapterItemClick onAdapterItemClick;
+
+        public ViewHolder(View itemView, OnAdapterItemClick onAdapterItemClick) {
             super(itemView);
             ButterKnife.bind(this, itemView);
+            this.onAdapterItemClick = onAdapterItemClick;
+        }
+
+        @OnClick(R.id.list_root)
+        public void onClick() {
+            onAdapterItemClick.onAdapterClick(itemView, getAdapterPosition());
+        }
+
+        @OnLongClick(R.id.list_root)
+        public boolean onLongClick() {
+            return onAdapterItemClick != null && onAdapterItemClick.onAdapterLongClick(itemView, getAdapterPosition());
         }
     }
+
 }

@@ -11,6 +11,7 @@ import android.view.ViewGroup;
 import com.oakkub.chat.R;
 import com.oakkub.chat.views.adapters.ListAdapter;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 
 /**
@@ -34,7 +35,7 @@ public class MainActivityFragment extends Fragment {
         RecyclerView recyclerView = (RecyclerView) rootView.findViewById(R.id.recyclerview);
         recyclerView.setHasFixedSize(true);
         recyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
-        recyclerView.setAdapter(new ListAdapter(Arrays.asList(getStrings())));
+        recyclerView.setAdapter(new ListAdapter(new ArrayList<>(Arrays.asList(getStrings())), null));
 
         return rootView;
     }

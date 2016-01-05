@@ -153,7 +153,7 @@ public class AddFriendActivityFragment extends Fragment
     private void getRecommendedFriendList(DataSnapshot dataSnapshot) {
         final String uid = authData.getUid();
 
-        // -1 because we don't need to store out info (owner id).
+        // -1 because we don't need to store our info (owner id).
         ArrayList<UserInfo> recommendedFriendList =
                 new ArrayList<>((int) dataSnapshot.getChildrenCount() - 1);
 
@@ -282,7 +282,7 @@ public class AddFriendActivityFragment extends Fragment
     }
 
     private void prepareToAddFriend(DataSnapshot dataSnapshot, UserInfo friendUserInfo) {
-
+        // if not null, it means we are already friend.
         if (dataSnapshot.getValue() != null) {
 
             addFriendListAdapter.remove(friendUserInfo);
@@ -325,7 +325,7 @@ public class AddFriendActivityFragment extends Fragment
 
             UserInfo friendUserInfo = addFriendListAdapter.getItem(selectedFriendPosition);
             addFriendSuccess(addFriendListAdapter.remove(friendUserInfo));
-            sendAddFriendNotification();
+            sendAddFriendNotification(friendUserInfo);
         }
     }
 
@@ -342,9 +342,10 @@ public class AddFriendActivityFragment extends Fragment
                 }).show();
     }
 
-    private void sendAddFriendNotification() {
+    private void sendAddFriendNotification(UserInfo friendUserInfo) {
 
         Intent notificationService = new Intent(getActivity(), GCMNotificationService.class);
+        notificationService.putExtra(GCMNotificationService.TO, friendUserInfo.getInstanceID());
         notificationService.putExtra(GCMNotificationService.TITLE,
                 getString(R.string.new_friend));
         notificationService.putExtra(GCMNotificationService.MESSAGE,

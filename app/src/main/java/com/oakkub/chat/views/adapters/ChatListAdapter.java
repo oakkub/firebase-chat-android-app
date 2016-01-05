@@ -11,17 +11,30 @@ import com.oakkub.chat.models.Message;
 import com.oakkub.chat.views.adapters.viewholders.FriendMessageHolder;
 import com.oakkub.chat.views.adapters.viewholders.MyMessageHolder;
 
-public class ChatListAdapter extends RecyclerViewAdapter<Message, RecyclerView.ViewHolder> {
+public class ChatListAdapter extends RecyclerViewAdapter<Message> {
 
     public static final int FRIEND_MESSAGE_TYPE = 0;
     public static final int MY_MESSAGE_TYPE = 1;
 
-    private final String myId;
-    private final SparseArray<String> friendProfileImageList;
+    private String myId;
+    private SparseArray<String> friendProfileImageList;
+    private SparseArray<String> friendDisplayNameList;
 
     public ChatListAdapter(String myId, SparseArray<String> friendProfileImageList) {
+        // private room
         this.myId = myId;
         this.friendProfileImageList = friendProfileImageList;
+    }
+
+    public ChatListAdapter(String myId, SparseArray<String> friendProfileImageList, SparseArray<String> friendDisplayNameList) {
+        // group room
+        this(myId, friendProfileImageList);
+        this.friendDisplayNameList = friendDisplayNameList;
+    }
+
+    public void newMember(String newMemberId, String newMemberProfileImage, String newMemberDisplayName) {
+        friendProfileImageList.put(newMemberId.hashCode(), newMemberProfileImage);
+        friendDisplayNameList.put(newMemberId.hashCode(), newMemberDisplayName);
     }
 
     @Override

@@ -1,8 +1,8 @@
 package com.oakkub.chat.fragments;
 
-import android.content.Context;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.v4.app.Fragment;
 import android.util.Log;
 
 import com.firebase.client.ChildEventListener;
@@ -11,6 +11,8 @@ import com.firebase.client.Firebase;
 import com.firebase.client.FirebaseError;
 import com.firebase.client.ValueEventListener;
 import com.oakkub.chat.managers.AppController;
+import com.oakkub.chat.models.EventBusNewRoom;
+import com.oakkub.chat.models.EventBusUpdatedRoom;
 import com.oakkub.chat.models.Room;
 import com.oakkub.chat.models.UserInfo;
 import com.oakkub.chat.utils.FirebaseUtil;
@@ -20,43 +22,33 @@ import java.util.ArrayList;
 import javax.inject.Inject;
 import javax.inject.Named;
 
-import dagger.Lazy;
-import icepick.State;
+import de.greenrobot.event.EventBus;
 
 /**
  * Created by OaKKuB on 12/6/2015.
  */
-public class RoomListFetchingFragment extends BaseFragment implements ChildEventListener {
+public class RoomListFetchingFragment extends Fragment implements ChildEventListener {
 
     private static final int MESSAGE_LIMIT = 20;
     private static final String ARGS_MY_ID = "args:myId";
     private static final String TAG = RoomListFetchingFragment.class.getSimpleName();
 
     @Inject
-    @Named(FirebaseUtil.NAMED_ROOMS)
-    Lazy<Firebase> roomFirebase;
+    @Named(FirebaseUtil.NAMED_ROOMS_INFO)
+    Firebase roomFirebase;
 
     @Inject
     @Named(FirebaseUtil.NAMED_USER_INFO)
-    Lazy<Firebase> userInfoFirebase;
+    Firebase userInfoFirebase;
 
     @Inject
     @Named(FirebaseUtil.NAMED_USER_ROOMS)
     Firebase userRoomsFirebase;
 
-    @State
-    ArrayList<String> myRoomList;
-
-    @State
-    ArrayList<Room> newRoomList;
-
-    @State
-    ArrayList<Room> changeRoomList;
-
-    @State
-    String myId;
-
-    private OnRoomListChangeListener onRoomListChangeListener;
+    private ArrayList<String> myRoomList;
+    private ArrayList<Room> roomList;
+    private ArrayList<Room> changeRoomList;
+    private String myId;
 
     public static RoomListFetchingFragment newInstance(String myId) {
         Bundle args = new Bundle();
@@ -69,57 +61,21 @@ public class RoomListFetchingFragment extends BaseFragment implements ChildEvent
     }
 
     @Override
-    public void onAttach(Context context) {
-        super.onAttach(context);
-
-        onRoomListChangeListener = (OnRoomListChangeListener) getParentFragment();
-    }
-
-    @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         AppController.getComponent(getActivity()).inject(this);
-        if (savedInstanceState == null) {
-            Bundle args = getArguments();
-            myId = args.getString(ARGS_MY_ID);
+        setRetainInstance(true);
 
-            myRoomList = new ArrayList<>(MESSAGE_LIMIT);
-        }
+        Bundle args = getArguments();
+        myId = args.getString(ARGS_MY_ID);
 
-        Log.e(TAG, "onCreate: " + String.valueOf(myId));
+        myRoomList = new ArrayList<>(MESSAGE_LIMIT);
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
         fetchUserRoomsFromServer();
-    }
-
-    @Override
-    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-
-        if (changeRoomList != null) {
-            if (!changeRoomList.isEmpty()) {
-                for (int i = 0, size = changeRoomList.size(); i < size; i++) {
-                    onRoomListChangeListener.onRoomChange(changeRoomList.get(i));
-                }
-            }
-
-            changeRoomList = null;
-        }
-
-        if (newRoomList != null) {
-            if (!newRoomList.isEmpty()) {
-                for (int i = 0, size = newRoomList.size(); i < size; i++) {
-                    onRoomListChangeListener.onNewRoom(newRoomList.get(i));
-                }
-            }
-
-            newRoomList = null;
-        }
-    }
-
-    @Override
-    public void onDetach() {
-        super.onDetach();
-        Log.e(TAG, "onDetach: ");
-        onRoomListChangeListener = null;
     }
 
     @Override
@@ -129,11 +85,8 @@ public class RoomListFetchingFragment extends BaseFragment implements ChildEvent
         userRoomsFirebase.child(myId).removeEventListener(this);
     }
 
-    private boolean isRoomListChangeListenerAvailable() {
-        return onRoomListChangeListener != null;
-    }
-
     private void fetchUserRoomsFromServer() {
+        userRoomsFirebase.keepSynced(true);
         userRoomsFirebase.child(myId)
                 .orderByValue()
                 .limitToLast(MESSAGE_LIMIT)
@@ -142,7 +95,7 @@ public class RoomListFetchingFragment extends BaseFragment implements ChildEvent
 
     private void fetchRoomIdUser(DataSnapshot dataSnapshot) {
         final String roomId = dataSnapshot.getKey();
-
+        Log.d(TAG, "fetchRoomIdUser: " + roomId);
         if (!myRoomList.contains(roomId)) {
             myRoomList.add(roomId);
             fetchUserRoomById(roomId);
@@ -150,7 +103,7 @@ public class RoomListFetchingFragment extends BaseFragment implements ChildEvent
     }
 
     private void fetchUserRoomById(final String roomId) {
-        roomFirebase.get().child(roomId)
+        roomFirebase.child(roomId)
                 .addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
@@ -168,13 +121,21 @@ public class RoomListFetchingFragment extends BaseFragment implements ChildEvent
         Room room = dataSnapshot.getValue(Room.class);
         room.setRoomId(roomId);
 
-        String friendId = findFriendIdFromPrivateRoom(dataSnapshot);
-        fetchFriendInfoForPrivateRoom(friendId, room);
+        // check type of room
+        // if room type == 'private', it means this room is private room 1 - 1 chat
+        // we gonna get name of friend to be use as room name
+        if (room.getType().equals(FirebaseUtil.VALUE_ROOM_TYPE_PRIVATE)) {
+
+            String friendId = findFriendIdFromPrivateRoom(dataSnapshot);
+            fetchFriendInfoForPrivateRoom(friendId, room);
+        } else {
+            EventBus.getDefault().post(new EventBusNewRoom(room));
+        }
     }
 
     private void fetchFriendInfoForPrivateRoom(String friendId, final Room room) {
-        // get friend info for room name and image room.
-        userInfoFirebase.get().child(friendId).addListenerForSingleValueEvent(new ValueEventListener() {
+        // get room name and room image from friend info
+        userInfoFirebase.child(friendId).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 UserInfo friendInfo = dataSnapshot.getValue(UserInfo.class);
@@ -182,24 +143,13 @@ public class RoomListFetchingFragment extends BaseFragment implements ChildEvent
                 room.setRoomName(friendInfo.getDisplayName());
                 room.setRoomImagePath(friendInfo.getProfileImageURL());
 
-                fetchRoomSuccess(room);
+                EventBus.getDefault().post(new EventBusNewRoom(room));
             }
 
             @Override
             public void onCancelled(FirebaseError firebaseError) {
             }
         });
-    }
-
-    private void fetchRoomSuccess(Room room) {
-        if (isRoomListChangeListenerAvailable()) {
-            onRoomListChangeListener.onNewRoom(room);
-        } else {
-            if (newRoomList == null) {
-                newRoomList = new ArrayList<>();
-            }
-            newRoomList.add(room);
-        }
     }
 
     private String findFriendIdFromPrivateRoom(DataSnapshot dataSnapshot) {
@@ -216,14 +166,14 @@ public class RoomListFetchingFragment extends BaseFragment implements ChildEvent
     }
 
     private void fetchUpdatedRoom(final String roomKey) {
-        roomFirebase.get().child(roomKey)
+        roomFirebase.child(roomKey)
                 .addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
                         Room room = dataSnapshot.getValue(Room.class);
                         room.setRoomId(roomKey);
 
-                        updatedRoomFetched(room);
+                        EventBus.getDefault().post(new EventBusUpdatedRoom(room));
                     }
 
                     @Override
@@ -233,18 +183,6 @@ public class RoomListFetchingFragment extends BaseFragment implements ChildEvent
                 });
     }
 
-    private void updatedRoomFetched(Room room) {
-        if (isRoomListChangeListenerAvailable()) {
-            onRoomListChangeListener.onRoomChange(room);
-        } else {
-            if (changeRoomList == null) {
-                changeRoomList = new ArrayList<>();
-            }
-
-            changeRoomList.add(room);
-        }
-    }
-
     @Override
     public void onChildAdded(DataSnapshot dataSnapshot, String previousChildKey) {
         fetchRoomIdUser(dataSnapshot);
@@ -252,8 +190,7 @@ public class RoomListFetchingFragment extends BaseFragment implements ChildEvent
 
     @Override
     public void onChildChanged(DataSnapshot dataSnapshot, String previousChildKey) {
-        final String roomKey = dataSnapshot.getKey();
-        fetchUpdatedRoom(roomKey);
+        fetchUpdatedRoom(dataSnapshot.getKey());
     }
 
     @Override
@@ -273,7 +210,6 @@ public class RoomListFetchingFragment extends BaseFragment implements ChildEvent
 
     public interface OnRoomListChangeListener {
         void onNewRoom(Room room);
-
         void onRoomChange(Room room);
     }
 

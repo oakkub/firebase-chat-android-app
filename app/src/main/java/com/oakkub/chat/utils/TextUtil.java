@@ -46,11 +46,12 @@ public class TextUtil {
     }
 
     public static String getPath(String... strings) {
-        final int capacity = strings.length;
-        StringBuilder builder = new StringBuilder(capacity);
+        int size = strings.length;
+        StringBuilder builder = new StringBuilder(size);
 
-        for (int i = 0; i < capacity; i++) {
-            builder.append(strings[i]).append(i == capacity - 1 ? "" : "/");
+        for (int i = 0; i < size; i++) {
+            builder.append(strings[i]);
+            builder.append(i == size - 1 ? "" : "/");
         }
         return builder.toString();
     }

@@ -25,7 +25,9 @@ public class AppController extends Application {
         super.onCreate();
 
         FacebookSdk.sdkInitialize(this);
+
         Firebase.setAndroidContext(this);
+
         Fresco.initialize(this);
 
         MultiDex.install(this);

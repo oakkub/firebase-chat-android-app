@@ -35,7 +35,6 @@ import java.util.Set;
 import butterknife.Bind;
 import butterknife.ButterKnife;
 import de.greenrobot.event.EventBus;
-import de.greenrobot.event.Subscribe;
 import icepick.State;
 
 /**
@@ -230,7 +229,6 @@ public class GoogleLoginActivity extends BaseActivity
         return builder.toString().trim();
     }
 
-    @Subscribe
     public void onEvent(GoogleLoginInfo googleLoginInfo) {
 
         if (googleLoginInfo == null) {

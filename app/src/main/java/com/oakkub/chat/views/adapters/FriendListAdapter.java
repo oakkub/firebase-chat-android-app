@@ -25,7 +25,7 @@ import butterknife.OnClick;
 /**
  * Created by OaKKuB on 10/26/2015.
  */
-public class FriendListAdapter extends RecyclerViewAdapter<UserInfo, RecyclerView.ViewHolder> {
+public class FriendListAdapter extends RecyclerViewAdapter<UserInfo> {
 
     private static final int FRIEND_TYPE = 0;
     private static final int ADD_FRIEND_TYPE = 1;
@@ -101,18 +101,12 @@ public class FriendListAdapter extends RecyclerViewAdapter<UserInfo, RecyclerVie
             holder instanceof AddFriendHolder) {
 
             final UserInfo userInfo = items.get(position);
+            final String profileImageURI = userInfo.getProfileImageURL();
 
             if (holder instanceof FriendHolder) {
                 final FriendHolder friendHolder = (FriendHolder) holder;
 
-                final String profileImageURI = userInfo.getProfileImageURL();
                 friendHolder.friendProfileImage.setImageURI(Uri.parse(profileImageURI));
-                /*Glide.with(friendHolder.itemView.getContext())
-                        .load(profileImageURI)
-                        .centerCrop()
-                        .crossFade()
-                        .into(friendHolder.friendProfileImage);*/
-
                 friendHolder.friendName.setText(userInfo.getDisplayName());
 
                 ViewCompat.setTransitionName(friendHolder.friendProfileImage,
@@ -121,7 +115,6 @@ public class FriendListAdapter extends RecyclerViewAdapter<UserInfo, RecyclerVie
             } else {
                 final AddFriendHolder addFriendHolder = (AddFriendHolder) holder;
 
-                final String profileImageURI = userInfo.getProfileImageURL();
                 addFriendHolder.addFriendProfileImage.setImageURI(Uri.parse(profileImageURI));
 
                 addFriendHolder.addFriendName.setText(userInfo.getDisplayName());

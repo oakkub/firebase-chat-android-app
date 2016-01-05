@@ -70,6 +70,10 @@ public class UserInfo {
         return registeredDate;
     }
 
+    public void setProfileImageURL(String profileImageURL) {
+        this.profileImageURL = profileImageURL;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

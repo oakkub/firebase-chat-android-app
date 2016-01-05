@@ -4,7 +4,8 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 
 import com.oakkub.chat.fragments.FriendsFragment;
-import com.oakkub.chat.fragments.MainActivityFragment;
+import com.oakkub.chat.fragments.GroupListFragment;
+import com.oakkub.chat.fragments.PublicListFragment;
 import com.oakkub.chat.fragments.RoomListFragment;
 
 import javax.inject.Inject;
@@ -14,7 +15,7 @@ import javax.inject.Inject;
  */
 public class MainViewPagerAdapter extends SmartFragmentStatePagerAdapter {
 
-    private static final int TOTAL_ITEM = 3;
+    private static final int TOTAL_ITEM = 4;
 
     private String myId;
 
@@ -39,7 +40,11 @@ public class MainViewPagerAdapter extends SmartFragmentStatePagerAdapter {
 
             case 2:
 
-                return MainActivityFragment.newInstance();
+                return GroupListFragment.newInstance(myId);
+
+            case 3:
+
+                return new PublicListFragment();
 
         }
 

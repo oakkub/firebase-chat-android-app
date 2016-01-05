@@ -11,6 +11,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.AdapterView;
 
 import com.firebase.client.AuthData;
 import com.firebase.client.DataSnapshot;
@@ -19,11 +20,13 @@ import com.firebase.client.FirebaseError;
 import com.firebase.client.ValueEventListener;
 import com.oakkub.chat.R;
 import com.oakkub.chat.fragments.FacebookLoginActivityFragment;
-import com.oakkub.chat.fragments.FriendsFragment;
+import com.oakkub.chat.fragments.FriendsFetchingFragment;
+import com.oakkub.chat.fragments.RoomListFetchingFragment;
 import com.oakkub.chat.managers.AppController;
 import com.oakkub.chat.utils.FirebaseUtil;
 import com.oakkub.chat.views.adapters.MainViewPagerAdapter;
 import com.oakkub.chat.views.widgets.Fab;
+import com.oakkub.chat.views.widgets.spinner.SpinnerInteractionListener;
 import com.oakkub.chat.views.widgets.toolbar.ToolbarCommunicator;
 import com.oakkub.chat.views.widgets.viewpager.ViewPager;
 
@@ -36,9 +39,11 @@ import butterknife.OnClick;
 import icepick.State;
 
 public class MainActivity extends BaseActivity implements
-        ToolbarCommunicator, ViewPager.OnPageChangeListener {
+        ToolbarCommunicator, ViewPager.OnPageChangeListener, SpinnerInteractionListener.OnSpinnerClickListener {
 
     private static final String TAG = MainActivity.class.getSimpleName();
+    private static final String ROOM_LIST_FRAGMENT_TAG = "tag:roomList";
+    private static final String FRIEND_LIST_FRAGMENT_TAG = "tag:friendList";
 
     @Bind(R.id.main_toolbar)
     Toolbar toolbar;
@@ -63,7 +68,9 @@ public class MainActivity extends BaseActivity implements
     @State
     String provider;
 
+    private SpinnerInteractionListener spinnerInteractionListener;
     private MainViewPagerAdapter mainViewPagerAdapter;
+    private FriendsFetchingFragment friendsFetchingFragment;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -80,6 +87,22 @@ public class MainActivity extends BaseActivity implements
 
         if (savedInstanceState == null) {
             setupFirebaseComponent();
+        }
+
+        addFragments();
+    }
+
+    private void addFragments() {
+        RoomListFetchingFragment roomListFetchingFragment = (RoomListFetchingFragment) findFragmentByTag(ROOM_LIST_FRAGMENT_TAG);
+        if (roomListFetchingFragment == null) {
+            roomListFetchingFragment = (RoomListFetchingFragment)
+                    addFragmentByTag(RoomListFetchingFragment.newInstance(myId), ROOM_LIST_FRAGMENT_TAG);
+        }
+
+        friendsFetchingFragment = (FriendsFetchingFragment) findFragmentByTag(FRIEND_LIST_FRAGMENT_TAG);
+        if (friendsFetchingFragment == null) {
+            friendsFetchingFragment = (FriendsFetchingFragment)
+                    addFragmentByTag(FriendsFetchingFragment.newInstance(FriendsFetchingFragment.FROM_NEW_FRIEND), FRIEND_LIST_FRAGMENT_TAG);
         }
     }
 
@@ -113,7 +136,6 @@ public class MainActivity extends BaseActivity implements
 
     @Override
     public void onPageSelected(int position) {
-        onPageSelectedFabAnimation(position);
         onSelectedFragment(position);
     }
 
@@ -125,9 +147,17 @@ public class MainActivity extends BaseActivity implements
     @Override
     public void onPageScrollStateChanged(int state) {
         if (state == ViewPager.SCROLL_STATE_SETTLING) {
-            animateFabWithScaleAnimation();
+            int position = viewPager.getCurrentItem();
+
+            animateFabWithScaleAnimation(position);
+            onPageSelectedFabAnimation(position);
             fab.setClickable(fab.getVisibility() == View.VISIBLE);
         }
+    }
+
+    @Override
+    public void onSpinnerItemClick(AdapterView<?> parent, View view, int position, long id) {
+        Log.e(TAG, "onSpinnerItemClick: " + position);
     }
 
     private void onPageSelectedFabAnimation(int position) {
@@ -156,12 +186,11 @@ public class MainActivity extends BaseActivity implements
         }
     }
 
-    private void animateFabWithScaleAnimation() {
+    private void animateFabWithScaleAnimation(int position) {
         final int viewPagerCount = mainViewPagerAdapter.getCount();
-        final int currentItem = viewPager.getCurrentItem();
 
-        if (fab.getVisibility() == View.GONE && currentItem < viewPagerCount - 1) fab.scaleUp();
-        else if (currentItem == viewPagerCount - 1) fab.scaleDown();
+        if (fab.getVisibility() == View.GONE && position < viewPagerCount - 1) fab.scaleUp();
+        else if (position == viewPagerCount - 1) fab.scaleDown();
     }
 
     @OnClick(R.id.fab)
@@ -179,6 +208,15 @@ public class MainActivity extends BaseActivity implements
                 break;
 
         }
+    }
+
+    @OnClick(R.id.group_contact_fab)
+    void onGroupContactFab() {
+
+        Intent groupContactIntent = new Intent(this, GroupContactActivity.class);
+        groupContactIntent.putExtra(GroupContactActivity.EXTRA_MY_ID, myId);
+
+        startActivity(groupContactIntent);
     }
 
     private void setToolbar() {
@@ -301,22 +339,12 @@ public class MainActivity extends BaseActivity implements
                 break;
 
             case 1:
-                onFriendListFragmentSelected(position);
+                friendsFetchingFragment.fetchUserFriends(myId);
                 break;
 
             case 2:
                 break;
 
-        }
-    }
-
-    private void onFriendListFragmentSelected(int position) {
-        FriendsFragment friendsFragment =
-                (FriendsFragment) mainViewPagerAdapter.getRegisteredFragment(position);
-
-        // if null, it's in the same page.
-        if (friendsFragment != null) {
-            friendsFragment.getUserFriends(myId);
         }
     }
 

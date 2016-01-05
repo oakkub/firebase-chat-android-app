@@ -82,6 +82,19 @@
         </activity>
         <!-- Private Chat Activity -->
 
+        <activity
+            android:name=".activities.NewMessagesActivity"
+            android:label="@string/new_messages" />
+
+        <activity
+            android:name=".activities.GroupContactActivity"
+            android:label="@string/title_activity_group_contact"
+            android:parentActivityName=".activities.MainActivity" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.oakkub.chat.activities.MainActivity" />
+        </activity>
+
         <!-- GCM -->
         <receiver
             android:name="com.google.android.gms.gcm.GcmReceiver"

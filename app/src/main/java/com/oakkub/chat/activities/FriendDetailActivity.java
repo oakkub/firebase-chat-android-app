@@ -3,9 +3,6 @@ package com.oakkub.chat.activities;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.app.ActivityOptionsCompat;
-import android.support.v4.util.Pair;
 import android.support.v4.view.ViewCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.CardView;
@@ -30,6 +27,8 @@ import com.oakkub.chat.utils.TextUtil;
 
 import org.parceler.Parcels;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -63,14 +62,14 @@ public class FriendDetailActivity extends AppCompatActivity {
     Lazy<Firebase> userRoomsFirebase;
 
     @Inject
-    @Named(FirebaseUtil.NAMED_ROOMS)
-    Lazy<Firebase> roomsFirebase;
+    @Named(FirebaseUtil.NAMED_ROOMS_INFO)
+    Lazy<Firebase> roomInfoFirebase;
 
     @Inject
     @Named(FirebaseUtil.NAMED_USER_INFO)
     Lazy<Firebase> currentUserFirebase;
 
-    UserInfo friendInfo;
+    private UserInfo friendInfo;
 
     public static void launch(AppCompatActivity activity, View imageView, UserInfo friendInfo) {
         final String imageViewTransitionName = ViewCompat.getTransitionName(imageView);
@@ -79,12 +78,14 @@ public class FriendDetailActivity extends AppCompatActivity {
         intent.putExtra(EXTRA_INFO, Parcels.wrap(friendInfo));
         intent.putExtra(TRANSITION_PROFILE_IMAGE, imageViewTransitionName);
 
-        Pair<View, String> imageTransitionView =
+        activity.startActivity(intent);
+
+        /*Pair<View, String> imageTransitionView =
                 Pair.create(imageView, imageViewTransitionName);
 
         ActivityOptionsCompat options =
                 ActivityOptionsCompat.makeSceneTransitionAnimation(activity, imageTransitionView);
-        ActivityCompat.startActivity(activity, intent, options.toBundle());
+        ActivityCompat.startActivity(activity, intent, options.toBundle());*/
     }
 
     @Override
@@ -130,7 +131,7 @@ public class FriendDetailActivity extends AppCompatActivity {
     }
 
     private void beginChattingWithFriend() {
-        Firebase roomsRef = roomsFirebase.get().getRef();
+        Firebase roomsRef = roomInfoFirebase.get().getRef();
         AuthData authData = roomsRef.getAuth();
 
         String roomKey = TextUtil.
@@ -159,6 +160,7 @@ public class FriendDetailActivity extends AppCompatActivity {
 
     private void creatingPrivateRoom(final Firebase roomsRef, final AuthData authData, final String roomKey) {
         // check if room is already created.
+        roomsRef.child(roomKey).keepSynced(true);
         roomsRef.child(roomKey)
                 .addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
@@ -258,9 +260,11 @@ public class FriendDetailActivity extends AppCompatActivity {
 
         Intent privateRoomIntent = new Intent(this, PrivateChatRoomActivity.class);
         privateRoomIntent.putExtra(PrivateChatRoomActivityFragment.EXTRA_ROOM_ID, roomKey);
-        privateRoomIntent.putExtra(PrivateChatRoomActivityFragment.EXTRA_FRIEND_ID, friendInfo.getUserKey());
-        privateRoomIntent.putExtra(PrivateChatRoomActivityFragment.EXTRA_FRIEND_NAME, friendInfo.getDisplayName());
-        privateRoomIntent.putExtra(PrivateChatRoomActivityFragment.EXTRA_FRIEND_PROFILE, friendInfo.getProfileImageURL());
+        privateRoomIntent.putExtra(PrivateChatRoomActivityFragment.EXTRA_ROOM_NAME, friendInfo.getDisplayName());
+        privateRoomIntent.putStringArrayListExtra(PrivateChatRoomActivityFragment.EXTRA_FRIEND_ID,
+                new ArrayList<>(Collections.singletonList(friendInfo.getUserKey())));
+        privateRoomIntent.putStringArrayListExtra(PrivateChatRoomActivityFragment.EXTRA_FRIEND_PROFILE,
+                new ArrayList<>(Collections.singletonList(friendInfo.getProfileImageURL())));
 
         startActivity(privateRoomIntent);
     }

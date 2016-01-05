@@ -27,7 +27,6 @@ import javax.inject.Inject;
 import javax.inject.Named;
 
 import de.greenrobot.event.EventBus;
-import de.greenrobot.event.Subscribe;
 
 /**
  * A placeholder fragment containing a simple view.
@@ -195,7 +194,6 @@ public class AuthenticationActivityFragment extends Fragment {
         return userInfo;
     }
 
-    @Subscribe
     public void onEvent(GoogleInstanceID googleInstanceID) {
         if (googleInstanceID == null) {
             backToLoginActivity(getString(R.string.error_message_network));

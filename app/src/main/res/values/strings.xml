@@ -72,10 +72,22 @@
         chat_<xliff:g id="someUserId">%s</xliff:g>_<xliff:g id="someOtherUserId">%s</xliff:g>
     </string>
 
+    <string name="total_friends" >
+        Total friends: <xliff:g id="totalFriend">%d</xliff:g>
+    </string>
+
     <string name="title_activity_friend_detail">FriendDetailActivity</string>
     <string name="chat">Chat</string>
     <string name="title_activity_private_chat_room">PrivateChatRoomActivity</string>
-    <string name="hint.message.enter_text_here">Enter text here...</string>
-    <string name="loading_messages">Loading messages...</string>
+    <string name="hint.message.enter_text_here">Enter text here…</string>
+    <string name="loading_messages">Loading messages…</string>
+
+    <string-array name="contact_spinner">
+        <item>Friends</item>
+        <item>Group</item>
+        <item>Public</item>
+    </string-array>
+    <string name="title_activity_group_contact">GroupContactActivity</string>
+    <string name="new_messages">New messages</string>
 
 </resources>
