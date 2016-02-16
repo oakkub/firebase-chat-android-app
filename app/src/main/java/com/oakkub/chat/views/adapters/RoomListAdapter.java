@@ -17,10 +17,11 @@ import com.oakkub.chat.views.adapters.viewholders.RoomHolder;
 public class RoomListAdapter extends RecyclerViewAdapter<Room>  {
 
     private OnAdapterItemClick onAdapterItemClick;
+    private String myId;
 
-    public RoomListAdapter(OnAdapterItemClick onAdapterItemClick) {
-        super();
+    public RoomListAdapter(OnAdapterItemClick onAdapterItemClick, String myId) {
         this.onAdapterItemClick = onAdapterItemClick;
+        this.myId = myId;
     }
 
     @Override
@@ -35,11 +36,28 @@ public class RoomListAdapter extends RecyclerViewAdapter<Room>  {
         Room room = getItem(position);
         RoomHolder roomHolder = (RoomHolder) holder;
 
+        setRoomMessage(roomHolder, room);
+
+        long time = room.getLatestMessageTime();
+        if (time > 0) {
+            roomHolder.latestMessageTime.setText(
+                    TimeUtil.readableTime(roomHolder.itemView.getContext(),
+                            room.getLatestMessageTime()));
+        }
+
         roomHolder.roomImage.setImageURI(Uri.parse(room.getImagePath()));
-        roomHolder.latestMessage.setText(room.getLatestMessage());
-        roomHolder.latestMessageTime.setText(
-                TimeUtil.timeInMillisToDate("dd/MM/yyyy", room.getLatestMessageTime(), true));
         roomHolder.roomName.setText(room.getName());
     }
 
+    private void setRoomMessage(RoomHolder holder, Room room) {
+        String latestMessage = room.getLatestMessage();
+        if (latestMessage == null) return;
+
+        String message = room.getLatestMessageUser().equals(myId) ?
+                holder.itemView.getContext().getString(R.string.latest_message_by,
+                        room.getLatestMessage())
+                : latestMessage;
+
+        holder.latestMessage.setText(message);
+    }
 }

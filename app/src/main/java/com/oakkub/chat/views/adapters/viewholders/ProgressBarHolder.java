@@ -14,7 +14,7 @@ import butterknife.ButterKnife;
  */
 public class ProgressBarHolder extends RecyclerView.ViewHolder {
 
-    @Bind(R.id.simple_progress_bar)
+    @Bind(R.id.center_progress_bar)
     ProgressBar loadingView;
 
     public ProgressBarHolder(View itemView) {

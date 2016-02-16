@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.v4.widget.DrawerLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/find_public_drawer_layout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="true"
+    android:orientation="vertical">
+
+    <android.support.design.widget.CoordinatorLayout
+        android:id="@+id/content_find_public_chat"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <include layout="@layout/partial_toolbar" />
+
+        <com.oakkub.chat.views.widgets.MySwipeRefreshLayout
+            android:id="@+id/find_public_swipe_refresh"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
+            <include
+                layout="@layout/recyclerview"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+
+            <com.oakkub.chat.views.widgets.EmptyTextProgressBar
+                android:id="@+id/find_public_empty_text_progress_bar"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                app:text="@string/no_public_chat"
+                app:progressBarDrawable="@drawable/simple_progress"/>
+
+        </com.oakkub.chat.views.widgets.MySwipeRefreshLayout>
+
+    </android.support.design.widget.CoordinatorLayout>
+
+    <android.support.design.widget.NavigationView
+        android:id="@+id/find_public_navigation_view"
+        style="@style/NavigationViewStyle"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_gravity="end"
+        android:background="@android:color/white"
+        android:fitsSystemWindows="true"
+        app:itemTextAppearance="@style/TextAppearance.AppCompat.Medium" />
+
+</android.support.v4.widget.DrawerLayout>

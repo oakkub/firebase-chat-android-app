@@ -11,7 +11,18 @@ public class SparseBooleanArrayParcelableWrapper extends SparseBooleanArray impl
 
     public SparseBooleanArrayParcelableWrapper() {}
 
-    protected SparseBooleanArrayParcelableWrapper(Parcel in) {}
+    protected SparseBooleanArrayParcelableWrapper(Parcel in) {
+        int size = in.readInt();
+        int[] keys = new int[size];
+        boolean[] values = new boolean[size];
+
+        in.readIntArray(keys);
+        in.readBooleanArray(values);
+
+        for (int i = 0; i < size; i++) {
+            this.put(keys[i], values[i]);
+        }
+    }
 
     public SparseBooleanArrayParcelableWrapper(SparseBooleanArray sparseBooleanArray) {
         for (int i = 0, size = sparseBooleanArray.size(); i < size; i++) {
@@ -26,7 +37,6 @@ public class SparseBooleanArrayParcelableWrapper extends SparseBooleanArray impl
 
     @Override
     public void writeToParcel(Parcel dest, int flags) {
-
         int size = size();
         int[] keys = new int[size];
         boolean[] values = new boolean[size];
@@ -44,20 +54,7 @@ public class SparseBooleanArrayParcelableWrapper extends SparseBooleanArray impl
     public static final Creator<SparseBooleanArrayParcelableWrapper> CREATOR = new Creator<SparseBooleanArrayParcelableWrapper>() {
         @Override
         public SparseBooleanArrayParcelableWrapper createFromParcel(Parcel in) {
-            SparseBooleanArrayParcelableWrapper wrapper = new SparseBooleanArrayParcelableWrapper();
-
-            int size = in.readInt();
-            int[] keys = new int[size];
-            boolean[] values = new boolean[size];
-
-            in.readIntArray(keys);
-            in.readBooleanArray(values);
-
-            for (int i = 0; i < size; i++) {
-                wrapper.put(keys[i], values[i]);
-            }
-
-            return wrapper;
+            return new SparseBooleanArrayParcelableWrapper(in);
         }
 
         @Override

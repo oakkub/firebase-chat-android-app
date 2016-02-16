@@ -4,7 +4,7 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 
 import com.oakkub.chat.fragments.EmailLoginFragment;
-import com.oakkub.chat.fragments.LoginActivityFragment;
+import com.oakkub.chat.fragments.LoginFragment;
 
 import javax.inject.Inject;
 
@@ -26,7 +26,7 @@ public class LoginViewPagerAdapter extends SmartFragmentStatePagerAdapter {
         switch (position) {
 
             case 0:
-                return new LoginActivityFragment();
+                return new LoginFragment();
 
             case 1:
                 return new EmailLoginFragment();

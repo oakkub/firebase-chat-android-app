@@ -13,8 +13,10 @@ public class Message {
     String message;
     String sentBy;
     String imagePath;
-    String thumbnailPath;
-    boolean showImage = true;
+    String ratio;
+    String isSuccessfullySent;
+    String languageRes;
+    int readTotal;
     long sentWhen = System.currentTimeMillis();
 
     public Message() {
@@ -35,12 +37,8 @@ public class Message {
         return roomId;
     }
 
-    public String getMessageKey() {
+    public String getKey() {
         return messageKey;
-    }
-
-    public void setMessageKey(String messageKey) {
-        this.messageKey = messageKey;
     }
 
     public String getSentBy() {
@@ -55,20 +53,52 @@ public class Message {
         return imagePath;
     }
 
-    public String getThumbnailPath() {
-        return thumbnailPath;
-    }
-
-    public boolean isShowImage() {
-        return showImage;
-    }
-
-    public void setShowImage(boolean showImage) {
-        this.showImage = showImage;
-    }
-
     public long getSentWhen() {
         return sentWhen;
+    }
+
+    public void setKey(String messageKey) {
+        this.messageKey = messageKey;
+    }
+
+    public void successfullySent() {
+        this.isSuccessfullySent = "";
+    }
+
+    public String getIsSuccessfullySent() {
+        return isSuccessfullySent;
+    }
+
+    public void setImagePath(String imagePath) {
+        this.imagePath = imagePath;
+    }
+
+    public String getRatio() {
+        return ratio;
+    }
+
+    public void setRatio(String ratio) {
+        this.ratio = ratio;
+    }
+
+    public int getReadTotal() {
+        return readTotal;
+    }
+
+    public void setReadTotal(int readTotal) {
+        this.readTotal = readTotal;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
+    }
+
+    public String getLanguageRes() {
+        return languageRes;
+    }
+
+    public void setLanguageRes(String languageRes) {
+        this.languageRes = languageRes;
     }
 
     @Override

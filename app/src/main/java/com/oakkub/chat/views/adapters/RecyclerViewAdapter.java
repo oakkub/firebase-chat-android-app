@@ -1,7 +1,6 @@
 package com.oakkub.chat.views.adapters;
 
 import android.os.Bundle;
-import android.os.Parcelable;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -26,16 +25,12 @@ public abstract class RecyclerViewAdapter<I> extends RecyclerView.Adapter {
     protected static final int LOAD_MORE_TYPE = 100;
     protected static final int NO_INTERNET_TYPE = 101;
 
-    protected ArrayList<I> items;
+    protected ArrayList<I> items = new ArrayList<>();
 
     @State
     boolean loadMore;
     @State
     boolean noInternet;
-
-    public RecyclerViewAdapter() {
-        items = new ArrayList<>();
-    }
 
     @Override
     public int getItemCount() {
@@ -50,9 +45,7 @@ public abstract class RecyclerViewAdapter<I> extends RecyclerView.Adapter {
     }
 
     public void onRestoreInstanceState(String key, Bundle savedInstanceState) {
-        Parcelable parceledItems = savedInstanceState.getParcelable(key);
-        items = Parcels.unwrap(parceledItems);
-
+        items = Parcels.unwrap(savedInstanceState.getParcelable(key));
         Icepick.restoreInstanceState(this, savedInstanceState);
     }
 
@@ -107,19 +100,29 @@ public abstract class RecyclerViewAdapter<I> extends RecyclerView.Adapter {
         return false;
     }
 
+    private I removeItem(int position) {
+        I removedItem = items.remove(position);
+
+        if (removedItem != null) {
+            notifyItemRemoved(position);
+            return removedItem;
+        }
+        return null;
+    }
+
+    public I remove(int position) {
+        if (position >= 0) {
+            return removeItem(position);
+        }
+        return null;
+    }
+
     public I remove(I item) {
         final int index = findPosition(item);
 
         if (index >= 0) {
-            I removedItem = items.remove(index);
-
-            if (removedItem != null) {
-                notifyItemRemoved(index);
-                return removedItem;
-            }
-            return null;
+            return removeItem(index);
         }
-
         return null;
     }
 
@@ -130,7 +133,18 @@ public abstract class RecyclerViewAdapter<I> extends RecyclerView.Adapter {
         notifyItemRemoved(lastPosition);
     }
 
-    public void removeAll() {
+    public int findById(String key) {
+        int size = getItemCount();
+        int keyHash = key.hashCode();
+        for (int i = 0; i < size; i++) {
+            if (items.get(i).hashCode() == keyHash) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    public void clear() {
         final int itemCount = items.size();
 
         if (itemCount > 0) {
@@ -162,11 +176,16 @@ public abstract class RecyclerViewAdapter<I> extends RecyclerView.Adapter {
 
     public I getItem(int position) {
         if (position >= getItemCount()) return null;
+        else if (position < 0) return null;
         else return items.get(position);
     }
 
     public int findPosition(I item) {
         return items.indexOf(item);
+    }
+
+    public boolean contains(I item) {
+        return items.contains(item);
     }
 
     public I getLastItem() {
@@ -205,7 +224,7 @@ public abstract class RecyclerViewAdapter<I> extends RecyclerView.Adapter {
     }
 
     public ProgressBarHolder getProgressBarHolder(ViewGroup parent) {
-        View view = inflateLayout(parent, R.layout.load_more_progress_bar);
+        View view = inflateLayout(parent, R.layout.center_progress_bar);
         return new ProgressBarHolder(view);
     }
 

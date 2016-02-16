@@ -7,15 +7,24 @@ public class FirebaseUtil {
 
     public static final String NAMED_ONLINE_USERS = "firebaseConnecting";
     public static final String NAMED_CONNECTION = "firebaseConnection";
+    public static final String NAMED_TYPING_USERS = "firebaseTyping";
     public static final String NAMED_ROOT = "firebaseRoot";
     public static final String NAMED_USERS = "firebaseUser";
     public static final String NAMED_USER_INFO = "firebaseUserInfo";
     public static final String NAMED_USER_FRIENDS = "firebaseUserFriends";
     public static final String NAMED_USER_ROOMS = "firebaseUserRooms";
-    public static final String NAMED_ROOMS = "firebaseRooms";
     public static final String NAMED_MESSAGES = "firebaseMessages";
+    public static final String NAMED_MESSAGES_LIST = "firebaseMessagesList";
+    public static final String NAMED_MESSAGES_READ_GROUP_ROOM = "firebaseMessagesReadTotalGroupRoom";
+    public static final String NAMED_MESSAGES_TYPING = "firebaseMessagesTyping";
+    public static final String NAMED_ROOMS = "firebaseRooms";
     public static final String NAMED_ROOMS_INFO = "firebaseRoomsInfo";
     public static final String NAMED_ROOMS_MEMBERS = "firebaseRoomsMembers";
+    public static final String NAMED_ROOMS_ADMIN_MEMBERS = "firebaseRoomsAdminMembers";
+    public static final String NAMED_ROOMS_PRESERVED_MEMBERS = "firebaseRoomsPreservedMembers";
+    public static final String NAMED_ROOMS_PUBLIC = "firebaseRoomsPublic";
+    public static final String NAMED_USER_GROUPS = "firebaseUserGroups";
+    public static final String NAMED_USER_PUBLIC = "firebaseUserPublic";
 
     public static final String FIREBASE_URL = "https://oakkub-chat.firebaseio.com/";
     public static final String FIREBASE_USER_URL = FIREBASE_URL + "users/";
@@ -26,6 +35,7 @@ public class FirebaseUtil {
     public static final String KEY_USERS_USER_FRIENDS = "userFriends";
     public static final String KEY_USERS_USER_ROOMS = "userRooms";
     public static final String KEY_USERS_USER_GROUP_ROOMS = "userGroupRooms";
+    public static final String KEY_USERS_USER_PUBLIC_ROOMS = "userPublicRooms";
     public static final String KEY_ONLINE_USER = "onlineUsers";
     public static final String KEY_TYPING_USER = "typingUsers";
     public static final String KEY_CONNECTION = ".info/connected";
@@ -33,7 +43,13 @@ public class FirebaseUtil {
     public static final String KEY_ROOMS = "rooms";
     public static final String KEY_ROOMS_INFO = "roomsInfo";
     public static final String KEY_ROOMS_MEMBERS = "roomsMembers";
+    public static final String KEY_ROOMS_ADMIN_MEMBERS = "roomsAdminMembers";
+    public static final String KEY_ROOMS_PRESERVED_MEMBERS = "roomsPreservedMembers";
+    public static final String KEY_ROOMS_PUBLIC = "roomsPublic";
     public static final String KEY_MESSAGES = "messages";
+    public static final String KEY_MESSAGES_LIST = "messagesList";
+    public static final String KEY_MESSAGES_READ_GROUP_ROOM = "messagesReadTotalGroupRoom";
+    public static final String KEY_MESSAGES_TYPING = "messagesTyping";
 
     public static final String CHILD_ONLINE = "online";
     public static final String CHILD_LAST_ONLINE = "lastOnline";
@@ -49,7 +65,8 @@ public class FirebaseUtil {
     public static final String CHILD_SENT_WHEN = "sentWhen";
     public static final String CHILD_ROOM_ID = "roomId";
     public static final String CHILD_MESSAGE = "message";
-    public static final String CHILD_MESSAGE_IMAGE_PATH = "imagePath";
+    public static final String CHILD_IMAGE_PATH = "imagePath";
+    public static final String CHILD_READ_TOTAL = "readTotal";
 
     public static final String CHILD_LATEST_MESSAGE = "latestMessage";
     public static final String CHILD_LATEST_MESSAGE_USER = "latestMessageUser";
@@ -57,12 +74,15 @@ public class FirebaseUtil {
 
     public static final String VALUE_ROOM_TYPE_PRIVATE = "private";
     public static final String VALUE_ROOM_TYPE_GROUP = "group";
+    public static final String VALUE_ROOM_TYPE_PUBLIC = "public";
 
     public static final String ROOM_ID_STARTER = "chat_";
 
     public static final String PROVIDER_EMAIL = "email";
     public static final String PROVIDER_PROFILE_IMAGE = "profileImageURL";
     public static final String PROVIDER_DISPLAY_NAME = "displayName";
+
+    public static final String SYSTEM = "system";
 
     public static boolean isFirebaseLogin(String provider) {
         return isEmailLogin(provider) && !(isFacebookLogin(provider) && isGoogleLogin(provider));
@@ -80,7 +100,7 @@ public class FirebaseUtil {
         return provider.equals(TextUtil.EMAIL_PROVIDER);
     }
 
-    public static String privateRoomFriendKey(String myId, String roomKey) {
+    public static String getPrivateRoomFriendKey(String myId, String roomKey) {
         // example of room id : chat_facebook:232194892384_google:4545646456445
         String[] splitString = roomKey.split("_");
 
@@ -89,7 +109,7 @@ public class FirebaseUtil {
                 return splitString[i];
             }
         }
-
         return "";
     }
+
 }

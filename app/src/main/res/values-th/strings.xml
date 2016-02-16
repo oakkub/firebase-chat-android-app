@@ -1,0 +1,176 @@
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+
+    <string name="action_settings">ตัวเลือก</string>
+
+    <string name="navigation_drawer_open">เปิด navigation drawer</string>
+    <string name="navigation_drawer_close">ปิด navigation drawer</string>
+
+    <string name="error.message.fill_out_information">กรุณากรอกข้อมูลให้ครบ</string>
+    <string name="error.message.email_taken">อีเมล์นี้ถูกใช้งานแล้ว</string>
+    <string name="error.message.network">เกิดข้อผิดพลาดทางอินเตอร์เน็ต กรุณาลองใหม่อีกครั้ง</string>
+    <string name="error.message.incorrect_id_or_password">อีเมล์หรือรหัสผ่านไม่ถูกต้อง</string>
+    <string name="error.message.email_invalid">รูปแบบอีเมล์</string>
+    <string name="error.message.confirm_password">รหัสผ่านยืนยันต้องมีค่าเท่ากับรหัสผ่าน</string>
+    <string name="error.message.login">ไม่สามารถเข้าสู่ระบบได้ กรุณาลองใหม่อีกครั้ง</string>
+    <string name="error.message.internet_connection">ไม่สามารถดำเนินการได้ กรุณาตรวจสอบการเชื่อมต่ออินเตอร์เน็ต</string>
+    <string name="error.message.already_friend">
+        คุณได้เป็นเพื่อนกับ <xliff:g id="friendName">%s</xliff:g> แล้ว
+    </string>
+
+    <string name="login">เข้าสู่ระบบ</string>
+    <string name="logging_in_with_google">กำลังเข้าสู่ระบบด้วย Gmail</string>
+    <string name="login_with_google">เข้าสู่ระบบด้วย Gmail</string>
+    <string name="logging_out_with_google">กำลังออกจากระบบด้วย Gmail</string>
+    <string name="logging_in_with_facebook">กำลังเข้าสู่ระบบด้วย Facebook</string>
+    <string name="login_with_facebook">เข้าสู่ระบบด้วย Facebook</string>
+    <string name="logging_out_with_facebook">กำลังออกจากระบบด้วย Facebook</string>
+    <string name="logging_in_with_twitter">กำลังเข้าสู่ระบบด้วย Twitter</string>
+    <string name="login_with_twitter">เข้าสู่ระบบด้วย Twitter</string>
+    <string name="logging_out_with_twitter">กำลังออกจากระบบด้วย Twitter</string>
+    <string name="logging_in_with_email">กำลังเข้าสู่ระบบด้วย Email</string>
+    <string name="login_with_email">เข้าสู่ระบบด้วย Email</string>
+    <string name="logging_out_with_email">กำลังออกจากระบบด้วย Email</string>
+
+    <string name="authenticating_user">กำลังยืนยันตัวตนผู้ใช้งาน</string>
+
+    <string name="register">สมัครสมาชิก</string>
+    <string name="registration">การสมัครสมาชิก</string>
+
+    <string name="or">หรือ</string>
+    <string name="cancel">ยกเลิก</string>
+    <string name="ok">ตกลง</string>
+
+    <string name="settings.logout">ออกจากระบบ</string>
+    <string name="create_account">สร้างบัญชีใหม่</string>
+    <string name="add_friend">เพิ่มเพื่อน</string>
+
+    <string name="success.message.you_are_now_friend">
+        คุณและ <xliff:g id="friendName">%s</xliff:g> เป็นเพื่อนกันแล้ว!!
+    </string>
+
+    <string name="new_friend">เพื่อนใหม่</string>
+    <string name="notification.message.you_are_added_as_friend">
+        <xliff:g id="friendName">%s</xliff:g> เพิ่มคุณเป็นเพื่อน!!
+    </string>
+
+    <string name="dialog.message.add_friend">
+        เพิ่ม <xliff:g id="friendName">%s</xliff:g> เป็นเพื่อน?
+    </string>
+
+    <string name="latest_message_by">
+        คุณ: <xliff:g id="message">%s</xliff:g>
+    </string>
+
+    <string name="friend_typing">
+        <xliff:g id="friend">%s</xliff:g> กำลังพิมพ์
+    </string>
+
+    <string name="chat">คุย</string>
+    <string name="hint.message.enter_text_here">พิมพ์ข้อความที่นี่…</string>
+    <string name="loading_messages">กำลังโหลด…</string>
+
+    <string-array name="contact_spinner">
+        <item>เพื่อน</item>
+        <item>กลุ่ม</item>
+        <item>สาธารณะ</item>
+    </string-array>
+
+    <string name="new_messages">ข้อความใหม่</string>
+    <string name="send_photo">ส่งรูปภาพ</string>
+    <string name="info">ข้อมูล</string>
+    <string name="people">ผู้คน</string>
+    <string name="group_members">สมาชิกกลุ่ม</string>
+    <string name="creating_room">กำลังสร้างห้อง</string>
+    <string name="find_friends">หาเพื่อน</string>
+    <string name="search">ค้นหา</string>
+    <string name="attachment">ไฟล์แนบ</string>
+    <string name="camera">กล้อง</string>
+    <string name="Gallery">แกลลอรี่</string>
+    <string name="close">ปิด</string>
+    <string name="room_created">ห้องถูกสร้างแล้ว</string>
+    <string name="no_message">ไม่มีข้อความ</string>
+    <string name="new_public_chat">สร้างห้องสาธารณะ</string>
+    <string name="admin">แอดมิน</string>
+    <string name="find_public_chat">ค้นหาห้องสาธารณะ</string>
+
+    <string name="room_name">ชื่อห้อง</string>
+    <string name="hint.optional_description_for_your_room">คำอธิบายสำหรับห้องของคุณ (ทางเลือก)</string>
+    <string name="type_colon">ประเภท:</string>
+    <string name="error.room_name_empty">ไม่มีชื่อห้อง</string>
+    <string name="error.room_name_exceeds_limit">จำนวนตัวอักษรชื่อห้องเกินที่จำกัดไว้</string>
+    <string name="error.room_description_empty">ไม่มีคำอธิบายสำหรับห้อง</string>
+    <string name="error.room_description_exceeds_limit">จำนวนคำอธิบายของห้องเกินที่จำกัดไว้</string>
+    <string name="open_with_camera">เปิดด้วยกล้อง</string>
+    <string name="open_with_gallery">เปิดด้วยแกลลอรี่</string>
+    <string name="error.creating_room">เกิดข้อผิดพลาดขณะสร้างห้อง กรุณาลองใหม่อีกครั้ง</string>
+    <string name="profile">โปรไฟล์</string>
+    <string name="general">ทั่วไป</string>
+    <string name="user">ผู้ใช้งาน</string>
+    <string name="filter_list">รายชื่อกรอง</string>
+    <string name="public_chat_type">ประเภทห้องสาธารณะ</string>
+    <string name="all">ทั้งหมด</string>
+
+    <string name="error.no_result_for">
+        ไม่พบผลลัพธ์สำหรับ: "<xliff:g name="result">%s</xliff:g>"
+    </string>
+    <string name="error.you.have.to.join.to.chat">คุณต้องเข้าร่วมห้องเพื่อคุย</string>
+    <string name="join_this_chat">เข้าร่วมห้อง</string>
+    <string name="error.cannot_join_chat">ไม่สามารถเข้าร่วมห้องได้ กรุณาลองใหม่อีกครั้ง</string>
+    <string name="join_room_success">เข้าร่วมห้องสำเร็จ</string>
+    <string name="invite_friends">เชิญเพื่อน</string>
+    <string name="error.select_at_least_two_to_make_a_group">กรุณาเลือกเพื่อนอย่างน้อย 2 คน เพื่อสร้างกลุ่ม</string>
+    <string name="error.select_at_least_one_person">กรุณาเลือกเพื่อนอย่างน้อย 1 คน</string>
+    <string name="add_members">เพิ่มสมาชิก</string>
+    <string name="members">สมาชิก</string>
+    <string name="add_admin">เพิ่มแอดมิน</string>
+    <string name="error.select_friend_only_n_amount">
+        คุณสามารถเลือกได้เพื่อนสูงสุดแค่ <xliff:g id="max">%d</xliff:g> คน
+    </string>
+    <string name="n_promoted_n_to_be_admin">
+        <xliff:g id="person">%s</xliff:g> เลื่อนขั้น <xliff:g id="all_friends">%s</xliff:g> เป็นแอดมิน
+    </string>
+    <string name="n_demoted_n_from_admin_to_member">
+        <xliff:g id="person">%s</xliff:g> ลดขั้น <xliff:g id="all_friends">%s</xliff:g> จากแอดมินเป็นสมาชิกทั่วไป
+    </string>
+    <string name="n_invited_n_to_room">
+        <xliff:g id="person">%s</xliff:g> เชิญ <xliff:g id="all_friends">%s</xliff:g> เข้าห้องแชท
+    </string>
+    <string name="n_removed_n_from_room">
+        <xliff:g id="person">%s</xliff:g> นำ <xliff:g id="all_friends">%s</xliff:g> ออกจากแชท
+    </string>
+    <string name="remove_member">นำสมาชิกออก</string>
+    <string name="remove_admin">นำแอดมินออก</string>
+    <string name="error_no_friend_to_be_invited">ไม่มีเพื่อนที่สามารถเชิญได้</string>
+    <string name="leave_room">ออกจากห้อง</string>
+    <string name="error.no_addable_admin">สมาชิกทุกคนในห้องเป็นแอดมิน</string>
+    <string name="find_admin">ค้นหาแอดมิน</string>
+    <string name="error_no_admin_to_be_demoted">ไม่มีแอดมินให้ลดขั้น</string>
+    <string name="error.no_member_to_be_removed">ไม่มีสมาชิกให้นำออก</string>
+    <string name="edit">แก้ไข</string>
+    <string name="leave_chat">ออกจากแชท</string>
+    <string name="leave_chat_message">คุณจะไม่ได้รับข้อความใหม่ใด ๆ เลย ถ้าคุณออกจากแชท</string>
+    <string name="error.leaving_chat">เกิดข้อผิดพลาดขึ้นขณะออกจากแชท กรุณาลองใหม่อีกครั้ง</string>
+
+    <string name="you_got_removed_from_this_chat">คุณถูกลบออกจากแชท คุณจะไม่สามารถคุยห้องแชทนี้ได้</string>
+    <string name="are_you_sure_to_logout">คุณแน่ใจที่จะออกจากระบบ?</string>
+    <string name="no_friend_to_be_added">ไม่พบเพื่อนให้เพิ่ม</string>
+    <string name="no_public_chat">ไม่พบห้องสาธารณะ</string>
+    <string name="successfullly_leave_n">
+        คุณออกจาก <xliff:g id="name">%s</xliff:g> เรียบร้อย
+    </string>
+    <string name="you">คุณ</string>
+    <string name="n_admin_leave_chat_n_is_now_admin">
+        แอดมิน <xliff:g id="leaveName">%s</xliff:g> ได้ออกจากห้อง <xliff:g id="newAdminName">%s</xliff:g> ได้เลื่อนขั้นเป็นแอดมิน
+    </string>
+    <string name="n_leave_chat_n_is_now_admin">
+        <xliff:g id="leaveName">%s</xliff:g> ได้ออกจากห้อง <xliff:g id="newAdminName">%s</xliff:g> ได้เลื่อนขั้นเป็นแอดมิน
+    </string>
+    <string name="n_leave_this_chat">%s ได้ออกจากห้อง</string>
+    <string-array name="main_tab_names">
+        <item>ข้อความ</item>
+        <item>เพื่อน</item>
+        <item>กลุ่ม</item>
+        <item>สาธารณะ</item>
+    </string-array>
+
+</resources>

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.oakkub.chat.views.widgets.VisibilityTextView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/wide_textview"
+    style="@style/TextViewSingleLineStyle"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/black_background"
+    android:fontFamily="sans-serif-light"
+    android:freezesText="true"
+    android:gravity="center"
+    android:padding="@dimen/spacing_smaller"
+    android:textColor="@android:color/white" />

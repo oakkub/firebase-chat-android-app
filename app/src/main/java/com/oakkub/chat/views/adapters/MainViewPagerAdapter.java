@@ -8,8 +8,6 @@ import com.oakkub.chat.fragments.GroupListFragment;
 import com.oakkub.chat.fragments.PublicListFragment;
 import com.oakkub.chat.fragments.RoomListFragment;
 
-import javax.inject.Inject;
-
 /**
  * Created by OaKKuB on 10/12/2015.
  */
@@ -19,7 +17,6 @@ public class MainViewPagerAdapter extends SmartFragmentStatePagerAdapter {
 
     private String myId;
 
-    @Inject
     public MainViewPagerAdapter(FragmentManager fragmentManager, String myId) {
         super(fragmentManager);
         this.myId = myId;
@@ -36,7 +33,7 @@ public class MainViewPagerAdapter extends SmartFragmentStatePagerAdapter {
 
             case 1:
 
-                return FriendsFragment.newInstance();
+                return FriendsFragment.newInstance(myId);
 
             case 2:
 
@@ -44,7 +41,7 @@ public class MainViewPagerAdapter extends SmartFragmentStatePagerAdapter {
 
             case 3:
 
-                return new PublicListFragment();
+                return PublicListFragment.newInstance(myId);
 
         }
 
@@ -53,7 +50,7 @@ public class MainViewPagerAdapter extends SmartFragmentStatePagerAdapter {
 
     @Override
     public CharSequence getPageTitle(int position) {
-        return String.valueOf(position);
+        return null;
     }
 
     @Override

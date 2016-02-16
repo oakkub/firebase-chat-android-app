@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string-array name="public_chat_tag_keys">
+        <item>ทั่วไป</item>
+        <item>ศิลปะ</item>
+        <item>หนังสือ</item>
+        <item>กล้อง</item>
+        <item>รถยนต์</item>
+        <item>การ์ตูน</item>
+        <item>การศึกษา</item>
+        <item>ความบันเทิง</item>
+        <item>ครอบครัว</item>
+        <item>การเงิน</item>
+        <item>อาหาร</item>
+        <item>เกม</item>
+        <item>สุขภาพ</item>
+        <item>เครื่องสำอาง</item>
+        <item>ภาพยนตร์</item>
+        <item>ดนตรี</item>
+        <item>สัตว์เลี้ยง</item>
+        <item>สินทรัพย์</item>
+        <item>วิทยาศาตร์</item>
+        <item>กีฬา</item>
+        <item>เทคโนโลยร</item>
+        <item>การท่องเที่ยว</item>
+    </string-array>
+
+</resources>

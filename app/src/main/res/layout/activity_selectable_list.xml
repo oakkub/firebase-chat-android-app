@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.design.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@android:color/white"
+    android:fitsSystemWindows="true">
+
+    <include layout="@layout/partial_toolbar" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
+        <EditText
+            android:id="@+id/find_friend_edittext"
+            style="@style/DefaultEditTextStyle.MultiLine"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="@dimen/spacing_smaller"
+            android:hint="@string/find_friends" />
+
+        <include layout="@layout/partial_horizontal_line" />
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1">
+
+            <include
+                android:id="@+id/find_friend_friend_recyclerview"
+                layout="@layout/recyclerview"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+
+            <com.oakkub.chat.views.widgets.EmptyTextProgressBar
+                android:id="@+id/find_friend_emptyTextProgressBar"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+
+        </FrameLayout>
+
+        <include
+            android:id="@+id/find_friend_selected_friend_line"
+            layout="@layout/partial_horizontal_line" />
+
+        <include
+            android:id="@+id/find_friend_selected_friend_recyclerview"
+            layout="@layout/recyclerview"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/spacing_bigger2" />
+
+    </LinearLayout>
+
+</android.support.design.widget.CoordinatorLayout>

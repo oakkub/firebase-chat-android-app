@@ -2,25 +2,17 @@ package com.oakkub.chat.views.adapters;
 
 import android.net.Uri;
 import android.support.v4.view.ViewCompat;
-import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.ProgressBar;
-import android.widget.TextView;
 
-import com.facebook.drawee.view.SimpleDraweeView;
 import com.oakkub.chat.R;
 import com.oakkub.chat.models.UserInfo;
 import com.oakkub.chat.utils.TransitionUtil;
-
-import butterknife.Bind;
-import butterknife.ButterKnife;
-import butterknife.OnClick;
+import com.oakkub.chat.views.adapters.presenter.OnAdapterItemClick;
+import com.oakkub.chat.views.adapters.viewholders.ProgressBarHolder;
+import com.oakkub.chat.views.adapters.viewholders.SimpleInfoHolder;
 
 /**
  * Created by OaKKuB on 10/26/2015.
@@ -30,10 +22,10 @@ public class FriendListAdapter extends RecyclerViewAdapter<UserInfo> {
     private static final int FRIEND_TYPE = 0;
     private static final int ADD_FRIEND_TYPE = 1;
 
-    private OnClickListener onClickListener;
+    private OnAdapterItemClick onAdapterItemClick;
 
-    public void setOnClickListener(OnClickListener onClickListener) {
-        this.onClickListener = onClickListener;
+    public FriendListAdapter(OnAdapterItemClick onAdapterItemClick) {
+        this.onAdapterItemClick = onAdapterItemClick;
     }
 
     @Override
@@ -52,17 +44,7 @@ public class FriendListAdapter extends RecyclerViewAdapter<UserInfo> {
             }
 
         } else {
-
-            final int type = userInfo.getType();
-
-            switch (type) {
-                case UserInfo.FRIEND:
-                    return FRIEND_TYPE;
-                case UserInfo.ADD_FRIEND:
-                    return ADD_FRIEND_TYPE;
-                default:
-                    return LOAD_MORE_TYPE;
-            }
+            return FRIEND_TYPE;
         }
     }
 
@@ -76,13 +58,8 @@ public class FriendListAdapter extends RecyclerViewAdapter<UserInfo> {
 
             case FRIEND_TYPE:
 
-                itemView = layoutInflater.inflate(R.layout.friends_list, parent, false);
-                return new FriendHolder(itemView);
-
-            case ADD_FRIEND_TYPE:
-
-                itemView = layoutInflater.inflate(R.layout.add_friends_list, parent, false);
-                return new AddFriendHolder(itemView);
+                itemView = layoutInflater.inflate(R.layout.simple_info_list, parent, false);
+                return new SimpleInfoHolder(itemView, onAdapterItemClick);
 
             case LOAD_MORE_TYPE:
 
@@ -97,95 +74,14 @@ public class FriendListAdapter extends RecyclerViewAdapter<UserInfo> {
     @Override
     public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
 
-        if (holder instanceof FriendHolder ||
-            holder instanceof AddFriendHolder) {
+        SimpleInfoHolder simpleInfoHolder = (SimpleInfoHolder) holder;
 
-            final UserInfo userInfo = items.get(position);
-            final String profileImageURI = userInfo.getProfileImageURL();
+        UserInfo userInfo = getItem(position);
 
-            if (holder instanceof FriendHolder) {
-                final FriendHolder friendHolder = (FriendHolder) holder;
+        simpleInfoHolder.profileImageTextView.setImageURI(Uri.parse(userInfo.getProfileImageURL()));
+        simpleInfoHolder.nameTextView.setText(userInfo.getDisplayName());
 
-                friendHolder.friendProfileImage.setImageURI(Uri.parse(profileImageURI));
-                friendHolder.friendName.setText(userInfo.getDisplayName());
-
-                ViewCompat.setTransitionName(friendHolder.friendProfileImage,
-                        TransitionUtil.SHARED_TRANSITION + position);
-
-            } else {
-                final AddFriendHolder addFriendHolder = (AddFriendHolder) holder;
-
-                addFriendHolder.addFriendProfileImage.setImageURI(Uri.parse(profileImageURI));
-
-                addFriendHolder.addFriendName.setText(userInfo.getDisplayName());
-            }
-
-        }
-
+        ViewCompat.setTransitionName(simpleInfoHolder.profileImageTextView,
+                TransitionUtil.SHARED_TRANSITION + position);
     }
-
-    public interface OnClickListener {
-        void onClick(View view, RecyclerView.ViewHolder viewHolder, int position);
-    }
-
-    static class ProgressBarHolder extends RecyclerView.ViewHolder {
-
-        @Bind(R.id.progressBar)
-        ProgressBar loading;
-
-        public ProgressBarHolder(View itemView) {
-            super(itemView);
-
-            ButterKnife.bind(this, itemView);
-        }
-    }
-
-    public class FriendHolder extends RecyclerView.ViewHolder {
-
-        @Bind(R.id.friendProfileImageView)
-        public ImageView friendProfileImage;
-        @Bind(R.id.friendProfileRoot)
-        LinearLayout friendProfileRoot;
-        @Bind(R.id.friendNameTextView)
-        TextView friendName;
-
-        public FriendHolder(View itemView) {
-            super(itemView);
-
-            ButterKnife.bind(this, itemView);
-        }
-
-        @OnClick(R.id.friendProfileRoot)
-        public void onClick(View view) {
-            onClickListener.onClick(itemView, this, getAdapterPosition());
-        }
-    }
-
-    public class AddFriendHolder extends RecyclerView.ViewHolder {
-
-        @Bind(R.id.addFriendProfileRoot)
-        CardView addFriendProfileRoot;
-
-        @Bind(R.id.addFriendProfileImageView)
-        SimpleDraweeView addFriendProfileImage;
-
-        @Bind(R.id.addFriendNameTextView)
-        TextView addFriendName;
-
-        @Bind(R.id.addFriendButton)
-        Button addFriendButton;
-
-        public AddFriendHolder(View itemView) {
-            super(itemView);
-
-            ButterKnife.bind(this, itemView);
-        }
-
-        @OnClick(R.id.addFriendButton)
-        public void onAddFriendClick(View view) {
-            onClickListener.onClick(itemView, this, getAdapterPosition());
-        }
-
-    }
-
 }

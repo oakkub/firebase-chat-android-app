@@ -10,6 +10,8 @@ public class Room {
 
     String roomId;
     String name;
+    String description;
+    String tag;
     String imagePath;
     String latestMessage;
     String latestMessageUser;
@@ -57,7 +59,7 @@ public class Room {
         this.latestMessageUser = latestMessageUser;
     }
 
-    public void setRoomName(String name) {
+    public void setName(String name) {
         this.name = name;
     }
 
@@ -77,10 +79,33 @@ public class Room {
         this.roomId = roomId;
     }
 
-    public void setRoomImagePath(String imagePath) {
+    public void setImagePath(String imagePath) {
         this.imagePath = imagePath;
     }
 
+    public String getDescription() {
+        return description;
+    }
+
+    public String getTag() {
+        return tag;
+    }
+
+    public void setTag(String tag) {
+        this.tag = tag;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public void setCreated(long created) {
+        this.created = created;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
 
     @Override
     public boolean equals(Object o) {
@@ -102,6 +127,8 @@ public class Room {
         return "Room{" +
                 "roomId='" + roomId + '\'' +
                 ", name='" + name + '\'' +
+                ", description='" + description + '\'' +
+                ", tag='" + tag + '\'' +
                 ", imagePath='" + imagePath + '\'' +
                 ", latestMessage='" + latestMessage + '\'' +
                 ", latestMessageUser='" + latestMessageUser + '\'' +

@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.oakkub.chat.views.widgets.MyLinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:TextImageView="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/message_input_layout"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+
+    <io.codetail.widget.RevealFrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <com.oakkub.chat.views.widgets.MyLinearLayout
+            android:id="@+id/message_attachment_root"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@android:color/white"
+            android:orientation="horizontal">
+
+            <com.oakkub.chat.views.widgets.TextImageView
+                android:id="@+id/textImageCamera"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                TextImageView:image="@drawable/ic_camera_alt_red_48dp"
+                TextImageView:textName="@string/camera" />
+
+            <com.oakkub.chat.views.widgets.TextImageView
+                android:id="@+id/textImageGallery"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                TextImageView:image="@drawable/ic_image_red_48dp"
+                TextImageView:textName="@string/Gallery" />
+
+            <com.oakkub.chat.views.widgets.TextImageView
+                android:id="@+id/textImageBack"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                TextImageView:image="@drawable/ic_keyboard_arrow_down_red_48dp"
+                TextImageView:textName="@string/close" />
+
+        </com.oakkub.chat.views.widgets.MyLinearLayout>
+
+    </io.codetail.widget.RevealFrameLayout>
+
+    <LinearLayout
+        android:id="@+id/message_input_root"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@android:color/white"
+        android:divider="@drawable/spacer_medium"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:showDividers="middle">
+
+        <ImageButton
+            android:id="@+id/message_attachment_button"
+            android:layout_width="@dimen/spacing_bigger"
+            android:layout_height="@dimen/spacing_bigger"
+            android:background="@drawable/white_background"
+            android:contentDescription="@string/attachment"
+            android:padding="@dimen/spacing_smaller"
+            android:scaleType="centerCrop"
+            android:src="@drawable/ic_attach_file_gray_24dp" />
+
+        <EditText
+            android:id="@+id/message_input_ediitext"
+            style="@style/DefaultEditTextStyle.MultiLine"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:hint="@string/hint.message.enter_text_here"
+            android:inputType="textAutoCorrect|textAutoComplete|textMultiLine"
+            android:padding="@dimen/spacing_small" />
+
+        <ImageButton
+            android:id="@+id/message_input_button"
+            android:layout_width="@dimen/spacing_bigger"
+            android:layout_height="@dimen/spacing_bigger"
+            android:background="@drawable/white_background"
+            android:contentDescription="@string/messenger_send_button_text"
+            android:padding="@dimen/spacing_smaller"
+            android:scaleType="centerCrop"
+            android:src="@drawable/ic_send_red_48dp" />
+
+    </LinearLayout>
+
+</com.oakkub.chat.views.widgets.MyLinearLayout>
+
+

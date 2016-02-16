@@ -2,13 +2,11 @@ package com.oakkub.chat.activities;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.content.ContextCompat;
-import android.widget.RelativeLayout;
+import android.support.design.widget.CoordinatorLayout;
 import android.widget.TextView;
 
 import com.oakkub.chat.R;
-import com.oakkub.chat.fragments.AuthenticationActivityFragment;
+import com.oakkub.chat.fragments.AuthenticationFragment;
 import com.oakkub.chat.utils.FirebaseUtil;
 
 import butterknife.Bind;
@@ -20,7 +18,7 @@ public class AuthenticationActivity extends BaseActivity {
     private static final String AUTHENTICATION_TAG = "tag:authenticationFragment";
 
     @Bind(R.id.login_process_root_view)
-    RelativeLayout rootView;
+    CoordinatorLayout rootView;
 
     @Bind(R.id.logging_in_text_view)
     TextView loggingTextView;
@@ -43,14 +41,21 @@ public class AuthenticationActivity extends BaseActivity {
         if (savedInstanceState != null) return;
 
         Intent intent = getIntent();
-        provider = intent.getStringExtra(AuthenticationActivityFragment.PROVIDER);
+        provider = intent.getStringExtra(AuthenticationFragment.PROVIDER);
     }
 
     private void setViews() {
 
-        rootView.setBackgroundColor(ContextCompat.getColor(this, getBackgroundColor()));
+        setStatusBarColor(getStatusBarColor());
+        rootView.setBackgroundColor(getCompatColor(getBackgroundColor()));
 
         loggingTextView.setText(getString(R.string.authenticating_user));
+    }
+
+    private int getStatusBarColor() {
+        if (FirebaseUtil.isGoogleLogin(provider)) return R.color.colorPrimaryDark;
+        else if (FirebaseUtil.isFacebookLogin(provider)) return R.color.darkerBlue;
+        else return R.color.colorPrimary;
     }
 
     private int getBackgroundColor() {
@@ -60,37 +65,33 @@ public class AuthenticationActivity extends BaseActivity {
     }
 
     private void findAuthenticationFragment() {
-        FragmentManager fragmentManager = getSupportFragmentManager();
-        AuthenticationActivityFragment authenticationActivityFragment = (AuthenticationActivityFragment) fragmentManager.findFragmentByTag(AUTHENTICATION_TAG);
-
-        if (authenticationActivityFragment == null) {
+        AuthenticationFragment authenticationFragment =
+                (AuthenticationFragment) findFragmentByTag(AUTHENTICATION_TAG);
+        if (authenticationFragment == null) {
             if (FirebaseUtil.isEmailLogin(provider)) {
-                authenticationActivityFragment = findEmailLoginAuthenticationFragment();
+                authenticationFragment = emailLoginAuthenticationFragment();
             } else {
-                authenticationActivityFragment = findTokenLoginAuthenticationFragment();
+                authenticationFragment = tokenLoginAuthenticationFragment();
             }
-
-            fragmentManager.beginTransaction()
-                    .add(authenticationActivityFragment, AUTHENTICATION_TAG)
-                    .commit();
+            addFragmentByTag(authenticationFragment, AUTHENTICATION_TAG);
         }
     }
 
-    private AuthenticationActivityFragment findEmailLoginAuthenticationFragment() {
+    private AuthenticationFragment emailLoginAuthenticationFragment() {
         Intent intent = getIntent();
 
-        String email = intent.getStringExtra(AuthenticationActivityFragment.EMAIL);
-        String password = intent.getStringExtra(AuthenticationActivityFragment.PASSWORD);
+        String email = intent.getStringExtra(AuthenticationFragment.EMAIL);
+        String password = intent.getStringExtra(AuthenticationFragment.PASSWORD);
 
-        return AuthenticationActivityFragment.newInstance(provider, email, password);
+        return AuthenticationFragment.newInstance(provider, email, password);
     }
 
-    private AuthenticationActivityFragment findTokenLoginAuthenticationFragment() {
+    private AuthenticationFragment tokenLoginAuthenticationFragment() {
         Intent intent = getIntent();
 
-        String token = intent.getStringExtra(AuthenticationActivityFragment.TOKEN);
+        String token = intent.getStringExtra(AuthenticationFragment.TOKEN);
 
-        return AuthenticationActivityFragment.newInstance(provider, token);
+        return AuthenticationFragment.newInstance(provider, token);
     }
 
     @Override

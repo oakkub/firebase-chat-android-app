@@ -22,8 +22,7 @@ public class Base64Util {
                 text.startsWith("file://") ||
                 text.startsWith("content://") ||
                 text.startsWith("asset://") ||
-                text.startsWith("res://") ||
-                text.startsWith("data:mime/type;base64,"));
+                text.startsWith("res://"));
 
         /*return !(text.startsWith("http://") ||
                text.startsWith("https://") ||

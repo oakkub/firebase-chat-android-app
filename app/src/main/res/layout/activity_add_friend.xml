@@ -1,22 +1,35 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.design.widget.CoordinatorLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+<android.support.design.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:fitsSystemWindows="true"
+    android:orientation="vertical"
     tools:context="com.oakkub.chat.activities.AddFriendActivity">
 
-    <include
-        layout="@layout/simple_toolbar" />
-
-    <fragment
-        android:id="@+id/fragment"
-        android:name="com.oakkub.chat.fragments.AddFriendActivityFragment"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        app:layout_behavior="@string/appbar_scrolling_view_behavior"
-        tools:layout="@layout/fragment_add_friend" />
+        android:orientation="vertical">
+
+        <include layout="@layout/partial_toolbar" />
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <include layout="@layout/recyclerview" />
+
+            <com.oakkub.chat.views.widgets.EmptyTextProgressBar
+                android:id="@+id/add_friend_empty_text_progress_bar"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                app:text="@string/no_friend_to_be_added"
+                app:progressBarDrawable="@drawable/simple_progress"/>
+
+        </FrameLayout>
+
+    </LinearLayout>
 
 </android.support.design.widget.CoordinatorLayout>

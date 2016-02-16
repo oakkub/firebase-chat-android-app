@@ -1,23 +1,31 @@
 package com.oakkub.chat.fragments;
 
+import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
-import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
 import com.oakkub.chat.R;
-import com.oakkub.chat.views.adapters.ListAdapter;
+import com.oakkub.chat.activities.GroupDetailDialogActivity;
+import com.oakkub.chat.managers.GridAutoFitLayoutManager;
+import com.oakkub.chat.managers.OnScrolledEventListener;
+import com.oakkub.chat.models.EventBusGroupRoom;
+import com.oakkub.chat.models.Room;
+import com.oakkub.chat.views.adapters.GroupListAdapter;
 import com.oakkub.chat.views.adapters.presenter.OnAdapterItemClick;
+import com.oakkub.chat.views.widgets.recyclerview.RecyclerViewScrollDirectionListener;
 
 import java.util.ArrayList;
+import java.util.Collections;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
+import de.greenrobot.event.EventBus;
 import icepick.State;
 
 /**
@@ -34,7 +42,8 @@ public class GroupListFragment extends BaseFragment implements OnAdapterItemClic
     @State
     String myId;
 
-    private ListAdapter listAdapter;
+    private GroupListAdapter groupListAdapter;
+    private OnScrolledEventListener onScrolledEventListener;
 
     public static GroupListFragment newInstance(String myId) {
         Bundle args = new Bundle();
@@ -46,9 +55,17 @@ public class GroupListFragment extends BaseFragment implements OnAdapterItemClic
     }
 
     @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+
+        onScrolledEventListener = (OnScrolledEventListener) getActivity();
+    }
+
+    @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         getDataFromArgs(savedInstanceState);
+        EventBus.getDefault().register(this);
     }
 
     @Override
@@ -72,7 +89,9 @@ public class GroupListFragment extends BaseFragment implements OnAdapterItemClic
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
 
-        listAdapter.onSaveInstanceState("a", outState);
+        if (groupListAdapter != null) {
+            groupListAdapter.onSaveInstanceState("a", outState);
+        }
     }
 
     @Override
@@ -80,7 +99,23 @@ public class GroupListFragment extends BaseFragment implements OnAdapterItemClic
         super.onViewStateRestored(savedInstanceState);
         if (savedInstanceState == null) return;
 
-        listAdapter.onRestoreInstanceState("a", savedInstanceState);
+        if (groupListAdapter != null) {
+            groupListAdapter.onRestoreInstanceState("a", savedInstanceState);
+        }
+    }
+
+    @Override
+    public void onDetach() {
+        super.onDetach();
+
+        onScrolledEventListener = null;
+    }
+
+    @Override
+    public void onDestroy() {
+        EventBus.getDefault().unregister(this);
+
+        super.onDestroy();
     }
 
     private void getDataFromArgs(Bundle savedInstanceState) {
@@ -91,32 +126,56 @@ public class GroupListFragment extends BaseFragment implements OnAdapterItemClic
     }
 
     private void setGroupRecyclerView() {
+        int columnWidth = (int) getResources().getDimension(R.dimen.cardview_width);
 
-        listAdapter = new ListAdapter(getTempData(), this);
+        groupListAdapter = new GroupListAdapter(this);
 
-        groupRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
-        groupRecyclerView.setAdapter(listAdapter);
+        groupRecyclerView.setLayoutManager(new GridAutoFitLayoutManager(getActivity(), columnWidth));
+        groupRecyclerView.setHasFixedSize(true);
+        groupRecyclerView.addOnScrollListener(new RecyclerViewScrollDirectionListener() {
+            @Override
+            public void onScrollUp() {
+                if (onScrolledEventListener != null) {
+                    onScrolledEventListener.onScrollUp();
+                }
+            }
 
+            @Override
+            public void onScrollDown() {
+                if (onScrolledEventListener != null) {
+                    onScrolledEventListener.onScrollDown();
+                }
+            }
+        });
+
+        groupRecyclerView.setAdapter(groupListAdapter);
     }
 
-    private ArrayList<String> getTempData() {
-        ArrayList<String> list = new ArrayList<>();
-        for (int i = 0; i < 100; i++) {
-            list.add(String.valueOf(i));
+    public void onEvent(EventBusGroupRoom eventBusGroupRoom) {
+        ArrayList<Room> roomList = eventBusGroupRoom.roomList;
+        Collections.reverse(roomList);
+
+        if (groupListAdapter != null) {
+            for (int i = 0, size = roomList.size(); i < size; i++) {
+                Room room = roomList.get(i);
+                if (!groupListAdapter.contains(room)) {
+                    groupListAdapter.addLast(room);
+                }
+            }
         }
-        return list;
     }
 
     @Override
     public void onAdapterClick(View itemView, int position) {
+        Room room = groupListAdapter.getItem(position);
 
+        Intent groupDetailIntent = GroupDetailDialogActivity.getStartIntent(getActivity(), room, myId,
+                true, GroupDetailDialogActivity.ACTION_GROUP);
+        startActivity(groupDetailIntent);
     }
 
     @Override
     public boolean onAdapterLongClick(View itemView, int position) {
-        Log.e(TAG, "onAdapterLongClick: " + listAdapter.isSelected(position) );
-        listAdapter.toggleSelection(position);
-
         return false;
     }
 }

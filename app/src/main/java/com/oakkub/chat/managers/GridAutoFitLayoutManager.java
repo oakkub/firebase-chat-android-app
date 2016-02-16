@@ -29,6 +29,7 @@ public class GridAutoFitLayoutManager extends GridLayoutManager {
     private int checkedColumnWidth(Context context, int columnWidth) {
 
         if (columnWidth <= 0) {
+            // default width
             columnWidth = (int) context.getResources().getDimension(R.dimen.spacing_larger);
         }
         return columnWidth;
@@ -44,10 +45,10 @@ public class GridAutoFitLayoutManager extends GridLayoutManager {
 
     @Override
     public void onLayoutChildren(RecyclerView.Recycler recycler, RecyclerView.State state) {
-        if (columnWidthChanged && columnWidth > 0) {
+        if (columnWidthChanged) {
 
-            final int totalSpace = getTotalSpace();
-            final int spanCount = Math.max(1, totalSpace / columnWidth);
+            int totalSpace = getTotalSpace();
+            int spanCount = Math.max(1, totalSpace / columnWidth);
             setSpanCount(spanCount);
 
             if (debug) {

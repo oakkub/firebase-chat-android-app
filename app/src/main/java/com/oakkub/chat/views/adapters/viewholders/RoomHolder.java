@@ -47,12 +47,7 @@ public class RoomHolder extends RecyclerView.ViewHolder {
 
     @OnLongClick(R.id.room_root)
     public boolean onRoomLongClick() {
-        if (onAdapterItemClick == null) {
-            return false;
-        } else {
-            onAdapterItemClick.onAdapterLongClick(itemView, getAdapterPosition());
-            return true;
-        }
+        return onAdapterItemClick != null && onAdapterItemClick.onAdapterLongClick(itemView, getAdapterPosition());
     }
 
 }

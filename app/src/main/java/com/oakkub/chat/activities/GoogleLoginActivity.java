@@ -1,15 +1,17 @@
 package com.oakkub.chat.activities;
 
+import android.accounts.Account;
 import android.app.IntentService;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
-import android.support.v4.content.ContextCompat;
+import android.support.annotation.NonNull;
+import android.support.design.widget.CoordinatorLayout;
 import android.util.Log;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+import com.crashlytics.android.Crashlytics;
 import com.google.android.gms.auth.GoogleAuthException;
 import com.google.android.gms.auth.GoogleAuthUtil;
 import com.google.android.gms.auth.UserRecoverableAuthException;
@@ -23,7 +25,7 @@ import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.common.api.Scope;
 import com.google.android.gms.common.api.Status;
 import com.oakkub.chat.R;
-import com.oakkub.chat.fragments.AuthenticationActivityFragment;
+import com.oakkub.chat.fragments.AuthenticationFragment;
 import com.oakkub.chat.models.GoogleLoginInfo;
 import com.oakkub.chat.utils.TextUtil;
 import com.oakkub.chat.utils.Util;
@@ -54,12 +56,15 @@ public class GoogleLoginActivity extends BaseActivity
     private static final String EMAIL_SCOPE = "https://www.googleapis.com/auth/userinfo.email";
 
     @Bind(R.id.login_process_root_view)
-    RelativeLayout rootView;
+    CoordinatorLayout rootView;
     @Bind(R.id.logging_in_text_view)
     TextView loggingInTextView;
 
     @State
     boolean isResolvingError;
+
+    @State
+    boolean isTryAgain;
 
     @State
     String action;
@@ -87,7 +92,8 @@ public class GoogleLoginActivity extends BaseActivity
 
     private void setViews() {
 
-        rootView.setBackgroundColor(ContextCompat.getColor(this, R.color.tomato));
+        setStatusBarColor(getCompatColor(R.color.colorPrimaryDark));
+        rootView.setBackgroundColor(getCompatColor(R.color.tomato));
 
         loggingInTextView.setText(action.equals(ACTION_LOGIN) ?
                 getString(R.string.logging_in_with_google) : getString(R.string.logging_out_with_google));
@@ -147,11 +153,9 @@ public class GoogleLoginActivity extends BaseActivity
     public void onBackPressed() {
 
         if (action.equals(ACTION_LOGIN)) {
-
             isResolvingError = true;
             googleApiClient.disconnect();
-
-            super.onBackPressed();
+            fadeOutFinish();
         }
     }
 
@@ -159,11 +163,13 @@ public class GoogleLoginActivity extends BaseActivity
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
-        if (requestCode == RC_GOOGLE) {
+        if (requestCode == RC_GOOGLE && resultCode == RESULT_OK) {
 
             GoogleSignInResult googleSignInResult = Auth.GoogleSignInApi.getSignInResultFromIntent(data);
             handleSignInResult(googleSignInResult);
 
+        } else {
+            onBackPressed();
         }
     }
 
@@ -172,14 +178,13 @@ public class GoogleLoginActivity extends BaseActivity
 
             if (action.equals(ACTION_LOGOUT)) {
                 logout(false);
-                finishActivity();
+                fadeOutFinish();
             } else {
                 GoogleSignInAccount account = googleSignInResult.getSignInAccount();
                 onGoogleServicesConnected(account);
             }
         } else {
-
-            finishActivity();
+            fadeOutFinish();
         }
     }
 
@@ -192,20 +197,20 @@ public class GoogleLoginActivity extends BaseActivity
 
     @Override
     public void onConnectionSuspended(int i) {
+        if (!isTryAgain) {
+            login();
+            isTryAgain = true;
+        } else {
+            onBackPressed();
+        }
     }
 
     @Override
-    public void onConnectionFailed(ConnectionResult result) {
-
+    public void onConnectionFailed(@NonNull ConnectionResult result) {
         final int errorCode = result.getErrorCode();
         Log.e("google errror code", String.valueOf(errorCode));
         Log.e("google errror code", String.valueOf(isResolvingError));
-
-    }
-
-    private void finishActivity() {
-        finish();
-        overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
+        Crashlytics.log(result.getErrorCode() + " : " + result.getErrorMessage());
     }
 
     private void onGoogleServicesConnected(GoogleSignInAccount account) {
@@ -221,7 +226,7 @@ public class GoogleLoginActivity extends BaseActivity
     }
 
     private String getScopes(Set<Scope> grantedScopes) {
-        StringBuilder builder = new StringBuilder();
+        StringBuilder builder = new StringBuilder(39 + 46 + 48);
         for (Scope scope : grantedScopes) {
             builder.append(scope.toString().startsWith("http") ? scope.toString() : "").append(" ");
         }
@@ -233,13 +238,13 @@ public class GoogleLoginActivity extends BaseActivity
 
         if (googleLoginInfo == null) {
 
-            finishActivity();
+            onBackPressed();
 
         } else {
 
             Intent authenticateIntent = Util.intentClearActivity(this, AuthenticationActivity.class);
-            authenticateIntent.putExtra(AuthenticationActivityFragment.PROVIDER, TextUtil.GOOGLE_PROVIDER);
-            authenticateIntent.putExtra(AuthenticationActivityFragment.TOKEN, googleLoginInfo.token);
+            authenticateIntent.putExtra(AuthenticationFragment.PROVIDER, TextUtil.GOOGLE_PROVIDER);
+            authenticateIntent.putExtra(AuthenticationFragment.TOKEN, googleLoginInfo.token);
 
             startActivity(authenticateIntent);
             overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
@@ -252,7 +257,7 @@ public class GoogleLoginActivity extends BaseActivity
         Auth.GoogleSignInApi.signOut(googleApiClient)
                 .setResultCallback(new ResultCallback<Status>() {
                     @Override
-                    public void onResult(Status status) {
+                    public void onResult(@NonNull Status status) {
                         Log.e("google logout", String.valueOf(status.getStatusCode()));
                     }
                 });
@@ -262,7 +267,7 @@ public class GoogleLoginActivity extends BaseActivity
         new Handler().postDelayed(new Runnable() {
             @Override
             public void run() {
-                finishActivity();
+                fadeOutFinish();
             }
         }, 1000);
     }
@@ -289,12 +294,11 @@ public class GoogleLoginActivity extends BaseActivity
 
             String email = intent.getStringExtra(EXTRA_EMAIL);
             String scopes = "oauth2:" + intent.getStringExtra(EXTRA_SCOPES);
+            Account account = new Account(email, GoogleAuthUtil.GOOGLE_ACCOUNT_TYPE);
 
             try {
-                final String token = GoogleAuthUtil.getToken(getApplicationContext(), email, scopes);
+                String token = GoogleAuthUtil.getToken(getApplicationContext(), account, scopes);
                 GoogleLoginInfo googleLoginInfo = new GoogleLoginInfo(token);
-
-                Log.e(TAG, token);
 
                 // send data back to onEvent method
                 EventBus.getDefault().post(googleLoginInfo);
@@ -313,7 +317,7 @@ public class GoogleLoginActivity extends BaseActivity
 
         private void handleTokenException(Exception e) {
             Log.e("GetTokenService", e.getMessage());
-            EventBus.getDefault().post(null);
+            EventBus.getDefault().post(new GoogleLoginInfo(null));
         }
     }
 

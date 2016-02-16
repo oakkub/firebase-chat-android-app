@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <group
+        android:id="@+id/group_main_section"
+        android:checkableBehavior="none">
+
+        <item
+            android:id="@+id/drawer_new_messages"
+            android:icon="@drawable/ic_mode_edit_red_24dp"
+            android:title="@string/new_messages" />
+
+        <item
+            android:id="@+id/drawer_add_friends"
+            android:icon="@drawable/ic_person_add_24dp"
+            android:title="@string/add_friend" />
+
+        <item
+            android:id="@+id/drawer_new_public_chat"
+            android:icon="@drawable/ic_public_red_24dp"
+            android:title="@string/new_public_chat" />
+
+        <item
+            android:id="@+id/drawer_find_public_chat"
+            android:icon="@drawable/ic_search_red_24dp"
+            android:title="@string/find_public_chat" />
+
+    </group>
+
+    <group
+        android:id="@+id/group_user_section"
+        android:checkableBehavior="none">
+
+        <item
+            android:id="@+id/drawer_profile"
+            android:icon="@drawable/ic_account_circle_white_24dp"
+            android:title="@string/profile" />
+
+        <item
+            android:id="@+id/drawer_settings"
+            android:icon="@drawable/ic_settings_white_24dp"
+            android:title="@string/action_settings" />
+
+        <item
+            android:id="@+id/drawer_logout"
+            android:icon="@drawable/ic_exit_to_app_white_24dp"
+            android:title="@string/settings.logout" />
+
+    </group>
+
+</menu>

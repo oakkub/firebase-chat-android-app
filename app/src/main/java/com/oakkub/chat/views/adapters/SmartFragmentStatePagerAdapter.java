@@ -34,8 +34,4 @@ public abstract class SmartFragmentStatePagerAdapter extends FragmentStatePagerA
         return registeredFragments.get(position);
     }
 
-    public SparseArray<Fragment> getFragments() {
-        return registeredFragments;
-    }
-
 }

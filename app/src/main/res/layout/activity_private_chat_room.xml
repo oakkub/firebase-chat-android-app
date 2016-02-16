@@ -1,84 +1,94 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<android.support.design.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fitsSystemWindows="true"
     android:orientation="vertical"
-    tools:context="com.oakkub.chat.activities.PrivateChatRoomActivity">
+    tools:context=".activities.ChatRoomActivity">
 
-    <include layout="@layout/simple_toolbar" />
+    <include layout="@layout/partial_toolbar" />
 
-    <RelativeLayout
+    <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
-        <android.support.v7.widget.RecyclerView
-            android:id="@+id/private_chat_message_recycler_view"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_above="@+id/private_chat_message_message_input_container"
-            android:scrollbars="vertical" />
+            android:orientation="vertical">
 
-        <RelativeLayout
-            android:id="@+id/private_chat_message_message_input_container"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_alignParentBottom="true"
-            android:layout_marginBottom="@dimen/spacing_small"
-            android:layout_marginEnd="@dimen/spacing_small"
-            android:layout_marginLeft="@dimen/spacing_small"
-            android:layout_marginRight="@dimen/spacing_small"
-            android:layout_marginStart="@dimen/spacing_small"
-            android:background="@drawable/rounded_square_background">
-
-            <EditText
-                android:id="@+id/private_chat_message_edit_text"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_centerVertical="true"
-                android:layout_toLeftOf="@+id/private_chat_message_button"
-                android:layout_toStartOf="@+id/private_chat_message_button"
-                android:clickable="true"
-                android:hint="@string/hint.message.enter_text_here"
-                android:inputType="textAutoCorrect|textAutoComplete" />
-
-            <Button
-                android:id="@+id/private_chat_message_button"
+            <FrameLayout
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_alignParentEnd="true"
-                android:layout_alignParentRight="true"
-                android:text="@string/messenger_send_button_text" />
+                android:layout_height="0dp"
+                android:layout_weight="1">
 
-        </RelativeLayout>
+                <android.support.v7.widget.RecyclerView
+                    android:id="@+id/private_chat_message_recycler_view"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:scrollbars="vertical" />
 
-        <com.oakkub.chat.views.widgets.MyLinearLayout xmlns:AVLoadingIndicatorView="http://schemas.android.com/apk/res-auto"
-            android:id="@+id/loading_messages_layout"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_centerInParent="true"
-            android:divider="@drawable/spacer_medium"
-            android:gravity="center"
-            android:orientation="vertical"
-            android:showDividers="middle">
+                <include
+                    android:id="@+id/private_chat_new_message_notify_textview"
+                    layout="@layout/partial_wide_text_view"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="bottom" />
+
+            </FrameLayout>
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <include layout="@layout/partial_message_input" />
+
+                <com.oakkub.chat.views.widgets.VisibilityButton
+                    android:id="@+id/private_chat_join_room_to_chat_botton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/join_this_chat"
+                    android:textAllCaps="false"
+                    android:textAppearance="@style/TextAppearance.AppCompat.Button"
+                    android:textColor="@android:color/white" />
+
+            </FrameLayout>
+
+
+        </LinearLayout>
+
+        <com.oakkub.chat.views.widgets.viewpager.MyFrameLayout
+            android:id="@+id/progress_bar_chat_container"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <include layout="@layout/progress_bar" />
+
+        </com.oakkub.chat.views.widgets.viewpager.MyFrameLayout>
+
+        <com.oakkub.chat.views.widgets.viewpager.MyFrameLayout
+            android:id="@+id/empty_messages_container"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
 
             <TextView
+                android:id="@+id/empty_messages_textview"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:fontFamily="sans-serif-light"
-                android:text="@string/loading_messages"
-                android:textSize="@dimen/spacing_big" />
+                android:layout_gravity="center"
+                android:text="@string/no_message"
+                android:textAppearance="@style/TextAppearance.AppCompat.Headline" />
 
-            <com.wang.avi.AVLoadingIndicatorView
-                android:id="@+id/progress_bar_login"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                AVLoadingIndicatorView:indicator="BallTrianglePath"
-                AVLoadingIndicatorView:indicator_color="@color/colorAccent" />
+        </com.oakkub.chat.views.widgets.viewpager.MyFrameLayout>
 
-        </com.oakkub.chat.views.widgets.MyLinearLayout>
+        <include
+            android:id="@+id/private_chat_typing_notify_textview"
+            layout="@layout/partial_wide_text_view"
+            android:clickable="false" />
 
-    </RelativeLayout>
+    </FrameLayout>
 
-</LinearLayout>
+</android.support.design.widget.CoordinatorLayout>

@@ -8,22 +8,12 @@ import org.parceler.Parcel;
 @Parcel
 public class UserInfo {
 
-    public static final int ME = 0;
-    public static final int FRIEND = 1;
-    public static final int ADD_FRIEND = 2;
-
-    public static final String EMAIL = "email";
-    public static final String DISPLAY_NAME = "displayName";
-    public static final String PROFILE_IMAGE_URL = "profileImageURL";
-    public static final String REGISTERED_DATE = "registeredDate";
-
     String email;
     String displayName;
     String profileImageURL;
     String userKey;
     String instanceID;
     long registeredDate;
-    int type;
 
     public UserInfo() {}
 
@@ -31,7 +21,6 @@ public class UserInfo {
         this.email = email;
         this.displayName = displayName;
         this.profileImageURL = profileImageURL;
-        this.type = ME;
     }
 
     public String getEmail() {
@@ -42,6 +31,10 @@ public class UserInfo {
         return displayName;
     }
 
+    public String getFirstDisplayName() {
+        return displayName.split(" ")[0];
+    }
+
     public String getProfileImageURL() {
         return profileImageURL;
     }
@@ -50,24 +43,24 @@ public class UserInfo {
         return instanceID;
     }
 
-    public String getUserKey() {
+    public String getKey() {
         return userKey;
     }
 
-    public void setUserKey(String userKey) {
+    public void setKey(String userKey) {
         this.userKey = userKey;
-    }
-
-    public int getType() {
-        return type;
-    }
-
-    public void setType(int type) {
-        this.type = type;
     }
 
     public long getRegisteredDate() {
         return registeredDate;
+    }
+
+    public void setInstanceID(String instanceID) {
+        this.instanceID = instanceID;
+    }
+
+    public void setRegisteredDate(long registeredDate) {
+        this.registeredDate = registeredDate;
     }
 
     public void setProfileImageURL(String profileImageURL) {
@@ -81,11 +74,23 @@ public class UserInfo {
 
         UserInfo userInfo = (UserInfo) o;
 
-        return getUserKey().equals(userInfo.getUserKey());
+        return getKey().equals(userInfo.getKey());
     }
 
     @Override
     public int hashCode() {
-        return getUserKey().hashCode();
+        return getKey().hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return "UserInfo{" +
+                "email='" + email + '\'' +
+                ", displayName='" + displayName + '\'' +
+                ", profileImageURL='" + profileImageURL + '\'' +
+                ", userKey='" + userKey + '\'' +
+                ", instanceID='" + instanceID + '\'' +
+                ", registeredDate=" + registeredDate +
+                '}';
     }
 }

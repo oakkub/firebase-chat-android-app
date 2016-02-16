@@ -2,6 +2,8 @@ package com.oakkub.chat.views.adapters.viewholders;
 
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
+import android.widget.CheckBox;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.facebook.drawee.view.SimpleDraweeView;
@@ -18,14 +20,17 @@ import butterknife.OnLongClick;
  */
 public class SelectableFriendHolder extends RecyclerView.ViewHolder {
 
+    @Bind(R.id.selectable_root)
+    public LinearLayout root;
+
     @Bind(R.id.selectable_profile_image)
     public SimpleDraweeView profileImage;
 
     @Bind(R.id.selectable_friend_name_textview)
     public TextView friendNameTextView;
 
-    @Bind(R.id.selectable_indicator_image)
-    public SimpleDraweeView selectionIndicatorImage;
+    @Bind(R.id.selectable_friend_checkbox)
+    public CheckBox friendCheckBox;
 
     private OnAdapterItemClick onAdapterItemClick;
 
@@ -33,19 +38,23 @@ public class SelectableFriendHolder extends RecyclerView.ViewHolder {
         super(itemView);
         ButterKnife.bind(this, itemView);
 
+        if (onAdapterItemClick == null) {
+            root.setBackgroundResource(0);
+        }
+
         this.onAdapterItemClick = onAdapterItemClick;
     }
 
     @OnClick(R.id.selectable_root)
     public void onClick() {
-        onAdapterItemClick.onAdapterClick(itemView, getAdapterPosition());
+        if (onAdapterItemClick != null) {
+            onAdapterItemClick.onAdapterClick(itemView, getAdapterPosition());
+        }
     }
 
     @OnLongClick(R.id.selectable_root)
     public boolean onLongClick() {
-        onAdapterItemClick.onAdapterLongClick(itemView, getAdapterPosition());
-
-        return false;
+        return onAdapterItemClick != null && onAdapterItemClick.onAdapterLongClick(itemView, getAdapterPosition());
     }
 
 }

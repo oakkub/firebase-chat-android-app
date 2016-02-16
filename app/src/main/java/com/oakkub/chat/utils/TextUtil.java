@@ -1,9 +1,5 @@
 package com.oakkub.chat.utils;
 
-import android.content.Context;
-
-import com.oakkub.chat.R;
-
 import java.util.regex.Pattern;
 
 /**
@@ -38,17 +34,29 @@ public class TextUtil {
         return emailPattern.matcher(email).matches();
     }
 
-    public static String getPrivateRoomKey(Context context, final String userId, final String friendId) {
-        return userId.compareTo(friendId) <= 0 ?
-                context.getString(R.string.private_room_key, userId, friendId)
-                :
-                context.getString(R.string.private_room_key, friendId, userId);
+    public static String implodeArray(String regularExpression, String[] strings) {
+        int size = strings.length;
+        StringBuilder builder = new StringBuilder(size * 12);
+        for (int i = 0; i < size; i++) {
+            builder.append(strings[i]);
+            builder.append(i == size - 1 ? "" : regularExpression);
+        }
+        return builder.toString();
+    }
+
+    public static String implode(String regularExpression, String... strings) {
+        int size = strings.length;
+        StringBuilder builder = new StringBuilder(size * 12);
+        for (int i = 0; i < size; i++) {
+            builder.append(strings[i]);
+            builder.append(i == size - 1 ? "" : regularExpression);
+        }
+        return builder.toString();
     }
 
     public static String getPath(String... strings) {
         int size = strings.length;
-        StringBuilder builder = new StringBuilder(size);
-
+        StringBuilder builder = new StringBuilder(size * 12);
         for (int i = 0; i < size; i++) {
             builder.append(strings[i]);
             builder.append(i == size - 1 ? "" : "/");

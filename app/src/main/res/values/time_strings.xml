@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+
+    <string name="time_year_ago" >
+        <xliff:g id="years">%d</xliff:g> year ago
+    </string>
+
+    <string name="time_years_ago" >
+        <xliff:g id="year">%d</xliff:g> years ago
+    </string>
+
+    <string name="yesterday">Yesterday</string>
+
+</resources>

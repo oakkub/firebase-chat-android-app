@@ -1,21 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/login_layout"
-    android:layout_width="wrap_content"
+    android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:layout_gravity="center_vertical"
     android:divider="@drawable/spacer_medium"
     android:gravity="center"
     android:orientation="vertical"
     android:padding="@dimen/spacing_smaller"
     android:showDividers="middle"
-    tools:context="com.oakkub.chat.fragments.LoginActivityFragment" >
+    tools:context=".fragments.LoginFragment">
 
     <Button
         android:id="@+id/login_with_email_button"
         style="@style/DefaultButtonStyle"
-        android:layout_width="@dimen/spacing_giant"
+        android:layout_width="@dimen/spacing_giant2"
         android:layout_height="@dimen/spacing_bigger"
         android:layout_marginTop="@dimen/spacing_small"
         android:background="@drawable/rounded_square_transparent_button"
@@ -33,13 +33,13 @@
 
     <com.google.android.gms.common.SignInButton
         android:id="@+id/google_login_button"
-        android:layout_width="@dimen/spacing_giant"
+        android:layout_width="@dimen/spacing_giant2"
         android:layout_height="wrap_content" />
 
     <Button
         android:id="@+id/facebook_login_button"
         style="@style/FacebookButtonStyle"
-        android:layout_width="@dimen/spacing_giant"
+        android:layout_width="@dimen/spacing_giant2"
         android:layout_height="@dimen/spacing_bigger"
         android:background="@drawable/facebook_login_button"
         android:text="@string/login_with_facebook" />

@@ -2,9 +2,8 @@ package com.oakkub.chat.activities;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.design.widget.CoordinatorLayout;
 import android.support.v4.app.FragmentManager;
-import android.support.v4.content.ContextCompat;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.oakkub.chat.R;
@@ -17,13 +16,13 @@ import icepick.State;
 public class FacebookLoginActivity extends BaseActivity {
 
     public static final String ACTION = "extra:action";
-    public static final String LOGIN_ACTION = "action:login";
-    public static final String LOGOUT_ACTION = "action:logout";
+    public static final String ACTION_LOGIN = "action:login";
+    public static final String ACTION_LOGOUT = "action:logout";
 
     private static final String FRAGMENT_TAG = "tag:facebookLoginFragment";
 
     @Bind(R.id.login_process_root_view)
-    RelativeLayout rootView;
+    CoordinatorLayout rootView;
     @Bind(R.id.logging_in_text_view)
     TextView loggingTextView;
 
@@ -52,9 +51,10 @@ public class FacebookLoginActivity extends BaseActivity {
 
     private void setViews() {
 
-        rootView.setBackgroundColor(ContextCompat.getColor(this, R.color.darkBlue));
+        setStatusBarColor(getCompatColor(R.color.darkerBlue));
+        rootView.setBackgroundColor(getCompatColor(R.color.darkBlue));
 
-        if (action.equals(LOGIN_ACTION)) {
+        if (action.equals(ACTION_LOGIN)) {
             loggingTextView.setText(getString(R.string.logging_in_with_facebook));
         } else {
             loggingTextView.setText(getString(R.string.logging_out_with_facebook));
@@ -78,7 +78,7 @@ public class FacebookLoginActivity extends BaseActivity {
     @Override
     public void onBackPressed() {
         // only when logging in can tap back button.
-        if (action.equals(LOGIN_ACTION)) {
+        if (action.equals(ACTION_LOGIN)) {
             super.onBackPressed();
         }
     }

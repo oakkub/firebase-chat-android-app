@@ -1,58 +1,84 @@
 package com.oakkub.chat.activities;
 
-import android.net.Uri;
+import android.content.Context;
+import android.content.Intent;
+import android.content.res.Resources;
 import android.os.Bundle;
-import android.support.annotation.Nullable;
-import android.support.v4.app.FragmentManager;
+import android.support.v7.app.ActionBar;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.text.Editable;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.EditText;
+import android.widget.Filter;
 
-import com.facebook.drawee.view.SimpleDraweeView;
 import com.oakkub.chat.R;
+import com.oakkub.chat.fragments.CreatePrivateRoomFragment;
 import com.oakkub.chat.fragments.FriendsFetchingFragment;
 import com.oakkub.chat.fragments.NewMessagesFragment;
 import com.oakkub.chat.models.EventBusNewMessagesFriendInfo;
+import com.oakkub.chat.models.Room;
 import com.oakkub.chat.models.UserInfo;
-import com.oakkub.chat.utils.Base64Util;
+import com.oakkub.chat.utils.RoomUtil;
 import com.oakkub.chat.utils.SortUtil;
-import com.oakkub.chat.views.adapters.SelectableFriendAdapter;
+import com.oakkub.chat.views.adapters.FriendSelectableAdapter;
+import com.oakkub.chat.views.adapters.UserImageAdapter;
 import com.oakkub.chat.views.adapters.presenter.OnAdapterItemClick;
+import com.oakkub.chat.views.dialogs.ProgressDialogFragment;
+import com.oakkub.chat.views.widgets.EmptyTextProgressBar;
+import com.oakkub.chat.views.widgets.MyToast;
+
+import org.parceler.Parcels;
 
 import java.util.List;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
-import butterknife.OnClick;
+import butterknife.OnTextChanged;
 import de.greenrobot.event.EventBus;
 import icepick.State;
 
 /**
  * Created by OaKKuB on 12/24/2015.
  */
-public class NewMessagesActivity extends BaseActivity implements OnAdapterItemClick, NewMessagesFragment.OnImageRequestListener {
+public class NewMessagesActivity extends BaseActivity implements OnAdapterItemClick,
+        NewMessagesFragment.OnRoomRequest, Filter.FilterListener {
 
-    public static final String EXTRA_MY_ID = "extra:myId";
+    public static final String EXTRA_FRIEND_ID = "extra:friendId";
 
+    private static final String STATE_FRIEND_INFO = "state:friendInfo";
     private static final String STATE_LIST_ADAPTER = "state:listAdapter";
+    private static final String STATE_SELECTED_LIST_ADAPTER = "state:selectedlistAdapter";
+    private static final String TAG_CREATING_ROOM_DIALOG = "tag:creatingRoomDialog";
     private static final String TAG_FRIENDS_FETCHING = "tag:friendsFetching";
     private static final String TAG_CREATING_NEW_MESSAGES = "tag:creatingNewMessages";
+    private static final String CREATE_PRIVATE_ROOM_TAG = "tag:createPrivateRoom";
     private static final String TAG = NewMessagesActivity.class.getSimpleName();
 
     @Bind(R.id.simple_toolbar)
     Toolbar toolbar;
 
-    @Bind(R.id.new_messages_edittext)
-    EditText newMessageEditText;
+    @Bind(R.id.find_friend_edittext)
+    EditText findFriendsEditText;
 
-    @Bind(R.id.test_image)
-    SimpleDraweeView testImage;
+    @Bind(R.id.find_friend_selected_friend_recyclerview)
+    RecyclerView selectedFriendImageList;
 
-    @Bind(R.id.recyclerview)
+    @Bind(R.id.find_friend_selected_friend_line)
+    View selectedFriendLine;
+
+    @Bind(R.id.find_friend_friend_recyclerview)
     RecyclerView friendList;
+
+    @Bind(R.id.find_friend_emptyTextProgressBar)
+    EmptyTextProgressBar progressBarLayout;
+
+    @State
+    int maxSelectedItems;
 
     @State
     int totalSelectedItems;
@@ -60,15 +86,30 @@ public class NewMessagesActivity extends BaseActivity implements OnAdapterItemCl
     @State
     String myId;
 
+    @State
+    boolean filteredFirstTime;
+
+    private UserInfo friendInfo;
+
     private FriendsFetchingFragment friendsFetchingFragment;
     private NewMessagesFragment newMessagesFragment;
-    private SelectableFriendAdapter selectableFriendAdapter;
+    private CreatePrivateRoomFragment createPrivateRoomFragment;
+    private FriendSelectableAdapter friendSelectableAdapter;
+    private UserImageAdapter userImageAdapter;
+
+    public static Intent getStartIntent(Context context, String myId, UserInfo friendInfo) {
+        Intent newMessageIntent = new Intent(context, NewMessagesActivity.class);
+        newMessageIntent.putExtra(EXTRA_MY_ID, myId);
+        newMessageIntent.putExtra(EXTRA_FRIEND_ID, Parcels.wrap(friendInfo));
+
+        return newMessageIntent;
+    }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        getDataFromIntent(savedInstanceState);
-        setContentView(R.layout.activity_new_messages);
+        getDataIntent(savedInstanceState);
+        setContentView(R.layout.activity_selectable_list);
         ButterKnife.bind(this);
 
         setToolbar();
@@ -78,6 +119,13 @@ public class NewMessagesActivity extends BaseActivity implements OnAdapterItemCl
         getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
 
         addFragments();
+
+        if (savedInstanceState == null) {
+            if (friendInfo != null) {
+                friendSelectableAdapter.setSelection(0, friendInfo.hashCode());
+                showSelectedItem(friendInfo);
+            }
+        }
     }
 
     private void addFragments() {
@@ -93,22 +141,32 @@ public class NewMessagesActivity extends BaseActivity implements OnAdapterItemCl
             newMessagesFragment = (NewMessagesFragment) addFragmentByTag(
                     new NewMessagesFragment(), TAG_CREATING_NEW_MESSAGES);
         }
+
+        createPrivateRoomFragment = (CreatePrivateRoomFragment) findFragmentByTag(CREATE_PRIVATE_ROOM_TAG);
+        if (createPrivateRoomFragment == null) {
+            createPrivateRoomFragment = (CreatePrivateRoomFragment)
+                    addFragmentByTag(CreatePrivateRoomFragment.newInstance(null, myId),
+                    CREATE_PRIVATE_ROOM_TAG);
+        }
     }
 
     @Override
-    protected void onPostCreate(@Nullable Bundle savedInstanceState) {
-        super.onPostCreate(savedInstanceState);
+    protected void onStart() {
+        super.onStart();
 
-        if (savedInstanceState == null) {
-            friendsFetchingFragment.fetchUserFriends(myId);
-        }
+        friendsFetchingFragment.fetchUserFriends(myId);
     }
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
 
-        selectableFriendAdapter.onSaveInstanceState(STATE_LIST_ADAPTER, outState);
+        if (friendInfo != null) {
+            outState.putParcelable(STATE_FRIEND_INFO, Parcels.wrap(friendInfo));
+        }
+
+        friendSelectableAdapter.onSaveInstanceState(STATE_LIST_ADAPTER, outState);
+        userImageAdapter.onSaveInstanceState(STATE_SELECTED_LIST_ADAPTER, outState);
     }
 
     @Override
@@ -116,134 +174,255 @@ public class NewMessagesActivity extends BaseActivity implements OnAdapterItemCl
         super.onRestoreInstanceState(savedInstanceState);
         if (savedInstanceState == null) return;
 
-        selectableFriendAdapter.onRestoreInstanceState(STATE_LIST_ADAPTER, savedInstanceState);
+        friendSelectableAdapter.onRestoreInstanceState(STATE_LIST_ADAPTER, savedInstanceState);
+        userImageAdapter.onRestoreInstanceState(STATE_SELECTED_LIST_ADAPTER, savedInstanceState);
+        searchFriend(findFriendsEditText.getText().toString());
+
+        friendInfo = Parcels.unwrap(savedInstanceState.getParcelable(STATE_FRIEND_INFO));
+
+        shouldShowSelectedImageList();
     }
 
     @Override
     protected void onDestroy() {
-        EventBus.getDefault().unregister(this);
-
         super.onDestroy();
+
+        EventBus.getDefault().unregister(this);
     }
 
     @Override
     public void onBackPressed() {
-        if (totalSelectedItems <= 0) {
-            super.onBackPressed();
+        onBack();
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_ok, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case android.R.id.home:
+                onBack();
+                return true;
+            case R.id.action_ok:
+
+                if (totalSelectedItems > maxSelectedItems) {
+                    MyToast.make(getString(R.string.error_select_friend_only_n_amount, maxSelectedItems)).show();
+                    return true;
+                }
+                onNewMessagesButtonClick();
+                return true;
+        }
+
+        return false;
+    }
+
+    private void onBack() {
+        if (!findFriendsEditText.getText().toString().isEmpty()) {
+            findFriendsEditText.setText("");
+            searchFriend(findFriendsEditText.getText().toString());
+        } else if (totalSelectedItems > 0) {
+            clearAllSelection();
         } else {
-            selectableFriendAdapter.clearSelection();
-            totalSelectedItems = 0;
-            setToolbarTitle(getString(R.string.new_messages));
+            super.onBackPressed();
         }
     }
 
-    private void getDataFromIntent(Bundle savedInstanceState) {
+    private void getDataIntent(Bundle savedInstanceState) {
         if (savedInstanceState != null) return;
+        Intent intent = getIntent();
 
-        myId = getIntent().getStringExtra(EXTRA_MY_ID);
+        myId = intent.getStringExtra(EXTRA_MY_ID);
+        friendInfo = Parcels.unwrap(intent.getParcelableExtra(EXTRA_FRIEND_ID));
+
+        Resources res = getResources();
+        maxSelectedItems = res.getInteger(R.integer.max_group_member) - 1;
     }
 
     private void setToolbar() {
         setSupportActionBar(toolbar);
 
+        ActionBar actionBar = getSupportActionBar();
+        if (actionBar != null) {
+            actionBar.setDisplayHomeAsUpEnabled(true);
+        }
+        setToolbarName();
+    }
+
+    private void setToolbarName() {
         if (totalSelectedItems > 0) {
-            setToolbarTitle(getString(R.string.total_friends, totalSelectedItems));
+            setToolbarTitle(getString(R.string.total_selected, totalSelectedItems));
         } else {
             setToolbarTitle(getString(R.string.new_messages));
         }
     }
 
     private void initRecyclerView() {
-        selectableFriendAdapter = new SelectableFriendAdapter(this);
+        friendSelectableAdapter = new FriendSelectableAdapter(this, true);
 
+        friendList.setItemAnimator(null);
         friendList.setLayoutManager(new LinearLayoutManager(this));
-        friendList.setAdapter(selectableFriendAdapter);
+        friendList.setAdapter(friendSelectableAdapter);
+
+        userImageAdapter = new UserImageAdapter();
+
+        selectedFriendImageList.setItemAnimator(null);
+        selectedFriendImageList.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
+        selectedFriendImageList.setAdapter(userImageAdapter);
+        shouldShowSelectedImageList();
     }
 
-    private void findFriendsFetchingFragment(Bundle savedInstanceState) {
-        if (savedInstanceState != null) return;
+    private void shouldShowSelectedImageList() {
+        int visibility = friendSelectableAdapter.getSelectedItemCount() > 0 ? View.VISIBLE : View.GONE;
 
-        FragmentManager fragmentManager = getSupportFragmentManager();
-        friendsFetchingFragment = (FriendsFetchingFragment) fragmentManager.findFragmentByTag(TAG_FRIENDS_FETCHING);
-
-        if (friendsFetchingFragment == null) {
-            friendsFetchingFragment = FriendsFetchingFragment.newInstance(FriendsFetchingFragment.FROM_NEW_MESSAGES);
-
-            fragmentManager.beginTransaction()
-                    .add(friendsFetchingFragment, TAG_FRIENDS_FETCHING)
-                    .commit();
-        }
-
+        selectedFriendImageList.setVisibility(visibility);
+        selectedFriendLine.setVisibility(visibility);
     }
 
-    private void setTotalSelectedItemToolbar(int position) {
-        selectableFriendAdapter.toggleSelection(position);
-        totalSelectedItems = selectableFriendAdapter.getSelectedItemCount();
-
-        if (totalSelectedItems > 0) {
-            setToolbarTitle(getString(R.string.total_friends, totalSelectedItems));
+    private void showSelectedItem(UserInfo userInfo) {
+        if (!userImageAdapter.contains(userInfo)) {
+            userImageAdapter.addLast(userInfo);
         } else {
-            setToolbarTitle(getString(R.string.new_messages));
+            userImageAdapter.remove(userInfo);
         }
+        shouldShowSelectedImageList();
     }
 
-    @OnClick(R.id.new_messages_button)
-    public void onNewMessagesButtonClick() {
-        String message = newMessageEditText.getText().toString().trim();
-        if (message.isEmpty()) return;
+    private void setSelectedItem(int position) {
+        // add or remove item from selected image list
+        UserInfo userInfo = friendSelectableAdapter.getItem(position);
 
-        long messageTime = System.currentTimeMillis();
-        int[] totalSelectedItemsPosition = selectableFriendAdapter.getSelectedItems();
-        if (totalSelectedItemsPosition.length >= 2) {
-            // group room
-            createGroupRoom(totalSelectedItemsPosition, message, messageTime);
-        } else {
-            // 1 - 1 room (private)
-            createPrivateRoom(totalSelectedItemsPosition, message, messageTime);
-        }
+        friendSelectableAdapter.toggleSelection(position, userInfo.hashCode());
+        totalSelectedItems = friendSelectableAdapter.getSelectedItemCount();
+
+        showSelectedItem(userInfo);
+        setToolbarName();
     }
 
-    private void createGroupRoom(int[] totalSelectedItemsPosition, String message, long messageTime) {
-        int size = 3;
-
-        UserInfo[] friendsInfo = new UserInfo[size];
-
-        // array index 3 will be the head of room (our profile image)
-        // we will fetch profile image header with firebase in NewMessageFragment
-        for (int i = 0; i < (size - 1); i++) {
-            friendsInfo[i] = selectableFriendAdapter.getItem(totalSelectedItemsPosition[i]);
-        }
-
-        newMessagesFragment.createGroupRoom(myId, friendsInfo, message, messageTime);
-    }
-
-    private void createPrivateRoom(int[] totalSelectedItemsPosition, String message, long messageTime) {
-        UserInfo friendInfo = selectableFriendAdapter.getItem(totalSelectedItemsPosition[0]);
-
-        newMessagesFragment.createPrivateRoom(myId, friendInfo, message, messageTime);
+    private void searchFriend(String query) {
+        friendSelectableAdapter.getFilter().filter(query, this);
     }
 
     @Override
-    public void onImageReceived(String base64Bitmap) {
-        testImage.setImageURI(Uri.parse(Base64Util.toDataUri(base64Bitmap)));
+    public void onFilterComplete(int count) {
+    }
+
+    private void clearAllSelection() {
+        friendSelectableAdapter.clearSelection();
+        totalSelectedItems = 0;
+        userImageAdapter.clear();
+
+        setToolbarTitle(getString(R.string.new_messages));
+        shouldShowSelectedImageList();
+    }
+
+    @OnTextChanged(value = R.id.find_friend_edittext, callback = OnTextChanged.Callback.AFTER_TEXT_CHANGED)
+    public void onFriendFriendEditTextChanged(Editable editable) {
+        searchFriend(editable.toString());
+    }
+
+    private boolean checkNewMessageError(int totalSelectedItem) {
+        if (friendInfo == null && totalSelectedItem == 0) {
+            MyToast.make(getString(R.string.error_select_at_least_one_person));
+            return true;
+        }
+        if (friendInfo != null && totalSelectedItem <= 1) {
+            MyToast.make(getString(R.string.error_select_at_least_two_to_make_a_group)).show();
+            return true;
+        }
+        return false;
+    }
+
+    public void onNewMessagesButtonClick() {
+        int[] totalSelectedItemsPosition = userImageAdapter.getTotalItemsPosition();
+        int totalSelected = totalSelectedItemsPosition.length;
+
+        if (checkNewMessageError(totalSelected)) {
+            return;
+        }
+
+        if (totalSelected >= 2) {
+            // group room
+            createGroupRoom(totalSelectedItemsPosition);
+        } else if (totalSelected == 1) {
+            // 1 - 1 room (private)
+            createPrivateRoom(totalSelectedItemsPosition);
+        }
+    }
+
+    private void createGroupRoom(int[] totalSelectedItemsPosition) {
+        int size = totalSelectedItemsPosition.length;
+
+        // we gonna use our image to combine with the rest.
+        UserInfo[] membersInfo = new UserInfo[size + 1];
+        int membersSize = membersInfo.length;
+
+        for (int i = 0; i < membersSize; i++) {
+            if (i > 0) {
+                membersInfo[i] = userImageAdapter.getItem(totalSelectedItemsPosition[i - 1]);
+            } else {
+                UserInfo myInfo = new UserInfo();
+                myInfo.setKey(myId);
+
+                membersInfo[i] = myInfo;
+            }
+        }
+
+        newMessagesFragment.createGroupRoom(myId, membersInfo);
+    }
+
+    private void createPrivateRoom(int[] totalSelectedItemsPosition) {
+        UserInfo friendInfo = userImageAdapter.getItem(totalSelectedItemsPosition[0]);
+        newMessagesFragment.createPrivateRoom(myId, friendInfo);
+        createPrivateRoomFragment.createPrivateRoom(
+                RoomUtil.getPrivateRoomKey(this, myId, friendInfo.getKey()), friendInfo);
     }
 
     @Override
     public void onAdapterClick(View itemView, int position) {
-        setTotalSelectedItemToolbar(position);
+        setSelectedItem(position);
     }
 
     @Override
     public boolean onAdapterLongClick(View itemView, int position) {
-        setTotalSelectedItemToolbar(position);
-
         return true;
     }
 
+    @Override
+    public void onRoomCreated(Room room) {
+        ProgressDialogFragment dialog = (ProgressDialogFragment) getSupportFragmentManager().findFragmentByTag(TAG_CREATING_ROOM_DIALOG);
+        if (dialog != null) {
+            dialog.dismiss();
+        }
+
+        if (room.getName() != null) {
+            Intent privateRoomIntent = ChatRoomActivity.getIntentGroupRoom(this, room, myId);
+            startActivity(privateRoomIntent);
+        } else {
+            Intent groupRoomIntent = ChatRoomActivity.getIntentPrivateRoom(this, room, myId);
+            startActivity(groupRoomIntent);
+        }
+
+        fadeOutFinish();
+    }
+
+    @Override
+    public void onShowLoading() {
+        ProgressDialogFragment dialog = ProgressDialogFragment.newInstance();
+        dialog.show(getSupportFragmentManager(), TAG_CREATING_ROOM_DIALOG);
+    }
+
     public void onEvent(EventBusNewMessagesFriendInfo eventBusNewMessagesFriendInfo) {
+        progressBarLayout.hideProgressBar();
+
         List<UserInfo> friendListInfo = eventBusNewMessagesFriendInfo.friendListInfo;
         SortUtil.sortUserInfoAlphabetically(friendListInfo);
-        selectableFriendAdapter.addFirstAll(friendListInfo);
+        friendSelectableAdapter.addLastAll(friendListInfo);
+
+        searchFriend(findFriendsEditText.getText().toString());
     }
 
 }

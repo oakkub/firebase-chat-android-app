@@ -1,40 +1,55 @@
 package com.oakkub.chat.views.adapters;
 
+import android.content.res.Resources;
 import android.net.Uri;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.RecyclerView;
 import android.util.SparseArray;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
+import android.widget.TextView;
 
+import com.facebook.drawee.interfaces.DraweeController;
+import com.facebook.drawee.view.SimpleDraweeView;
 import com.oakkub.chat.R;
 import com.oakkub.chat.models.Message;
+import com.oakkub.chat.models.UserInfo;
+import com.oakkub.chat.utils.FirebaseUtil;
+import com.oakkub.chat.utils.FrescoUtil;
+import com.oakkub.chat.utils.MessageUtil;
+import com.oakkub.chat.utils.TimeUtil;
+import com.oakkub.chat.views.adapters.viewholders.FriendImageMessageHolder;
 import com.oakkub.chat.views.adapters.viewholders.FriendMessageHolder;
+import com.oakkub.chat.views.adapters.viewholders.MyImageMessageHolder;
 import com.oakkub.chat.views.adapters.viewholders.MyMessageHolder;
+import com.oakkub.chat.views.adapters.viewholders.SystemMessageDivider;
 
 public class ChatListAdapter extends RecyclerViewAdapter<Message> {
 
     public static final int FRIEND_MESSAGE_TYPE = 0;
     public static final int MY_MESSAGE_TYPE = 1;
+    public static final int FRIEND_IMAGE_TYPE = 2;
+    public static final int MY_IMAGE_TYPE = 3;
+    public static final int SYSTEM_MESSAGE_TYPE = 4;
+    public static final int SYSTEM_TIME_DIVIDER_TYPE = 5;
 
     private String myId;
-    private SparseArray<String> friendProfileImageList;
-    private SparseArray<String> friendDisplayNameList;
+    private boolean isPrivateRoom;
+    private SparseArray<UserInfo> friendInfoList;
 
-    public ChatListAdapter(String myId, SparseArray<String> friendProfileImageList) {
-        // private room
+    public ChatListAdapter(String myId, SparseArray<UserInfo> friendInfoList, boolean isPrivateRoom) {
         this.myId = myId;
-        this.friendProfileImageList = friendProfileImageList;
+        this.friendInfoList = friendInfoList;
+        this.isPrivateRoom = isPrivateRoom;
     }
 
-    public ChatListAdapter(String myId, SparseArray<String> friendProfileImageList, SparseArray<String> friendDisplayNameList) {
-        // group room
-        this(myId, friendProfileImageList);
-        this.friendDisplayNameList = friendDisplayNameList;
+    public void addMember(UserInfo userInfo) {
+        friendInfoList.put(userInfo.hashCode(), userInfo);
     }
 
-    public void newMember(String newMemberId, String newMemberProfileImage, String newMemberDisplayName) {
-        friendProfileImageList.put(newMemberId.hashCode(), newMemberProfileImage);
-        friendDisplayNameList.put(newMemberId.hashCode(), newMemberDisplayName);
+    public void removeMember(UserInfo userInfo) {
+        friendInfoList.remove(userInfo.hashCode());
     }
 
     @Override
@@ -42,8 +57,15 @@ public class ChatListAdapter extends RecyclerViewAdapter<Message> {
         Message message = items.get(position);
 
         if (message != null) {
-            if (message.getSentBy().equals(myId)) return MY_MESSAGE_TYPE;
-            else return FRIEND_MESSAGE_TYPE;
+            if (message.getSentBy().equals(myId)) {
+                if (message.getImagePath() != null) return MY_IMAGE_TYPE;
+                return MY_MESSAGE_TYPE;
+            } else if (message.getSentBy().equals(FirebaseUtil.SYSTEM)) {
+                return message.getMessage() == null ? SYSTEM_TIME_DIVIDER_TYPE : SYSTEM_MESSAGE_TYPE;
+            } else if (!message.getSentBy().equals(myId)) {
+                if (message.getImagePath() != null) return FRIEND_IMAGE_TYPE;
+                else return FRIEND_MESSAGE_TYPE;
+            }
         } else {
             if (loadMore) return LOAD_MORE_TYPE;
         }
@@ -65,6 +87,22 @@ public class ChatListAdapter extends RecyclerViewAdapter<Message> {
                 view = inflateLayout(parent, R.layout.my_message_list);
                 return new MyMessageHolder(view);
 
+            case FRIEND_IMAGE_TYPE:
+
+                view = inflateLayout(parent, R.layout.friend_message_image_list);
+                return new FriendImageMessageHolder(view);
+
+            case MY_IMAGE_TYPE:
+
+                view = inflateLayout(parent, R.layout.my_message_image_list);
+                return new MyImageMessageHolder(view);
+
+            case SYSTEM_MESSAGE_TYPE:
+            case SYSTEM_TIME_DIVIDER_TYPE:
+
+                view = inflateLayout(parent, R.layout.system_message_list);
+                return new SystemMessageDivider(view);
+
             case LOAD_MORE_TYPE:
 
                 return getProgressBarHolder(parent);
@@ -84,33 +122,175 @@ public class ChatListAdapter extends RecyclerViewAdapter<Message> {
 
     private void bindHolder(Message message, RecyclerView.ViewHolder holder, int position) {
         if (holder instanceof MyMessageHolder) {
-
-            onBindMyMessageHolder((MyMessageHolder) holder, message);
+            onBindMyMessageHolder((MyMessageHolder) holder, message, position);
         } else if (holder instanceof FriendMessageHolder) {
-
             onBindFriendMessageHolder((FriendMessageHolder) holder, message);
+        } else if (holder instanceof MyImageMessageHolder) {
+            onBindMyImageMessageHolder((MyImageMessageHolder) holder, message, position);
+        } else if (holder instanceof FriendImageMessageHolder) {
+            onBindFriendImageMessageHolder((FriendImageMessageHolder) holder, message);
+        } else {
+            onBindSystemMessageHolder((SystemMessageDivider) holder, message);
         }
     }
 
-    private void onBindMyMessageHolder(MyMessageHolder holder, Message message) {
+    private void onBindSystemMessageHolder(SystemMessageDivider holder, Message message) {
+        String readableDate = TimeUtil.getReadableDate(message.getSentWhen());
+        // default of system message is showing date time
+        String systemMessage = message.getMessage() == null ?
+                readableDate : message.getMessage();
+
+        if (message.getLanguageRes() != null) {
+            switch (message.getLanguageRes()) {
+                case MessageUtil.LAST_ADMIN_LEAVED:
+                    // message = leaveId:promotedId
+                    systemMessage = MessageUtil.lastAdminLeavedRes(message, friendInfoList, myId);
+                    break;
+                case MessageUtil.REMOVED_MEMBER:
+                    systemMessage = getStringRes(R.string.n_removed_n_from_room, message);
+                    break;
+                case MessageUtil.INVITE_MEMBER:
+                    systemMessage = getStringRes(R.string.n_invited_n_to_room, message);
+                    break;
+                case MessageUtil.PROMOTED_MEMBER:
+                    systemMessage = getStringRes(R.string.n_promoted_n_to_be_admin, message);
+                    break;
+                case MessageUtil.DEMOTED_ADMIN:
+                    systemMessage = getStringRes(R.string.n_demoted_n_from_admin_to_member, message);
+                    break;
+            }
+        }
+
+        holder.systemMessageTextView.setText(systemMessage);
+    }
+
+    private String getStringRes(int stringRes, Message message) {
+        return MessageUtil.getStringResTwoParam(stringRes,
+                message, friendInfoList, myId);
+    }
+
+    private void onBindMyMessageHolder(MyMessageHolder holder, Message message, int position) {
         holder.message.setText(message.getMessage());
+        holder.messageTimeTextView.setText(TimeUtil.getOnlyTime(message.getSentWhen()));
+        showReadItem(message, holder.isReadImageView, holder.totalReadTextView, position);
+
+        int backgroundColor =
+                ContextCompat.getColor(holder.itemView.getContext(),
+                        message.getIsSuccessfullySent() != null ?
+                        R.color.colorPrimary : R.color.gray);
+        holder.message.setBackgroundColor(backgroundColor);
+    }
+
+    private void onBindMyImageMessageHolder(MyImageMessageHolder holder, final Message message, int position) {
+        showReadItem(message, holder.isReadImageView, holder.totalReadTextView, position);
+        holder.messageTimeTextView.setText(TimeUtil.getOnlyTime(message.getSentWhen()));
+
+        SimpleDraweeView imageMessage = holder.imageMessage;
+        setResizeImage(imageMessage, message);
     }
 
     private void onBindFriendMessageHolder(FriendMessageHolder holder, Message message) {
         holder.message.setText(message.getMessage());
+        holder.messageTimeTextView.setText(TimeUtil.getOnlyTime(message.getSentWhen()));
+        setImage(holder, message);
+    }
 
-        if (message.isShowImage()) {
-            holder.friendProfileImage.setVisibility(View.VISIBLE);
-            setImage(holder, message);
-        } else {
-            holder.friendProfileImage.setVisibility(View.INVISIBLE);
-        }
+    private void onBindFriendImageMessageHolder(FriendImageMessageHolder holder, Message message) {
+        holder.messageTimeTextView.setText(TimeUtil.getOnlyTime(message.getSentWhen()));
+        holder.profileImage.setImageURI(
+                Uri.parse(friendInfoList.get(message.getSentBy().hashCode()).getProfileImageURL()));
+        SimpleDraweeView messageImage = holder.messageImage;
+        setResizeImage(messageImage, message);
     }
 
     private void setImage(FriendMessageHolder holder, Message message) {
         holder.friendProfileImage.setVisibility(View.VISIBLE);
         holder.friendProfileImage.setImageURI(
-                Uri.parse(friendProfileImageList.get(message.getSentBy().hashCode())));
+                Uri.parse(friendInfoList.get(message.getSentBy().hashCode()).getProfileImageURL()));
+    }
+
+    private boolean shouldShowReadImage(Message message, int position) {
+        Message newerMessage = getItem(position - 1);
+        int visibility;
+
+        if (newerMessage == null) {
+            visibility = message.getReadTotal() > 0 ? View.VISIBLE : View.INVISIBLE;
+        } else {
+            // if current message is read, and the newer message is not read yet,
+            // we will show visibility icon to the current message
+            visibility = message.getReadTotal() > 0 && newerMessage.getReadTotal() == 0 ?
+                    View.VISIBLE : View.INVISIBLE;
+        }
+
+        return visibility == View.VISIBLE;
+    }
+
+    private void showReadItem(Message message, SimpleDraweeView imageView, TextView textView, int position) {
+//        int visibility = shouldShowReadImage(message, position) ? View.VISIBLE : View.INVISIBLE;
+        imageView.setVisibility(message.getReadTotal() > 0 ? View.VISIBLE : View.INVISIBLE);
+        if (!isPrivateRoom) {
+            textView.setVisibility(message.getReadTotal() > 0 ? View.VISIBLE : View.INVISIBLE);
+            textView.setText(String.valueOf(message.getReadTotal()));
+        }
+    }
+
+    private void setResizeImage(final SimpleDraweeView image, final Message message) {
+        setMatchedRatioViewSize(image, message.getRatio());
+        image.setImageURI(Uri.parse(message.getImagePath()));
+        image.getViewTreeObserver().addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
+            @Override
+            public boolean onPreDraw() {
+                int width = image.getWidth();
+                int height = image.getHeight();
+
+                DraweeController resizeController = FrescoUtil
+                        .getResizeController(width, height, Uri.parse(message.getImagePath()),
+                                image.getController());
+
+                image.setController(resizeController);
+                image.getViewTreeObserver().removeOnPreDrawListener(this);
+                return true;
+            }
+        });
+    }
+
+    private void setMatchedRatioViewSize(SimpleDraweeView image, String ratio) {
+        if (ratio == null) return;
+        Resources res = image.getContext().getResources();
+
+        int dimenWidth;
+        int dimenHeight;
+
+        switch (ratio) {
+            case "9:16":
+                dimenWidth = R.dimen.image_port_width;
+                dimenHeight = R.dimen.image_port_height;
+                break;
+            case "16:9":
+                dimenWidth = R.dimen.image_land_width;
+                dimenHeight = R.dimen.image_land_height;
+                break;
+            case "5:4":
+                dimenWidth = R.dimen.spacing_giant1;
+                dimenHeight = R.dimen.spacing_super_large3;
+                break;
+            case "4:3":
+                dimenWidth = R.dimen.spacing_giant1;
+                dimenHeight = R.dimen.spacing_super_large2;
+                break;
+            default:
+                dimenWidth = R.dimen.spacing_giant1;
+                dimenHeight = R.dimen.spacing_giant1;
+        }
+
+        int viewWidth = res.getDimensionPixelOffset(dimenWidth);
+        int viewHeight = res.getDimensionPixelOffset(dimenHeight);
+
+        ViewGroup.LayoutParams layoutParams = image.getLayoutParams();
+        layoutParams.width = viewWidth;
+        layoutParams.height = viewHeight;
+
+        image.setLayoutParams(layoutParams);
     }
 
 }

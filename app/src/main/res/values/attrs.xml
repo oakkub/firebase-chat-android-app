@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <declare-styleable name="TextImageView">
+        <attr name="textName" format="string" />
+        <attr name="image" format="reference" />
+    </declare-styleable>
+
+    <declare-styleable name="EmptyTextProgressBar">
+        <attr name="text" format="string" />
+        <attr name="progressBarDrawable" format="reference" />
+    </declare-styleable>
+
+</resources>

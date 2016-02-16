@@ -13,6 +13,7 @@ import com.facebook.FacebookException;
 import com.facebook.login.LoginManager;
 import com.facebook.login.LoginResult;
 import com.oakkub.chat.activities.AuthenticationActivity;
+import com.oakkub.chat.activities.BaseActivity;
 import com.oakkub.chat.activities.FacebookLoginActivity;
 import com.oakkub.chat.utils.TextUtil;
 import com.oakkub.chat.utils.Util;
@@ -53,7 +54,7 @@ public class FacebookLoginActivityFragment extends Fragment implements FacebookC
         action = getArguments().getString(FacebookLoginActivity.ACTION);
 
         if (action == null) finishActivity();
-        else if (action.equals(FacebookLoginActivity.LOGIN_ACTION)) performLogin();
+        else if (action.equals(FacebookLoginActivity.ACTION_LOGIN)) performLogin();
         else performLogout();
     }
 
@@ -80,8 +81,8 @@ public class FacebookLoginActivityFragment extends Fragment implements FacebookC
         action = getActivity().getIntent().getAction();
 
         if (action == null) finishActivity();
-        else if (action.equals(FacebookLoginActivity.LOGIN_ACTION) ||
-                action.equals(FacebookLoginActivity.LOGOUT_ACTION)) return;
+        else if (action.equals(FacebookLoginActivity.ACTION_LOGIN) ||
+                action.equals(FacebookLoginActivity.ACTION_LOGOUT)) return;
         else finishActivity();
     }
 
@@ -116,17 +117,16 @@ public class FacebookLoginActivityFragment extends Fragment implements FacebookC
         Intent authenticationIntent =
                 Util.intentClearActivity(getActivity().getApplicationContext(),
                         AuthenticationActivity.class);
-        authenticationIntent.putExtra(AuthenticationActivityFragment.PROVIDER,
+        authenticationIntent.putExtra(AuthenticationFragment.PROVIDER,
                                         TextUtil.FACEBOOK_PROVIDER);
-        authenticationIntent.putExtra(AuthenticationActivityFragment.TOKEN, token);
+        authenticationIntent.putExtra(AuthenticationFragment.TOKEN, token);
 
         startActivity(authenticationIntent);
         getActivity().overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
     }
 
     private void finishActivity() {
-        getActivity().finish();
-        getActivity().overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
+        ((BaseActivity) getActivity()).fadeOutFinish();
     }
 
     @Override

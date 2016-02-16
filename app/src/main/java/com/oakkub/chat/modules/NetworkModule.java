@@ -3,7 +3,6 @@ package com.oakkub.chat.modules;
 import com.firebase.client.Firebase;
 import com.oakkub.chat.dagger.PerApp;
 import com.oakkub.chat.utils.FirebaseUtil;
-import com.squareup.okhttp.OkHttpClient;
 
 import java.util.concurrent.TimeUnit;
 
@@ -11,6 +10,7 @@ import javax.inject.Named;
 
 import dagger.Module;
 import dagger.Provides;
+import okhttp3.OkHttpClient;
 
 /**
  * Created by OaKKuB on 10/22/2015.
@@ -48,6 +48,18 @@ public class NetworkModule {
         return firebase.child(FirebaseUtil.KEY_USERS_USER_ROOMS);
     }
 
+    @Named(FirebaseUtil.NAMED_USER_GROUPS)
+    @Provides
+    Firebase provideFirebaseUserGroups(@Named(FirebaseUtil.NAMED_USERS) Firebase firebase) {
+        return firebase.child(FirebaseUtil.KEY_USERS_USER_GROUP_ROOMS);
+    }
+
+    @Named(FirebaseUtil.NAMED_USER_PUBLIC)
+    @Provides
+    Firebase provideFirebaseUserPublic(@Named(FirebaseUtil.NAMED_USERS) Firebase firebase) {
+        return firebase.child(FirebaseUtil.KEY_USERS_USER_PUBLIC_ROOMS);
+    }
+
     @Named(FirebaseUtil.NAMED_ONLINE_USERS)
     @Provides
     Firebase provideFirebaseUserOnline(@Named(FirebaseUtil.NAMED_ROOT) Firebase firebase) {
@@ -78,21 +90,54 @@ public class NetworkModule {
         return firebase.child(FirebaseUtil.KEY_ROOMS_MEMBERS);
     }
 
+    @Named(FirebaseUtil.NAMED_ROOMS_ADMIN_MEMBERS)
+    @Provides
+    Firebase provideFirebaseAdminMembers(@Named(FirebaseUtil.NAMED_ROOMS) Firebase firebase) {
+        return firebase.child(FirebaseUtil.KEY_ROOMS_ADMIN_MEMBERS);
+    }
+
+    @Named(FirebaseUtil.NAMED_ROOMS_PRESERVED_MEMBERS)
+    @Provides
+    Firebase provideFirebasePreservedMembers(@Named(FirebaseUtil.NAMED_ROOMS) Firebase firebase) {
+        return firebase.child(FirebaseUtil.KEY_ROOMS_PRESERVED_MEMBERS);
+    }
+
+    @Named(FirebaseUtil.NAMED_ROOMS_PUBLIC)
+    @Provides
+    Firebase provideFirebasePublicRooms(@Named(FirebaseUtil.NAMED_ROOMS) Firebase firebase) {
+        return firebase.child(FirebaseUtil.KEY_ROOMS_PUBLIC);
+    }
+
     @Named(FirebaseUtil.NAMED_MESSAGES)
     @Provides
     Firebase provideFirebaseMessages(@Named(FirebaseUtil.NAMED_ROOT) Firebase firebase) {
         return firebase.child(FirebaseUtil.KEY_MESSAGES);
     }
 
+    @Named(FirebaseUtil.NAMED_MESSAGES_LIST)
+    @Provides
+    Firebase provideFirebaseMessagesList(@Named(FirebaseUtil.NAMED_MESSAGES) Firebase firebase) {
+        return firebase.child(FirebaseUtil.KEY_MESSAGES_LIST);
+    }
+
+    @Named(FirebaseUtil.NAMED_MESSAGES_READ_GROUP_ROOM)
+    @Provides
+    Firebase provideFirebaseTotalReadGroupRoom(@Named(FirebaseUtil.NAMED_MESSAGES) Firebase firebase) {
+        return firebase.child(FirebaseUtil.KEY_MESSAGES_READ_GROUP_ROOM);
+    }
+
+    @Named(FirebaseUtil.NAMED_MESSAGES_TYPING)
+    @Provides
+    Firebase provideFirebaseMessagesTyping(@Named(FirebaseUtil.NAMED_MESSAGES) Firebase firebase) {
+        return firebase.child(FirebaseUtil.KEY_MESSAGES_TYPING);
+    }
+
     @PerApp
     @Provides
     OkHttpClient provideOkHttpClient() {
-        OkHttpClient okHttpClient = new OkHttpClient();
-
-        okHttpClient.setConnectTimeout(30, TimeUnit.SECONDS);
-        okHttpClient.setReadTimeout(30, TimeUnit.SECONDS);
-        okHttpClient.setWriteTimeout(30, TimeUnit.SECONDS);
-
-        return okHttpClient;
+        return new OkHttpClient().newBuilder()
+                .readTimeout(30, TimeUnit.SECONDS)
+                .writeTimeout(30, TimeUnit.SECONDS)
+                .build();
     }
 }

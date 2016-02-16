@@ -9,7 +9,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.FragmentActivity;
-import android.util.Log;
+import android.support.v4.util.ArrayMap;
 import android.widget.Toast;
 
 import com.facebook.common.executors.CallerThreadExecutor;
@@ -17,6 +17,7 @@ import com.facebook.common.references.CloseableReference;
 import com.facebook.datasource.BaseDataSubscriber;
 import com.facebook.datasource.DataSource;
 import com.facebook.drawee.backends.pipeline.Fresco;
+import com.facebook.imagepipeline.common.Priority;
 import com.facebook.imagepipeline.core.ImagePipeline;
 import com.facebook.imagepipeline.image.CloseableBitmap;
 import com.facebook.imagepipeline.image.CloseableImage;
@@ -26,28 +27,21 @@ import com.firebase.client.DataSnapshot;
 import com.firebase.client.Firebase;
 import com.firebase.client.FirebaseError;
 import com.firebase.client.ValueEventListener;
+import com.oakkub.chat.R;
 import com.oakkub.chat.managers.AppController;
+import com.oakkub.chat.models.EventBusNewPrivateRoomMessage;
 import com.oakkub.chat.models.Message;
 import com.oakkub.chat.models.Room;
 import com.oakkub.chat.models.UserInfo;
+import com.oakkub.chat.utils.ArrayMapUtil;
 import com.oakkub.chat.utils.Base64Util;
 import com.oakkub.chat.utils.FirebaseUtil;
-import com.oakkub.chat.utils.TextUtil;
-
-import java.util.HashMap;
 
 import javax.inject.Inject;
 import javax.inject.Named;
 
 import dagger.Lazy;
-
-import static com.oakkub.chat.utils.FirebaseUtil.KEY_MESSAGES;
-import static com.oakkub.chat.utils.FirebaseUtil.KEY_ROOMS;
-import static com.oakkub.chat.utils.FirebaseUtil.KEY_ROOMS_INFO;
-import static com.oakkub.chat.utils.FirebaseUtil.KEY_ROOMS_MEMBERS;
-import static com.oakkub.chat.utils.FirebaseUtil.KEY_USERS;
-import static com.oakkub.chat.utils.FirebaseUtil.KEY_USERS_USER_GROUP_ROOMS;
-import static com.oakkub.chat.utils.FirebaseUtil.KEY_USERS_USER_ROOMS;
+import de.greenrobot.event.EventBus;
 
 /**
  * Created by OaKKuB on 12/24/2015.
@@ -72,21 +66,23 @@ public class NewMessagesFragment extends BaseFragment {
     @Named(FirebaseUtil.NAMED_USER_INFO)
     Lazy<Firebase> userFirebase;
 
-    private OnImageRequestListener onImageRequestListener;
-    private String bitmapBase64Result;
-    private String message;
     private String myId;
 
-    private long messageTime;
+    private boolean isPrivateRoom;
 
-    private UserInfo[] usersInfo;
+    private UserInfo[] membersInfo;
+
+    private Room createdRoom;
+    private OnRoomRequest onRoomRequest;
+
+    private CreatePrivateRoomFragment createPrivateRoomFragment;
 
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
 
         FragmentActivity activity = getActivity();
-        onImageRequestListener = (OnImageRequestListener) activity;
+        onRoomRequest = (OnRoomRequest) activity;
     }
 
     @Override
@@ -94,14 +90,17 @@ public class NewMessagesFragment extends BaseFragment {
         super.onCreate(savedInstanceState);
         AppController.getComponent(getActivity()).inject(this);
         setRetainInstance(true);
+
+        EventBus.getDefault().register(this);
     }
 
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
 
-        if (bitmapBase64Result != null) {
-            onImageRequestListener.onImageReceived(bitmapBase64Result);
+        if (createdRoom != null) {
+            onRoomRequest.onRoomCreated(createdRoom);
+            createdRoom = null;
         }
     }
 
@@ -109,40 +108,70 @@ public class NewMessagesFragment extends BaseFragment {
     public void onDetach() {
         super.onDetach();
 
-        onImageRequestListener = null;
+        onRoomRequest = null;
     }
 
-    public void setRoomData(String myId, String message, long messageTime) {
+    @Override
+    public void onDestroy() {
+        EventBus.getDefault().unregister(this);
+
+        super.onDestroy();
+    }
+
+    public void setRoomData(String myId) {
         this.myId = myId;
-        this.message = message;
-        this.messageTime = messageTime;
     }
 
-    public void createPrivateRoom(String myId, UserInfo friendInfo, String message, long messageTime) {
-        Firebase createRoomFirebase = roomFirebase.get().push();
-        String roomKey = createRoomFirebase.getKey();
+    public void createPrivateRoom(String myId, UserInfo friendInfo) {
+        setRoomData(myId);
+        isPrivateRoom = true;
 
-        setRoomData(myId, message, messageTime);
-        usersInfo = new UserInfo[] {friendInfo};
+        UserInfo myInfo = new UserInfo();
+        myInfo.setKey(myId);
 
-        Room room = new Room(FirebaseUtil.VALUE_ROOM_TYPE_PRIVATE);
+        membersInfo = new UserInfo[] {
+                friendInfo, myInfo
+        };
+
+        onRoomRequest.onShowLoading();
     }
 
-    public void createGroupRoom(String myId, UserInfo[] friendsInfo, String message, long messageTime) {
-        setRoomData(myId, message, messageTime);
-        this.usersInfo = friendsInfo;
+    @SuppressWarnings("unused")
+    public void onEvent(EventBusNewPrivateRoomMessage eventBusRoom) {
+        onPrivateRoomCreated(eventBusRoom.room);
+    }
+
+    public void onPrivateRoomCreated(Room room) {
+        room.setLatestMessageUser(myId);
+
+        // if message not null and message time > 0
+        // means we already chat with this friend (room is already created)
+        if (room.getLatestMessage() != null && room.getLatestMessageTime() > 0) {
+            roomSuccessfullyCreated(room);
+        } else {
+            mapRoomData(room);
+        }
+    }
+
+    public void createGroupRoom(String myId, UserInfo[] membersInfo) {
+        setRoomData(myId);
+        this.isPrivateRoom = false;
+        this.membersInfo = membersInfo;
+
+        onRoomRequest.onShowLoading();
 
         // create bitmap from friend profile images
         // by using 2 of our friends and 1 from user
-        getMyUserInfo();
+        fetchMyInfoGroupRoom();
     }
 
-    private void getMyUserInfo() {
+    private void fetchMyInfoGroupRoom() {
+        userFirebase.get().child(myId).keepSynced(true);
         userFirebase.get().child(myId)
                 .addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
-                        getMyUserInfo(dataSnapshot);
+                        myInfoGroupRoomFetched(dataSnapshot);
                     }
 
                     @Override
@@ -152,25 +181,30 @@ public class NewMessagesFragment extends BaseFragment {
                 });
     }
 
-    private void getMyUserInfo(DataSnapshot dataSnapshot) {
-        usersInfo[usersInfo.length - 1] = dataSnapshot.getValue(UserInfo.class);
-        usersInfo[usersInfo.length - 1].setUserKey(dataSnapshot.getKey());
+    private void myInfoGroupRoomFetched(DataSnapshot dataSnapshot) {
+        membersInfo[0] = dataSnapshot.getValue(UserInfo.class);
+        membersInfo[0].setKey(dataSnapshot.getKey());
 
-        for (UserInfo friendInfo : usersInfo) {
-            friendInfo.setProfileImageURL(Base64Util.toDataUri(friendInfo.getProfileImageURL()));
-        }
-
-        findFrescoBitmap();
+        setImageURLToDataUri();
+        findFrescoBitmaps();
     }
 
-    private void findFrescoBitmap() {
+    private void setImageURLToDataUri() {
+        for (UserInfo friendInfo : membersInfo) {
+            friendInfo.setProfileImageURL(Base64Util.toDataUri(friendInfo.getProfileImageURL()));
+        }
+    }
+
+    private void findFrescoBitmaps() {
         final Bitmap[] bitmaps = new Bitmap[TOTAL_MERGE_IMAGES];
         ImagePipeline imagePipeline = Fresco.getImagePipeline();
 
         for (int i = 0; i < TOTAL_MERGE_IMAGES; i++) {
 
             ImageRequest imageRequest = ImageRequestBuilder
-                    .newBuilderWithSource(Uri.parse(usersInfo[i].getProfileImageURL()))
+                    .newBuilderWithSource(Uri.parse(membersInfo[i].getProfileImageURL()))
+                    .setRequestPriority(Priority.HIGH)
+                    .setLowestPermittedRequestLevel(ImageRequest.RequestLevel.FULL_FETCH)
                     .build();
 
             DataSource<CloseableReference<CloseableImage>>
@@ -191,14 +225,11 @@ public class NewMessagesFragment extends BaseFragment {
         }
     }
 
+    @SuppressWarnings("ConstantConditions")
     private void onFrescoBitmapReceived(DataSource<CloseableReference<CloseableImage>> dataSource, Bitmap[] bitmaps) {
         CloseableReference<CloseableImage> closeableRefImage = dataSource.getResult();
-        CloseableBitmap closeableBitmap = closeableRefImage != null ?
-                (CloseableBitmap) closeableRefImage.get() : null;
 
-        if (closeableBitmap == null) {
-            throw new NullPointerException("Closeable Bitmap is Null, WTF?");
-        }
+        CloseableBitmap closeableBitmap = (CloseableBitmap) closeableRefImage.get();
 
         for (int i = 0; i < TOTAL_MERGE_IMAGES; i++) {
 
@@ -207,7 +238,7 @@ public class NewMessagesFragment extends BaseFragment {
                 bitmaps[i] = closeableBitmap.getUnderlyingBitmap();
                 CloseableReference.closeSafely(closeableRefImage);
 
-                if (i == TOTAL_MERGE_IMAGES -1) {
+                if (i == TOTAL_MERGE_IMAGES - 1) {
                     new MergeThreeBitmapTask(bitmaps).execute();
                 }
 
@@ -216,83 +247,74 @@ public class NewMessagesFragment extends BaseFragment {
         }
     }
 
-    private void onMergedBitmapSuccess(String base64Bitmap) {
-        Firebase createRoomFirebase = roomFirebase.get().push();
-        String roomKey = createRoomFirebase.getKey();
+    private void mapRoomData(Room room) {
+        int size = 8 + (isPrivateRoom ? 2 : membersInfo.length * 3);
+        ArrayMap<String, Object> roomMap = new ArrayMap<>(size);
+        ArrayMapUtil.mapRoom(roomMap, room, room.getRoomId());
 
+        // group room will send message that tell us when this room is created
+        if (!isPrivateRoom) {
+            String messageKey = messageFirebase.get().child(room.getRoomId()).push().getKey();
+            Message messageRoom = new Message(room.getRoomId(), room.getLatestMessage(),
+                    FirebaseUtil.SYSTEM, room.getCreated());
+            ArrayMapUtil.mapMessage(roomMap, messageKey, room.getRoomId(), messageRoom);
+            ArrayMapUtil.mapUsersGroupRoom(roomMap, membersInfo, room.getRoomId(), room.getCreated());
+
+            for (UserInfo userInfo : membersInfo) {
+                ArrayMapUtil.mapUserPreservedMemberRoom(roomMap, userInfo.getKey(), room.getRoomId(), room.getCreated());
+            }
+        }
+
+        ArrayMapUtil.mapUserRoom(
+                roomMap, myId, room.getRoomId(), room.getCreated());
+
+        insertRoom(roomMap, room);
+    }
+
+    private void onImageRoomCreated(String base64Bitmap) {
+        String roomKey = roomFirebase.get().push().getKey();
         String roomName = createGroupRoomName();
-        long roomCreated = System.currentTimeMillis();
 
+        // if room has no message, it's a new room,
+        // we will use message time to show time instead of message.
         Room room = new Room(FirebaseUtil.VALUE_ROOM_TYPE_GROUP);
-        room.setRoomName(roomName);
-        room.setRoomImagePath(Base64Util.toDataUri(base64Bitmap));
-        room.setLatestMessage(message);
-        room.setLatestMessageTime(messageTime);
-        room.setLatestMessageUser(myId);
+        room.setRoomId(roomKey);
+        room.setName(roomName);
+        room.setImagePath(Base64Util.toDataUri(base64Bitmap));
+        room.setLatestMessageTime(room.getCreated());
+        room.setLatestMessage(getString(R.string.room_created));
+        room.setLatestMessageUser(FirebaseUtil.SYSTEM);
 
-        Message messageRoom = new Message(roomKey, message, myId, roomCreated);
+        mapRoomData(room);
+    }
 
-        HashMap<String, Object> groupRoomMap = new HashMap<>();
-        putUsersRoomData(groupRoomMap, roomKey, roomCreated);
-        putGroupRoomInfoMap(groupRoomMap, room, roomKey, roomCreated);
-        putRoomMessage(groupRoomMap, roomKey, messageRoom);
-
-        rootFirebase.get().updateChildren(groupRoomMap, new Firebase.CompletionListener() {
+    private void insertRoom(ArrayMap<String, Object> map, final Room room) {
+        rootFirebase.get().updateChildren(map, new Firebase.CompletionListener() {
             @Override
             public void onComplete(FirebaseError firebaseError, Firebase firebase) {
                 if (firebaseError != null) {
-                    Log.e("Group Room Creation", "onComplete: " + firebaseError.getMessage());
+                    Toast.makeText(getActivity(), firebaseError.getMessage(), Toast.LENGTH_SHORT).show();
                 }
 
-                Toast.makeText(getActivity(), "Group Room Created", Toast.LENGTH_SHORT).show();
+                roomSuccessfullyCreated(room);
             }
         });
-
     }
 
-    private void putGroupRoomInfoMap(HashMap<String, Object> groupRoomMap, Room room, String roomKey, long roomCreated) {
-        putRoomInfo(groupRoomMap, roomKey, "name", room.getName());
-        putRoomInfo(groupRoomMap, roomKey, "imagePath", room.getImagePath());
-        putRoomInfo(groupRoomMap, roomKey, "latestMessage", room.getLatestMessage());
-        putRoomInfo(groupRoomMap, roomKey, "latestMessageUser", room.getLatestMessageUser());
-        putRoomInfo(groupRoomMap, roomKey, "latestMessageTime", room.getLatestMessageTime());
-        putRoomInfo(groupRoomMap, roomKey, "type", room.getType());
-        putRoomInfo(groupRoomMap, roomKey, "created", room.getCreated());
-    }
-
-    private void putRoomInfo(HashMap<String, Object> roomMap, String roomKey, String key, Object value) {
-        roomMap.put(TextUtil.getPath(KEY_ROOMS, KEY_ROOMS_INFO, roomKey, key), value);
-    }
-
-    private void putUsersRoomData(HashMap<String, Object> groupRoomMap, String roomKey, long roomCreated) {
-
-        for (UserInfo userInfo : usersInfo) {
-            String userKey = userInfo.getUserKey();
-
-            groupRoomMap.put(TextUtil.getPath(KEY_ROOMS, KEY_ROOMS_MEMBERS, roomKey, userKey), roomCreated);
-            groupRoomMap.put(TextUtil.getPath(KEY_USERS, KEY_USERS_USER_ROOMS, userKey, roomKey), roomCreated);
-            groupRoomMap.put(TextUtil.getPath(KEY_USERS, KEY_USERS_USER_GROUP_ROOMS, userKey, roomKey), roomCreated);
+    private void roomSuccessfullyCreated(Room room) {
+        if (onRoomRequest != null) {
+            onRoomRequest.onRoomCreated(room);
+        } else {
+            createdRoom = room;
         }
     }
 
-    private void putRoomMessage(HashMap<String, Object> roomMap, String roomKey, Message messageRoom) {
-        String messageKey = messageFirebase.get().child(roomKey).push().getKey();
-
-        putMessageInfo(roomMap, roomKey, messageKey, "roomId", messageRoom.getRoomId());
-        putMessageInfo(roomMap, roomKey, messageKey, "message", messageRoom.getMessage());
-        putMessageInfo(roomMap, roomKey, messageKey, "sentBy", messageRoom.getSentBy());
-        putMessageInfo(roomMap, roomKey, messageKey, "sentWhen", messageRoom.getSentWhen());
-    }
-
-    private void putMessageInfo(HashMap<String, Object> roomMap, String roomKey, String messageKey, String key, Object value) {
-        roomMap.put(TextUtil.getPath(KEY_MESSAGES, roomKey, messageKey, key), value);
-    }
-
     private String createGroupRoomName() {
-        StringBuilder builder = new StringBuilder();
+        int size = membersInfo.length;
+        StringBuilder builder = new StringBuilder(size * 4);
 
-        for (int i = 0, size = usersInfo.length; i < size; i++) {
-            String firstName = usersInfo[i].getDisplayName().split(" ")[0];
+        for (int i = 0; i < size; i++) {
+            String firstName = membersInfo[i].getDisplayName().split(" ")[0];
 
             builder.append(firstName);
             builder.append(i == (size - 1) ? "" : ", ");
@@ -355,17 +377,13 @@ public class NewMessagesFragment extends BaseFragment {
         protected void onPostExecute(String base64Bitmap) {
             super.onPostExecute(base64Bitmap);
 
-            if (onImageRequestListener != null) {
-                onImageRequestListener.onImageReceived(base64Bitmap);
-            }
-
-            bitmapBase64Result = base64Bitmap;
-            onMergedBitmapSuccess(base64Bitmap);
+            onImageRoomCreated(base64Bitmap);
         }
     }
 
-    public interface OnImageRequestListener {
-        void onImageReceived(String base64Bitmap);
+    public interface OnRoomRequest {
+        void onRoomCreated(Room room);
+        void onShowLoading();
     }
 
 }

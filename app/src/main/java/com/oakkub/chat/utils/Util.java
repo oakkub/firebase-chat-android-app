@@ -13,6 +13,7 @@ import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 
 import com.oakkub.chat.managers.AppController;
+import com.oakkub.chat.managers.Contextor;
 
 /**
  * Created by OaKKuB on 10/13/2015.
@@ -39,11 +40,9 @@ public class Util {
         return (int) (px / Resources.getSystem().getDisplayMetrics().density);
     }
 
-    public static boolean isLandScape(Context context) {
-
+    public static boolean isLandScape() {
+        Display display = ((WindowManager) Contextor.getInstance().getContext().getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
         Point size = new Point();
-
-        Display display = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
         display.getSize(size);
 
         return size.x > size.y;

@@ -4,6 +4,10 @@
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
 
+        <item name="android:colorEdgeEffect">@color/gray</item>
+
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:windowContentTransitions">true</item>
 
         <item name="android:windowEnterTransition">@transition/content_no_fade</item>
@@ -17,11 +21,13 @@
         </item>
     </style>
 
-    <style name="AppTheme.NoActionBar.TargetSharedElementTransition">
-        <item name="android:windowIsTranslucent">true</item>
-        <item name="android:windowBackground">@android:color/transparent</item>
-        <item name="android:windowContentOverlay">@null</item>
-        <item name="android:backgroundDimEnabled">true</item>
+    <style name="SmallProgressBarStyle" parent="@android:style/Widget.Material.ProgressBar.Small" />
+
+    <style name="MediumProgressBarStyle" parent="@android:style/Widget.Material.ProgressBar.Small">
+        <item name="android:minWidth">@dimen/spacing_big</item>
+        <item name="android:maxWidth">@dimen/spacing_big</item>
+        <item name="android:minHeight">@dimen/spacing_big</item>
+        <item name="android:maxHeight">@dimen/spacing_big</item>
     </style>
 
 </resources>

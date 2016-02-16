@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <integer name="max_ems">15</integer>
+    <integer name="min_ems">2</integer>
+
+    <integer name="max_group_member">200</integer>
+
+    <integer name="max_length_public_chat_name">50</integer>
+    <integer name="max_length_optional_description">200</integer>
+    <integer name="max_length_password">30</integer>
+
+</resources>

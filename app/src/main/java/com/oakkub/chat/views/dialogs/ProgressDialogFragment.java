@@ -1,6 +1,7 @@
 package com.oakkub.chat.views.dialogs;
 
 import android.app.Dialog;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
@@ -8,7 +9,6 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.app.DialogFragment;
 import android.view.Window;
-import android.view.WindowManager;
 
 import com.oakkub.chat.R;
 
@@ -17,12 +17,15 @@ import com.oakkub.chat.R;
  */
 public class ProgressDialogFragment extends DialogFragment {
 
-    private static final String ARGS_DIM_SCREEN = "argsClearDimScreen";
+    private static final String ARGS_DIALOG_MESSAGE = "args:dialogMessage";
 
-    public static ProgressDialogFragment newInstance(boolean clearDimScreen) {
+    public static ProgressDialogFragment newInstance() {
+        return newInstance(null);
+    }
 
+    public static ProgressDialogFragment newInstance(String dialogMessage) {
         Bundle args = new Bundle();
-        args.putBoolean(ARGS_DIM_SCREEN, clearDimScreen);
+        args.putString(ARGS_DIALOG_MESSAGE, dialogMessage);
 
         ProgressDialogFragment progressDialog = new ProgressDialogFragment();
         progressDialog.setArguments(args);
@@ -30,61 +33,47 @@ public class ProgressDialogFragment extends DialogFragment {
         return progressDialog;
     }
 
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-
-        setRetainInstance(true);
-    }
-
     @NonNull
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
 
         Bundle args = getArguments();
-        final boolean clearDimScreen = args.getBoolean(ARGS_DIM_SCREEN);
+        String dialogMessage = args.getString(ARGS_DIALOG_MESSAGE);
 
         setCancelable(false);
-        return ProgressDialog.newInstance(getActivity(), clearDimScreen);
+        return MyProgressDialog.newInstance(getActivity(), dialogMessage);
     }
 
-    @Override
-    public void onDestroyView() {
-        if (getDialog() != null && getRetainInstance()) {
-            getDialog().setDismissMessage(null);
-        }
-        super.onDestroyView();
-    }
+    private static class MyProgressDialog extends ProgressDialog {
 
-    @Override
-    public void dismiss() {
-        if (getDialog() != null && !isRemoving()) {
-            super.dismiss();
-        }
-    }
+        private String dialogMessage;
 
-    private static class ProgressDialog extends android.app.ProgressDialog {
-
-        public static ProgressDialog newInstance(Context context, boolean clearDimScreen) {
-            return new ProgressDialog(context, clearDimScreen);
+        public static MyProgressDialog newInstance(Context context, String dialogMessage) {
+            return new MyProgressDialog(context, dialogMessage);
         }
 
-        public ProgressDialog(Context context, boolean clearDimScreen) {
+        public MyProgressDialog(Context context, String dialogMessage) {
             super(context);
 
             getWindow().requestFeature(Window.FEATURE_NO_TITLE);
-            getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-            if (clearDimScreen) {
-                getWindow().clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
+
+            if (dialogMessage == null) {
+                getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+            } else {
+                this.dialogMessage = dialogMessage;
             }
+
+//            getWindow().clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
         }
 
         @Override
         protected void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
-
             setContentView(R.layout.progress_bar);
 
+            if (dialogMessage != null) {
+                setMessage(dialogMessage);
+            }
         }
     }
 }

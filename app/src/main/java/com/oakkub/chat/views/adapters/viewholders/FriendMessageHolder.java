@@ -21,6 +21,9 @@ public class FriendMessageHolder extends RecyclerView.ViewHolder {
     @Bind(R.id.friend_message_text_view)
     public TextView message;
 
+    @Bind(R.id.message_time_text_view)
+    public TextView messageTimeTextView;
+
     public FriendMessageHolder(View itemView) {
         super(itemView);
         ButterKnife.bind(this, itemView);

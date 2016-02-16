@@ -13,6 +13,7 @@ import com.oakkub.chat.models.EventBusFriendListInfo;
 import com.oakkub.chat.models.EventBusNewMessagesFriendInfo;
 import com.oakkub.chat.models.UserInfo;
 import com.oakkub.chat.utils.FirebaseUtil;
+import com.oakkub.chat.utils.UserInfoUtil;
 
 import java.util.ArrayList;
 
@@ -71,8 +72,8 @@ public class FriendsFetchingFragment extends Fragment {
     }
 
     public void fetchUserFriends(String myId) {
-        firebaseUserFriends.get().keepSynced(true);
 
+        firebaseUserFriends.get().keepSynced(true);
         firebaseUserFriends.get().child(myId)
                 .addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
@@ -101,8 +102,7 @@ public class FriendsFetchingFragment extends Fragment {
     }
 
     private void fetchFriendInfo(String friendKey) {
-        firebaseFriends.get().keepSynced(true);
-
+        firebaseFriends.get().child(friendKey).keepSynced(true);
         firebaseFriends.get().child(friendKey)
                 .addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
@@ -119,7 +119,7 @@ public class FriendsFetchingFragment extends Fragment {
 
     private void sendFriendToAdapter(DataSnapshot dataSnapshot) {
         String friendKey = dataSnapshot.getKey();
-        UserInfo friendInfo = initFriendInfo(dataSnapshot, friendKey);
+        UserInfo friendInfo = UserInfoUtil.get(friendKey, dataSnapshot);
 
         friendInfoList.add(friendInfo);
         ++totalFriendFetched;
@@ -138,21 +138,6 @@ public class FriendsFetchingFragment extends Fragment {
                 EventBus.getDefault().post(new EventBusNewMessagesFriendInfo(friendInfoList));
                 break;
         }
-    }
-
-    private UserInfo initFriendInfo(DataSnapshot dataSnapshot, String friendKey) {
-        UserInfo friendUserInfo = dataSnapshot.getValue(UserInfo.class);
-
-        friendUserInfo.setUserKey(friendKey);
-        friendUserInfo.setType(UserInfo.FRIEND);
-
-        return friendUserInfo;
-    }
-
-    public interface FriendRequestListener {
-
-        void onNewFriend();
-
     }
 
 }

@@ -1,42 +1,42 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:fresco="http://schemas.android.com/apk/res-auto"
     android:id="@+id/selectable_root"
-    android:focusable="true"
-    android:clickable="true"
-    android:background="?attr/selectableItemBackground"
-    android:padding="@dimen/spacing_small"
     android:layout_width="match_parent"
-    android:layout_height="match_parent" >
+    android:layout_height="match_parent"
+    android:background="?attr/selectableItemBackground"
+    android:clickable="true"
+    android:focusable="true"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:padding="@dimen/spacing_small">
 
     <com.facebook.drawee.view.SimpleDraweeView
         android:id="@+id/selectable_profile_image"
         android:layout_width="@dimen/spacing_bigger"
         android:layout_height="@dimen/spacing_bigger"
-        android:layout_marginRight="@dimen/spacing_small"
         android:layout_marginEnd="@dimen/spacing_small"
-        android:layout_centerVertical="true"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true"
+        android:layout_marginRight="@dimen/spacing_small"
         fresco:roundAsCircle="true" />
 
     <TextView
         android:id="@+id/selectable_friend_name_textview"
-        android:layout_toRightOf="@id/selectable_profile_image"
-        android:layout_toEndOf="@id/selectable_profile_image"
-        android:layout_centerVertical="true"
-        android:textAppearance="@style/TextAppearance.AppCompat.Body1"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
+        android:layout_height="wrap_content"
+        android:textAppearance="@style/TextAppearance.AppCompat.Body1" />
 
-    <com.facebook.drawee.view.SimpleDraweeView
-        android:id="@+id/selectable_indicator_image"
-        android:layout_width="@dimen/spacing_big"
-        android:layout_height="@dimen/spacing_big"
-        android:layout_alignParentRight="true"
-        android:layout_alignParentEnd="true"
-        android:layout_centerVertical="true"
-        fresco:placeholderImage="@drawable/ic_check_circle_green_24dp" />
+    <FrameLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1">
 
-</RelativeLayout>
+        <CheckBox
+            android:id="@+id/selectable_friend_checkbox"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="end"
+            android:clickable="false" />
+
+    </FrameLayout>
+
+</LinearLayout>

@@ -10,6 +10,8 @@ import icepick.Icepick;
  */
 public class BaseFragment extends Fragment {
 
+    protected static final String ARGS_MY_ID = "args:myId";
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

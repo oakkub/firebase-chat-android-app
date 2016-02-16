@@ -4,27 +4,36 @@
     android:id="@+id/message_root"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:layout_margin="@dimen/spacing_smaller"
     android:clickable="true"
     android:divider="@drawable/spacer_medium"
     android:focusable="true"
-    android:gravity="start"
+    android:gravity="top"
     android:orientation="horizontal"
-    android:showDividers="beginning|middle|end">
+    android:showDividers="beginning|end">
 
     <com.facebook.drawee.view.SimpleDraweeView
         android:id="@+id/friend_message_profile_image_view"
-        android:layout_width="@dimen/spacing_bigger"
-        android:layout_height="@dimen/spacing_bigger"
+        android:layout_width="@dimen/spacing_big"
+        android:layout_height="@dimen/spacing_big"
+        android:layout_marginEnd="@dimen/spacing_small"
+        android:layout_marginRight="@dimen/spacing_small"
         fresco:roundAsCircle="true" />
 
-    <TextView
-        android:id="@+id/friend_message_text_view"
+    <android.support.v7.widget.CardView
+        style="@style/CardViewStyle"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center_vertical"
-        android:background="@color/colorAccent"
-        android:padding="@dimen/spacing_small"
-        android:textColor="@android:color/white" />
+        android:layout_height="wrap_content">
+
+        <TextView
+            android:id="@+id/friend_message_text_view"
+            style="@style/TextViewMessageStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:textColor="@android:color/black" />
+
+    </android.support.v7.widget.CardView>
+
+    <include layout="@layout/partial_message_time" />
 
 </LinearLayout>

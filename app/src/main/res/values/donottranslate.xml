@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="app_name">Witcom</string>
+    <string name="simple_chat_for_everyone">Simple chat for everyone</string>
+    <string name="facebook_app_id">1646438208961419</string>
+    <string name="google_project_id">490800630447</string>
+    <string name="google_web_client_id">490800630447-o3sol0ou9bi194qtnk1df5lm9f17rj73.apps.googleusercontent.com</string>
+    <string name="google_api_key">AIzaSyBT7CtlbgCDKobBnVqZVBRO8OTwT4BjLV0</string>
+
+    <string name="hint.message.email_example">Email (ex: example@gmail.com)</string>
+    <string name="hint.message.password">Password</string>
+    <string name="hint.message.confirmed_password">Confirmed password</string>
+
+    <string name="private_room_key">
+        chat_<xliff:g id="someUserId">%s</xliff:g>_<xliff:g id="someOtherUserId">%s</xliff:g>
+    </string>
+
+    <string name="total_selected">
+        <xliff:g id="total_items">%d</xliff:g>/199
+    </string>
+
+    <string name="value_slash_value">
+        <xliff:g id="total_items">%d</xliff:g>/<xliff:g id="max_total">%d</xliff:g>
+    </string>
+
+    <string name="user_message">
+        <xliff:g id="friendName">%s</xliff:g>: <xliff:g id="message">%s</xliff:g>
+    </string>
+
+</resources>

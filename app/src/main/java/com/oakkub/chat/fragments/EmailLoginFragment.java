@@ -4,14 +4,10 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
-import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.inputmethod.EditorInfo;
-import android.widget.Button;
 import android.widget.EditText;
-import android.widget.TextView;
 
 import com.oakkub.chat.R;
 import com.oakkub.chat.activities.AuthenticationActivity;
@@ -25,24 +21,19 @@ import javax.inject.Inject;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
+import butterknife.OnClick;
 import dagger.Lazy;
 
 /**
  * A simple {@link Fragment} subclass.
  */
-public class EmailLoginFragment extends Fragment
-        implements View.OnClickListener,
-                    EditText.OnEditorActionListener {
+public class EmailLoginFragment extends BaseFragment {
 
-    /* Email login view */
     @Bind(R.id.email_edittext)
     EditText emailEditText;
+
     @Bind(R.id.password_edittext)
     EditText passwordEditText;
-    @Bind(R.id.email_register_button)
-    Button emailRegisterButton;
-    @Bind(R.id.email_login_button)
-    Button emailLoginButton;
 
     @Inject
     SharedPreferences prefs;
@@ -53,7 +44,6 @@ public class EmailLoginFragment extends Fragment
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         AppController.getComponent(getActivity()).inject(this);
     }
 
@@ -62,7 +52,6 @@ public class EmailLoginFragment extends Fragment
                              Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.email_login_fragment, container, false);
         ButterKnife.bind(this, rootView);
-
         return rootView;
     }
 
@@ -70,60 +59,28 @@ public class EmailLoginFragment extends Fragment
     public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        passwordEditText.setOnEditorActionListener(this);
-        emailLoginButton.setOnClickListener(this);
-        emailRegisterButton.setOnClickListener(this);
-
         if (emailEditText.getText().toString().isEmpty()) {
             emailEditText.setText(prefs.getString(PrefsUtil.PREF_EMAIL, ""));
         }
     }
 
-    @Override
-    public boolean onEditorAction(TextView textView, int actionId, KeyEvent event) {
-
-        switch (actionId) {
-
-            case EditorInfo.IME_ACTION_DONE:
-
-                Util.hideSoftKeyboard(getActivity());
-                loginWithEmail();
-
-                return true;
-        }
-
-        return false;
+    @OnClick(R.id.email_login_button)
+    public void onEmailLoginButtonClick() {
+        login();
     }
 
-    @Override
-    public void onClick(View view) {
-
-        switch (view.getId()) {
-
-            case R.id.email_register_button:
-
-                goToRegisterActivity();
-
-                break;
-
-            case R.id.email_login_button:
-
-                loginWithEmail();
-
-                break;
-
-        }
-
+    @OnClick(R.id.email_register_button)
+    public void onRegisterButtonClick() {
+        goToRegisterActivity();
     }
 
     private void goToRegisterActivity() {
-
         Intent intent = new Intent(getActivity(), RegisterActivity.class);
         startActivity(intent);
         getActivity().overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
     }
 
-    private void loginWithEmail() {
+    private void login() {
 
         final String email = emailEditText.getText().toString().trim();
         final String password = passwordEditText.getText().toString().trim();
@@ -140,20 +97,16 @@ public class EmailLoginFragment extends Fragment
             return;
         }
 
-        rememberEmail(email);
-        beginAuthentication(email, password);
-    }
-
-    private void rememberEmail(String email) {
         editor.get().putString(PrefsUtil.PREF_EMAIL, email).apply();
+        beginAuthentication(email, password);
     }
 
     private void beginAuthentication(String email, String password) {
 
         Intent authenticationIntent = new Intent(getActivity(), AuthenticationActivity.class);
-        authenticationIntent.putExtra(AuthenticationActivityFragment.PROVIDER, TextUtil.EMAIL_PROVIDER);
-        authenticationIntent.putExtra(AuthenticationActivityFragment.EMAIL, email);
-        authenticationIntent.putExtra(AuthenticationActivityFragment.PASSWORD, password);
+        authenticationIntent.putExtra(AuthenticationFragment.PROVIDER, TextUtil.EMAIL_PROVIDER);
+        authenticationIntent.putExtra(AuthenticationFragment.EMAIL, email);
+        authenticationIntent.putExtra(AuthenticationFragment.PASSWORD, password);
 
         startActivity(authenticationIntent);
         getActivity().overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);

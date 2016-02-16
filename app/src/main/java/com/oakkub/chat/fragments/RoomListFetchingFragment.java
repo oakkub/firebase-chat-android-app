@@ -3,7 +3,7 @@ package com.oakkub.chat.fragments;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
-import android.util.Log;
+import android.util.SparseArray;
 
 import com.firebase.client.ChildEventListener;
 import com.firebase.client.DataSnapshot;
@@ -12,10 +12,12 @@ import com.firebase.client.FirebaseError;
 import com.firebase.client.ValueEventListener;
 import com.oakkub.chat.managers.AppController;
 import com.oakkub.chat.models.EventBusNewRoom;
+import com.oakkub.chat.models.EventBusRemovedRoom;
 import com.oakkub.chat.models.EventBusUpdatedRoom;
 import com.oakkub.chat.models.Room;
 import com.oakkub.chat.models.UserInfo;
 import com.oakkub.chat.utils.FirebaseUtil;
+import com.oakkub.chat.utils.RoomUtil;
 
 import java.util.ArrayList;
 
@@ -45,7 +47,7 @@ public class RoomListFetchingFragment extends Fragment implements ChildEventList
     @Named(FirebaseUtil.NAMED_USER_ROOMS)
     Firebase userRoomsFirebase;
 
-    private ArrayList<String> myRoomList;
+    private SparseArray<Long> latestRoomActiveTimeList;
     private ArrayList<Room> roomList;
     private ArrayList<Room> changeRoomList;
     private String myId;
@@ -66,10 +68,16 @@ public class RoomListFetchingFragment extends Fragment implements ChildEventList
         AppController.getComponent(getActivity()).inject(this);
         setRetainInstance(true);
 
+        roomList = new ArrayList<>();
+        latestRoomActiveTimeList = new SparseArray<>();
+    }
+
+    @Override
+    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+
         Bundle args = getArguments();
         myId = args.getString(ARGS_MY_ID);
-
-        myRoomList = new ArrayList<>(MESSAGE_LIMIT);
     }
 
     @Override
@@ -81,7 +89,6 @@ public class RoomListFetchingFragment extends Fragment implements ChildEventList
     @Override
     public void onDestroy() {
         super.onDestroy();
-        Log.e(TAG, "onDestroy: ");
         userRoomsFirebase.child(myId).removeEventListener(this);
     }
 
@@ -95,11 +102,9 @@ public class RoomListFetchingFragment extends Fragment implements ChildEventList
 
     private void fetchRoomIdUser(DataSnapshot dataSnapshot) {
         final String roomId = dataSnapshot.getKey();
-        Log.d(TAG, "fetchRoomIdUser: " + roomId);
-        if (!myRoomList.contains(roomId)) {
-            myRoomList.add(roomId);
-            fetchUserRoomById(roomId);
-        }
+
+        latestRoomActiveTimeList.put(roomId.hashCode(), dataSnapshot.getValue(Long.class));
+        fetchUserRoomById(roomId);
     }
 
     private void fetchUserRoomById(final String roomId) {
@@ -126,10 +131,11 @@ public class RoomListFetchingFragment extends Fragment implements ChildEventList
         // we gonna get name of friend to be use as room name
         if (room.getType().equals(FirebaseUtil.VALUE_ROOM_TYPE_PRIVATE)) {
 
-            String friendId = findFriendIdFromPrivateRoom(dataSnapshot);
+            String friendId = RoomUtil.findFriendIdFromPrivateRoom(myId, room.getRoomId());
             fetchFriendInfoForPrivateRoom(friendId, room);
         } else {
-            EventBus.getDefault().post(new EventBusNewRoom(room));
+            addRoom(room);
+            EventBus.getDefault().post(new EventBusNewRoom(room, latestRoomActiveTimeList.get(room.hashCode())));
         }
     }
 
@@ -139,30 +145,18 @@ public class RoomListFetchingFragment extends Fragment implements ChildEventList
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 UserInfo friendInfo = dataSnapshot.getValue(UserInfo.class);
+                room.setName(friendInfo.getDisplayName());
+                room.setImagePath(friendInfo.getProfileImageURL());
 
-                room.setRoomName(friendInfo.getDisplayName());
-                room.setRoomImagePath(friendInfo.getProfileImageURL());
+                addRoom(room);
 
-                EventBus.getDefault().post(new EventBusNewRoom(room));
+                EventBus.getDefault().post(new EventBusNewRoom(room, latestRoomActiveTimeList.get(room.hashCode())));
             }
 
             @Override
             public void onCancelled(FirebaseError firebaseError) {
             }
         });
-    }
-
-    private String findFriendIdFromPrivateRoom(DataSnapshot dataSnapshot) {
-        // find image for private room
-        final String[] key = dataSnapshot.getKey().split("_");
-        final String[] users = new String[]{key[1], key[2]};
-
-        for (String userId : users) {
-            if (!userId.equals(myId)) {
-                return userId;
-            }
-        }
-        return "";
     }
 
     private void fetchUpdatedRoom(final String roomKey) {
@@ -173,7 +167,12 @@ public class RoomListFetchingFragment extends Fragment implements ChildEventList
                         Room room = dataSnapshot.getValue(Room.class);
                         room.setRoomId(roomKey);
 
-                        EventBus.getDefault().post(new EventBusUpdatedRoom(room));
+                        if (roomList.contains(room)) {
+                            EventBus.getDefault().post(new EventBusUpdatedRoom(room, latestRoomActiveTimeList.get(room.hashCode())));
+                        } else {
+                            EventBus.getDefault().post(new EventBusNewRoom(room, latestRoomActiveTimeList.get(room.hashCode())));
+                            addRoom(room);
+                        }
                     }
 
                     @Override
@@ -190,12 +189,22 @@ public class RoomListFetchingFragment extends Fragment implements ChildEventList
 
     @Override
     public void onChildChanged(DataSnapshot dataSnapshot, String previousChildKey) {
-        fetchUpdatedRoom(dataSnapshot.getKey());
+        String roomKey = dataSnapshot.getKey();
+        latestRoomActiveTimeList.put(roomKey.hashCode(), dataSnapshot.getValue(Long.class));
+        fetchUpdatedRoom(roomKey);
     }
 
     @Override
     public void onChildRemoved(DataSnapshot dataSnapshot) {
-
+        String roomKey = dataSnapshot.getKey();
+        for (int i = 0, size = roomList.size(); i < size; i++) {
+            Room room = roomList.get(i);
+            if (room.getRoomId().equals(roomKey)) {
+                EventBus.getDefault().post(new EventBusRemovedRoom(room));
+                roomList.remove(i);
+                break;
+            }
+        }
     }
 
     @Override
@@ -206,6 +215,12 @@ public class RoomListFetchingFragment extends Fragment implements ChildEventList
     @Override
     public void onCancelled(FirebaseError firebaseError) {
 
+    }
+
+    private void addRoom(Room room) {
+        if (!roomList.contains(room)) {
+            roomList.add(room);
+        }
     }
 
     public interface OnRoomListChangeListener {

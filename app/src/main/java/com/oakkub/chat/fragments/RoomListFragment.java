@@ -1,5 +1,6 @@
 package com.oakkub.chat.fragments;
 
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -11,21 +12,22 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.oakkub.chat.R;
-import com.oakkub.chat.activities.PrivateChatRoomActivity;
+import com.oakkub.chat.activities.ChatRoomActivity;
 import com.oakkub.chat.managers.AppController;
+import com.oakkub.chat.managers.OnScrolledEventListener;
 import com.oakkub.chat.models.EventBusNewRoom;
+import com.oakkub.chat.models.EventBusRemovedRoom;
 import com.oakkub.chat.models.EventBusUpdatedRoom;
 import com.oakkub.chat.models.Room;
 import com.oakkub.chat.utils.FirebaseUtil;
 import com.oakkub.chat.views.adapters.RoomListAdapter;
 import com.oakkub.chat.views.adapters.presenter.OnAdapterItemClick;
-
-import java.util.ArrayList;
-import java.util.Collections;
+import com.oakkub.chat.views.widgets.recyclerview.RecyclerViewScrollDirectionListener;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
 import de.greenrobot.event.EventBus;
+import icepick.State;
 
 public class RoomListFragment extends BaseFragment implements OnAdapterItemClick {
 
@@ -34,11 +36,14 @@ public class RoomListFragment extends BaseFragment implements OnAdapterItemClick
     private static final String ROOM_LIST_STATE = "state:roomList";
     private static final String TAG = RoomListFragment.class.getSimpleName();
 
-    @Bind(R.id.message_list_recycler_view)
-    RecyclerView messageList;
+    @Bind(R.id.recyclerview)
+    RecyclerView roomList;
+
+    @State
+    String myId;
 
     private RoomListAdapter roomListAdapter;
-    private String myId;
+    private OnScrolledEventListener onScrolledEventListener;
 
     public static RoomListFragment newInstance(String myId) {
 
@@ -52,20 +57,33 @@ public class RoomListFragment extends BaseFragment implements OnAdapterItemClick
     }
 
     @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+
+        onScrolledEventListener = (OnScrolledEventListener) getActivity();
+    }
+
+    @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         AppController.getComponent(getActivity()).inject(this);
+        getDataFromArguments(savedInstanceState);
+
+        roomListAdapter = new RoomListAdapter(this, myId);
+        EventBus.getDefault().register(this);
+    }
+
+    private void getDataFromArguments(Bundle savedInstanceState) {
+        if (savedInstanceState != null) return;
 
         myId = getArguments().getString(ARGS_MY_ID);
-        roomListAdapter = new RoomListAdapter(this);
-        EventBus.getDefault().register(this);
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
-        View rootView = inflater.inflate(R.layout.fragment_message_list, container, false);
+        View rootView = inflater.inflate(R.layout.recyclerview, container, false);
         ButterKnife.bind(this, rootView);
 
         return rootView;
@@ -93,6 +111,13 @@ public class RoomListFragment extends BaseFragment implements OnAdapterItemClick
     }
 
     @Override
+    public void onDetach() {
+        super.onDetach();
+
+        onScrolledEventListener = null;
+    }
+
+    @Override
     public void onDestroy() {
         EventBus.getDefault().unregister(this);
 
@@ -100,39 +125,48 @@ public class RoomListFragment extends BaseFragment implements OnAdapterItemClick
     }
 
     private void setRecyclerView() {
-        messageList.setItemAnimator(null);
-        messageList.setHasFixedSize(true);
-        messageList.setLayoutManager(new LinearLayoutManager(getActivity()));
-        messageList.setAdapter(roomListAdapter);
-    }
+        roomList.setItemAnimator(null);
+        roomList.setHasFixedSize(true);
+        roomList.setLayoutManager(new LinearLayoutManager(getActivity()));
+        roomList.addOnScrollListener(new RecyclerViewScrollDirectionListener() {
+            @Override
+            public void onScrollUp() {
+                if (onScrolledEventListener != null) {
+                    onScrolledEventListener.onScrollUp();
+                }
+            }
 
-    private void setPrivateRoomIntent(Intent privateRoomIntent, Room room) {
+            @Override
+            public void onScrollDown() {
+                if (onScrolledEventListener != null) {
+                    onScrolledEventListener.onScrollDown();
+                }
+            }
+        });
 
-        privateRoomIntent.putStringArrayListExtra(PrivateChatRoomActivityFragment.EXTRA_FRIEND_ID,
-                new ArrayList<>(Collections.singletonList(FirebaseUtil.privateRoomFriendKey(myId, room.getRoomId()))));
-        privateRoomIntent.putStringArrayListExtra(PrivateChatRoomActivityFragment.EXTRA_FRIEND_PROFILE,
-                new ArrayList<>(Collections.singletonList(room.getImagePath())));
+        roomList.setAdapter(roomListAdapter);
     }
 
     @Override
     public void onAdapterClick(View itemView, int position) {
         Room room = roomListAdapter.getItem(position);
 
-        Intent privateRoomIntent = new Intent(getActivity(), PrivateChatRoomActivity.class);
-        privateRoomIntent.putExtra(PrivateChatRoomActivityFragment.EXTRA_MY_ID, myId);
-        privateRoomIntent.putExtra(PrivateChatRoomActivityFragment.EXTRA_ROOM_ID, room.getRoomId());
-
-        if (room.getType().equals(FirebaseUtil.VALUE_ROOM_TYPE_PRIVATE)) {
-            // private room will use room image for friend image
-            // and friend id for fetching display name
-            setPrivateRoomIntent(privateRoomIntent, room);
-        } else {
-            // we already have room name
-            privateRoomIntent.putExtra(PrivateChatRoomActivityFragment.EXTRA_ROOM_NAME, room.getName());
-            privateRoomIntent.putExtra(PrivateChatRoomActivityFragment.EXTRA_ROOM_IMAGE, room.getImagePath());
+        switch (room.getType()) {
+            case FirebaseUtil.VALUE_ROOM_TYPE_PRIVATE:
+                // private room will use room image for friend image
+                // and friend id for fetching display name
+                Intent privateRoomIntent = ChatRoomActivity.getIntentPrivateRoom(getActivity(), room, myId);
+                startActivity(privateRoomIntent);
+                break;
+            case FirebaseUtil.VALUE_ROOM_TYPE_GROUP:
+                Intent groupRoomIntent = ChatRoomActivity.getIntentGroupRoom(getActivity(), room, myId);
+                startActivity(groupRoomIntent);
+                break;
+            case FirebaseUtil.VALUE_ROOM_TYPE_PUBLIC:
+                Intent publicRoomIntent = ChatRoomActivity.getIntentPublicRoom(getActivity(), room, myId, true);
+                startActivity(publicRoomIntent);
+                break;
         }
-
-        startActivity(privateRoomIntent);
     }
 
     @Override
@@ -141,39 +175,62 @@ public class RoomListFragment extends BaseFragment implements OnAdapterItemClick
         return false;
     }
 
-    public void onEvent(EventBusNewRoom newRoom) {
+    public void onEvent(EventBusNewRoom eventBusNewRoom) {
         if (roomListAdapter == null) return;
 
         Room firstRoom = roomListAdapter.getFirstItem();
+        Room newRoom = eventBusNewRoom.room;
+
+        newRoom.setLatestMessageTime(eventBusNewRoom.latestActiveTime);
+
+        if (roomListAdapter.contains(newRoom)) return;
 
         if (firstRoom != null) {
-            if (firstRoom.getLatestMessageTime() > newRoom.room.getLatestMessageTime()) {
-                // if first room is the latest, then add newRoom after this room
-                // group room will be fetched faster than private room,
-                // cause them to be sent here faster than others.
-                roomListAdapter.add(1, newRoom.room);
-            } else {
-                roomListAdapter.addFirst(newRoom.room);
+
+            for (int i = 0, size = roomListAdapter.getItemCount(); i < size; i++) {
+
+                Room room = roomListAdapter.getItem(i);
+
+                if (newRoom.getLatestMessageTime() > room.getLatestMessageTime()) {
+
+                    roomListAdapter.add(i, newRoom);
+
+                    // scroll to first position if necessary
+                    if (((LinearLayoutManager) roomList.getLayoutManager())
+                            .findFirstCompletelyVisibleItemPosition() < 2) {
+                        roomList.scrollToPosition(0);
+                    }
+
+                    break;
+                }
+
+                if (i == (size - 1) && newRoom.getLatestMessageTime() < room.getLatestMessageTime()) {
+                    roomListAdapter.addLast(newRoom);
+                }
             }
+
         } else {
-            roomListAdapter.addFirst(newRoom.room);
+            roomListAdapter.addFirst(newRoom);
         }
     }
 
+    @SuppressWarnings("unused")
     public void onEvent(EventBusUpdatedRoom updatedRoom) {
         if (roomListAdapter == null) return;
 
         Room existingUpdatedRoom = updatedRoom.room;
-        if (existingUpdatedRoom.getLatestMessageTime() > roomListAdapter.getFirstItem().getLatestMessageTime()) {
-            roomListAdapter.moveItem(existingUpdatedRoom, 0);
-        }
+        Room existingRoom = roomListAdapter.getItem(roomListAdapter.findPosition(existingUpdatedRoom));
 
-        // set info of newerRoom to oldRoom
-        Room oldRoom = roomListAdapter.getFirstItem();
-        oldRoom.setLatestMessage(existingUpdatedRoom.getLatestMessage());
-        oldRoom.setLatestMessageTime(existingUpdatedRoom.getLatestMessageTime());
-        oldRoom.setLatestMessageUser(existingUpdatedRoom.getLatestMessageUser());
+        existingRoom.setLatestMessage(existingUpdatedRoom.getLatestMessage());
+        existingRoom.setLatestMessageTime(updatedRoom.latestActiveTime);
+        existingRoom.setLatestMessageUser(existingUpdatedRoom.getLatestMessageUser());
 
-        roomListAdapter.replace(oldRoom);
+        roomListAdapter.moveItem(existingRoom, 0);
+        roomListAdapter.replace(existingRoom);
+    }
+
+    public void onEvent(EventBusRemovedRoom removedRoom) {
+        if (roomListAdapter == null) return;
+        roomListAdapter.remove(removedRoom.room);
     }
 }

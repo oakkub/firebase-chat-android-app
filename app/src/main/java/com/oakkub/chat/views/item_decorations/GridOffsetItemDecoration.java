@@ -22,8 +22,8 @@ public class GridOffsetItemDecoration extends RecyclerView.ItemDecoration {
     public void getItemOffsets(Rect outRect, View view, RecyclerView parent, RecyclerView.State state) {
         super.getItemOffsets(outRect, view, parent, state);
 
-        final int itemPosition = parent.getChildAdapterPosition(view);
-        final int spanCount = ((GridLayoutManager) parent.getLayoutManager()).getSpanCount();
+        int itemPosition = parent.getChildAdapterPosition(view);
+        int spanCount = ((GridLayoutManager) parent.getLayoutManager()).getSpanCount();
 
         if (allSpace) {
             outRect.left = spaceBetweenCell;

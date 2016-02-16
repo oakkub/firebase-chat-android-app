@@ -1,9 +1,9 @@
 package com.oakkub.chat.views.adapters;
 
 import android.os.Bundle;
-import android.util.SparseBooleanArray;
+import android.util.SparseIntArray;
 
-import com.oakkub.chat.managers.SparseBooleanArrayParcelableWrapper;
+import com.oakkub.chat.managers.SparseIntArrayParcelableWrapper;
 
 /**
  * Created by OaKKuB on 12/22/2015.
@@ -12,17 +12,12 @@ public abstract class RecyclerViewMultipleSelectionAdapter<I> extends RecyclerVi
 
     private static final String STATE_SELECTED_ITEMS = "state:selectedItems";
 
-    private SparseBooleanArray selectedItems;
-
-    public RecyclerViewMultipleSelectionAdapter() {
-        super();
-        selectedItems = new SparseBooleanArray();
-    }
+    private SparseIntArray selectedItems = new SparseIntArray();
 
     @Override
     public void onSaveInstanceState(String key, Bundle outState) {
         super.onSaveInstanceState(key, outState);
-        outState.putParcelable(STATE_SELECTED_ITEMS, new SparseBooleanArrayParcelableWrapper(selectedItems));
+        outState.putParcelable(STATE_SELECTED_ITEMS, new SparseIntArrayParcelableWrapper(selectedItems));
     }
 
     @Override
@@ -32,33 +27,39 @@ public abstract class RecyclerViewMultipleSelectionAdapter<I> extends RecyclerVi
     }
 
     public boolean isSelected(int position) {
-        return selectedItems.get(position);
+        return selectedItems.get(position, -1) != -1;
     }
 
     public int getSelectedItemCount() {
         return selectedItems.size();
     }
 
-    public void toggleSelection(int position) {
-        if (isSelected(position)) {
-            selectedItems.delete(position);
-        } else {
-            selectedItems.put(position, true);
-        }
+    public void toggleSelection(int position, int hashCode) {
+        setSelection(position, hashCode);
         notifyItemChanged(position);
     }
 
-    public void clearSelection() {
-        int[] totalSelectedItemToBeCleared = getSelectedItems();
-        selectedItems.clear();
-
-        for (int itemPositionToBeCleared : totalSelectedItemToBeCleared) {
-            notifyItemChanged(itemPositionToBeCleared);
+    public void setSelection(int position, int hashCode) {
+        if (isSelected(hashCode)) {
+            selectedItems.delete(hashCode);
+        } else {
+            selectedItems.put(hashCode, position);
         }
     }
 
-    public int[] getSelectedItems() {
-        final int size = selectedItems.size();
+    public void clearSelection() {
+        /*int[] selectedItemsPosition = getSelectedItemsKey();
+        selectedItems.clear();
+
+        for (int itemPosition : selectedItemsPosition) {
+            notifyItemChanged(itemPosition);
+        }*/
+        selectedItems.clear();
+        notifyDataSetChanged();
+    }
+
+    public int[] getSelectedItemsKey() {
+        int size = selectedItems.size();
 
         int[] totalSelectedPosition = new int[size];
         for (int i = 0; i < size; i++) {

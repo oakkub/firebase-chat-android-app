@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string-array name="public_chat_tag_keys">
+        <item>General</item>
+        <item>Art</item>
+        <item>Book</item>
+        <item>Camera</item>
+        <item>Car</item>
+        <item>Cartoon</item>
+        <item>Education</item>
+        <item>Entertainment</item>
+        <item>Family</item>
+        <item>Financial</item>
+        <item>Food</item>
+        <item>Game</item>
+        <item>Healthy</item>
+        <item>Makeup</item>
+        <item>Movie</item>
+        <item>Music</item>
+        <item>Pet</item>
+        <item>Property</item>
+        <item>Science</item>
+        <item>Sport</item>
+        <item>Technology</item>
+        <item>Tourism</item>
+    </string-array>
+
+    <string-array name="public_chat_tag_values" translatable="false">
+        <item>General</item>
+        <item>Art</item>
+        <item>Book</item>
+        <item>Camera</item>
+        <item>Car</item>
+        <item>Cartoon</item>
+        <item>Education</item>
+        <item>Entertainment</item>
+        <item>Family</item>
+        <item>Financial</item>
+        <item>Food</item>
+        <item>Game</item>
+        <item>Healthy</item>
+        <item>Makeup</item>
+        <item>Movie</item>
+        <item>Music</item>
+        <item>Pet</item>
+        <item>Property</item>
+        <item>Science</item>
+        <item>Sport</item>
+        <item>Technology</item>
+        <item>Tourism</item>
+    </string-array>
+
+</resources>

@@ -8,6 +8,7 @@
     <uses-permission android:name="android.permission.USE_CREDENTIALS" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
     <permission
         android:name="com.oakkub.chat.permission.C2D_MESSAGE"
@@ -28,6 +29,9 @@
         <meta-data
             android:name="com.google.android.gms.version"
             android:value="@integer/google_play_services_version" />
+        <meta-data
+            android:name="io.fabric.ApiKey"
+            android:value="46296a6769626e89a1377ceda3997ea9d2c1f00a" />
 
         <!-- android:theme="@android:style/Theme.Translucent.NoTitleBar" -->
         <activity
@@ -35,64 +39,109 @@
             android:configChanges="keyboard|keyboardHidden|screenLayout|screenSize|orientation"
             android:label="@string/app_name"
             android:theme="@android:style/Theme.NoDisplay" />
-        <activity android:name=".activities.LoginActivity">
+        <activity android:name=".activities.SplashScreenActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name=".activities.LoginActivity" />
         <activity android:name=".activities.GoogleLoginActivity" />
         <activity android:name=".activities.FacebookLoginActivity" />
         <activity android:name=".activities.AuthenticationActivity" />
         <activity
             android:name=".activities.MainActivity"
-            android:launchMode="singleTask" />
+            android:launchMode="singleTask"
+            android:parentActivityName=".activities.SplashScreenActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".activities.SplashScreenActivity" />
+        </activity>
         <activity
             android:name=".activities.RegisterActivity"
             android:parentActivityName=".activities.LoginActivity"
             android:theme="@style/AppTheme.NoActionBar.BackgroundColorPrimary">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.oakkub.chat.activities.LoginActivity" />
+                android:value=".activities.LoginActivity" />
         </activity>
         <activity
             android:name=".activities.AddFriendActivity"
             android:launchMode="singleTop"
-            android:parentActivityName=".activities.MainActivity">
+            android:parentActivityName=".activities.MainActivity"
+            android:stateNotNeeded="true">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.oakkub.chat.activities.MainActivity" />
+                android:value=".activities.MainActivity" />
         </activity>
         <activity
             android:name=".activities.FriendDetailActivity"
-            android:label="@string/title_activity_friend_detail"
             android:theme="@style/AppTheme.NoActionBar.TargetSharedElementTransition" />
 
         <service android:name=".activities.GoogleLoginActivity$GetGoogleTokenService" />
 
         <activity
-            android:name=".activities.PrivateChatRoomActivity"
-            android:label="@string/title_activity_private_chat_room"
+            android:name=".activities.ChatRoomActivity"
             android:parentActivityName=".activities.MainActivity"
             android:windowSoftInputMode="stateAlwaysHidden|adjustResize">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.oakkub.chat.activities.MainActivity" />
+                android:value=".activities.MainActivity" />
         </activity>
-        <!-- Private Chat Activity -->
 
         <activity
             android:name=".activities.NewMessagesActivity"
-            android:label="@string/new_messages" />
-
-        <activity
-            android:name=".activities.GroupContactActivity"
-            android:label="@string/title_activity_group_contact"
-            android:parentActivityName=".activities.MainActivity" >
+            android:label="@string/new_messages"
+            android:launchMode="singleTop"
+            android:parentActivityName=".activities.MainActivity"
+            android:windowSoftInputMode="stateHidden">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.oakkub.chat.activities.MainActivity" />
+        </activity>
+        <activity
+            android:name=".activities.GroupDetailDialogActivity"
+            android:theme="@style/AppTheme.NoActionBar.TargetSharedElementTransition" />
+        <activity
+            android:name=".activities.PublicDetailDialogActivity"
+            android:theme="@style/AppTheme.NoActionBar.TargetSharedElementTransition" />
+        <activity android:name=".activities.RoomInfoActivity" />
+        <activity android:name=".activities.RoomMemberActivity" />
+
+        <activity
+            android:name=".activities.NewPublicChatActivity"
+            android:parentActivityName=".activities.MainActivity"
+            android:windowSoftInputMode="stateHidden">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".activities.MainActivity" />
+        </activity>
+
+        <activity
+            android:name=".activities.FindPublicChatActivity"
+            android:parentActivityName=".activities.MainActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".activities.MainActivity" />
+        </activity>
+
+        <activity
+            android:name=".activities.MemberManagerActivity"
+            android:parentActivityName=".activities.RoomInfoActivity"
+            android:windowSoftInputMode="stateHidden">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".activities.RoomInfoActivity" />
+        </activity>
+
+        <activity
+            android:name=".activities.ProfileActivity"
+            android:windowSoftInputMode="stateHidden"
+            android:parentActivityName=".activities.MainActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".activities.MainActivity" />
         </activity>
 
         <!-- GCM -->
@@ -109,7 +158,7 @@
         </receiver>
 
         <service
-            android:name=".services.GCMNotificationService"
+            android:name=".services.GCMNotifyService"
             android:exported="false" />
         <service
             android:name=".services.GCMRegistrationIntentService"

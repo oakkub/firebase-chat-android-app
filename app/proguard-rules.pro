@@ -15,3 +15,68 @@
 #-keepclassmembers class fqcn.of.javascript.interface.for.webview {
 #   public *;
 #}
+
+# MaterialSheetFab
+-keep class io.codetail.animation.arcanimator.** { *; }
+
+# ButterKnife
+-keep class butterknife.** { *; }
+-dontwarn butterknife.internal.**
+-keep class **$$ViewBinder { *; }
+-keepclasseswithmembernames class * {
+    @butterknife.* <fields>;
+}
+-keepclasseswithmembernames class * {
+    @butterknife.* <methods>;
+}
+
+# Icepick
+-dontwarn icepick.**
+-keep class **$$Icepick { *; }
+-keepclasseswithmembernames class * {
+    @icepick.* <fields>;
+}
+
+# Green EventBus
+-keepclassmembers class ** {
+    public void onEvent*(***);
+}
+
+# Parcel library
+-keep class * implements android.os.Parcelable {
+  public static final android.os.Parcelable$Creator *;
+}
+-keep class org.parceler.Parceler$$Parcels
+
+# Material Sheet Fab
+-keep class io.codetail.animation.arcanimator.** { *; }
+
+# Firebase
+-keepattributes Signature
+-keep class com.firebase.** { *; }
+-keep class org.apache.** { *; }
+-keepnames class com.fasterxml.jackson.** { *; }
+-keepnames class javax.servlet.** { *; }
+-keepnames class org.ietf.jgss.** { *; }
+-dontwarn org.w3c.dom.**
+-dontwarn org.joda.time.**
+-dontwarn org.shaded.apache.**
+-dontwarn org.ietf.jgss.**
+-dontwarn org.apache.**
+-keep public class com.example.** {
+  public *** get*();
+  public void set*(***);
+}
+# Jackson inside Firebase
+-keepnames class com.fasterxml.jackson.annotation.** { *; }
+-dontwarn org.w3c.dom.bootstrap.DOMImplementationRegistry
+-keepattributes Annotation,EnclosingMethod,Signature
+
+# Android Support Library
+-keep public class android.support.v7.widget.** { *; }
+-keep public class android.support.v7.internal.widget.** { *; }
+-keep public class android.support.v7.internal.view.menu.** { *; }
+-keep public class * extends android.support.v4.view.ActionProvider {
+    public <init>(android.content.Context);
+}
+

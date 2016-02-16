@@ -6,9 +6,11 @@ package com.oakkub.chat.models;
 public class EventBusNewRoom {
 
     public final Room room;
+    public final long latestActiveTime;
 
-    public EventBusNewRoom(Room room) {
+    public EventBusNewRoom(Room room, long latestActiveTime) {
         this.room = room;
+        this.latestActiveTime = latestActiveTime;
     }
 
 }

@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:fresco="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/public_room_root"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:background="?attr/selectableItemBackground"
+    android:clickable="true"
+    android:focusable="true"
+    android:padding="@dimen/spacing_medium">
+
+    <com.facebook.drawee.view.SimpleDraweeView
+        android:id="@+id/public_room_imageview"
+        android:layout_width="@dimen/spacing_bigger"
+        android:layout_height="@dimen/spacing_bigger"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_centerVertical="true"
+        android:layout_marginEnd="@dimen/spacing_small"
+        android:layout_marginRight="@dimen/spacing_small"
+        fresco:roundAsCircle="true" />
+
+    <TextView
+        android:id="@+id/public_room_name_textview"
+        style="@style/TextViewSingleLineStyle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_toRightOf="@+id/public_room_imageview"
+        android:layout_toEndOf="@+id/public_room_imageview"
+        android:textAppearance="@style/TextAppearance.AppCompat.Subhead"
+        android:textColor="@android:color/black" />
+
+    <TextView
+        android:id="@+id/public_room_type_textview"
+        style="@style/TextViewSingleLineStyle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_toEndOf="@+id/public_room_imageview"
+        android:layout_toRightOf="@+id/public_room_imageview" />
+
+    <TextView
+        android:id="@+id/public_room_latest_time_textview"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentBottom="true" />
+
+</RelativeLayout>
