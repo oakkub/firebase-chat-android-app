@@ -7,7 +7,6 @@ import android.content.res.Resources;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
-import android.support.v4.app.FragmentManager;
 import android.support.v7.app.ActionBar;
 import android.support.v7.widget.Toolbar;
 import android.view.LayoutInflater;
@@ -16,23 +15,18 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.ViewTreeObserver;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
 
-import com.facebook.drawee.interfaces.DraweeController;
-import com.facebook.drawee.view.SimpleDraweeView;
 import com.oakkub.chat.R;
 import com.oakkub.chat.activities.BaseActivity;
-import com.oakkub.chat.activities.ChatRoomActivity;
 import com.oakkub.chat.models.Room;
 import com.oakkub.chat.utils.FileUtil;
 import com.oakkub.chat.utils.FirebaseUtil;
-import com.oakkub.chat.utils.FrescoUtil;
 import com.oakkub.chat.utils.IntentUtil;
 import com.oakkub.chat.utils.UriUtil;
 import com.oakkub.chat.views.dialogs.ChooseImageDialog;
-import com.oakkub.chat.views.dialogs.ProgressDialogFragment;
+import com.oakkub.chat.views.widgets.MyDraweeView;
 import com.oakkub.chat.views.widgets.MyToast;
 import com.oakkub.chat.views.widgets.spinner.MySpinner;
 
@@ -45,14 +39,14 @@ import butterknife.ButterKnife;
 import butterknife.OnClick;
 import icepick.State;
 
-public class RoomCreationFragment extends BaseFragment implements
-        ChooseImageDialog.ChooseImageDialogListener, NewPublicChatFragment.NewPublicChatListener {
+public class PublicRoomCreationFragment extends BaseFragment implements
+        ChooseImageDialog.ChooseImageDialogListener {
 
-    private static final String TAG = RoomCreationFragment.class.getSimpleName();
-    private static final String NEW_PUBLIC_CHAT_FRAGMENT_TAG = "tag:publicChatFragment";
+    private static final String TAG = PublicRoomCreationFragment.class.getSimpleName();
     private static final String CHOOSE_IMAGE_DIALOG_TAG = "tag:chooseImageDialog";
-    private static final String TAG_PROGRESS_DIALOG = "tag:progressDialogFragment";
     private static final String INPUT_ROOM_STATE = "state:inputRoom";
+    private static final String ARGS_ROOM = "args:room";
+    private static final String ARGS_TOOLBAR_TITLE = "args:toolbarTitle";
     private static final int CAMERA_REQUEST_CODE = 0;
     private static final int IMAGE_VIEWER_REQUEST_CODE = 1;
 
@@ -60,7 +54,7 @@ public class RoomCreationFragment extends BaseFragment implements
     Toolbar toolbar;
 
     @Bind(R.id.public_chat_image)
-    SimpleDraweeView publicChatImage;
+    MyDraweeView image;
 
     @Bind(R.id.public_chat_name_edittext)
     EditText nameEditText;
@@ -87,21 +81,33 @@ public class RoomCreationFragment extends BaseFragment implements
     Uri uriImage;
 
     @State
+    String toolbarTitle;
+
+    @State
     String[] spinnerKeys;
 
     @State
     String[] spinnerValues;
 
     private Room inputRoom;
+    private Room argsRoom;
 
     private OnRoomCreationListener onRoomCreationListener;
-    private NewPublicChatFragment newPublicChatFragment;
 
-    public static RoomCreationFragment newInstance(String myId) {
+    public static PublicRoomCreationFragment newInstance(String myId, String toolbarTitle) {
+        return newInstance(myId, toolbarTitle, null);
+    }
+
+    public static PublicRoomCreationFragment newInstance(String myId, String toolbarTitle, Room room) {
         Bundle args = new Bundle();
         args.putString(ARGS_MY_ID, myId);
+        args.putString(ARGS_TOOLBAR_TITLE, toolbarTitle);
 
-        RoomCreationFragment fragment = new RoomCreationFragment();
+        if (room != null) {
+            args.putParcelable(ARGS_ROOM, Parcels.wrap(room));
+        }
+
+        PublicRoomCreationFragment fragment = new PublicRoomCreationFragment();
         fragment.setArguments(args);
 
         return fragment;
@@ -119,16 +125,19 @@ public class RoomCreationFragment extends BaseFragment implements
         super.onCreate(savedInstanceState);
         getDataArgs(savedInstanceState);
         getDataResources(savedInstanceState);
+        setHasOptionsMenu(true);
 
-        if (savedInstanceState.containsKey(INPUT_ROOM_STATE)) {
-            inputRoom = Parcels.unwrap(savedInstanceState.getParcelable(INPUT_ROOM_STATE));
+        if (savedInstanceState != null) {
+            if (savedInstanceState.containsKey(INPUT_ROOM_STATE)) {
+                inputRoom = Parcels.unwrap(savedInstanceState.getParcelable(INPUT_ROOM_STATE));
+            }
         }
     }
 
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        View rootView = inflater.inflate(R.layout.activity_public_chat_creation, container, false);
+        View rootView = inflater.inflate(R.layout.fragment_public_chat_creation, container, false);
         ButterKnife.bind(this, rootView);
         return rootView;
     }
@@ -140,14 +149,26 @@ public class RoomCreationFragment extends BaseFragment implements
         setToolbar();
         setSpinner();
 
-        FragmentManager fragmentManager = getChildFragmentManager();
-        newPublicChatFragment = (NewPublicChatFragment) fragmentManager.findFragmentByTag(NEW_PUBLIC_CHAT_FRAGMENT_TAG);
-        if (newPublicChatFragment == null) {
-            newPublicChatFragment = NewPublicChatFragment.newInstance(myId);
-            fragmentManager.beginTransaction()
-                    .add(newPublicChatFragment, NEW_PUBLIC_CHAT_FRAGMENT_TAG)
-                    .commit();
+        setArgsRoomData(savedInstanceState);
+    }
+
+    private void setArgsRoomData(Bundle savedInstanceState) {
+        if (argsRoom == null || savedInstanceState != null) return;
+
+        image.setMatchedSizeImageURI(Uri.parse(argsRoom.getImagePath()));
+        nameEditText.setText(argsRoom.getName());
+        descriptionEditText.setText(argsRoom.getDescription());
+        tagSpinner.setSelection(getSpinnerValuePosition(argsRoom.getTag()), true);
+    }
+
+    private int getSpinnerValuePosition(String value) {
+        for (int i = 0, size = spinnerValues.length; i < size; i++) {
+            if (spinnerValues[i].equals(value)) {
+                tagSpinner.setSelection(i, true);
+                return i;
+            }
         }
+        return 0;
     }
 
     @Override
@@ -169,6 +190,7 @@ public class RoomCreationFragment extends BaseFragment implements
     private void sendResultBack() {
         if (onRoomCreationListener != null && inputRoom != null) {
             onRoomCreationListener.onInputSend(inputRoom, uriImage, absolutePath);
+            inputRoom = null;
         }
     }
 
@@ -177,22 +199,6 @@ public class RoomCreationFragment extends BaseFragment implements
         super.onActivityResult(requestCode, resultCode, data);
         onCameraResult(requestCode, resultCode);
         onImageViewerResult(requestCode, resultCode, data);
-    }
-
-    @Override
-    public void onStart() {
-        super.onStart();
-
-        if (uriImage != null) {
-            publicChatImage.getViewTreeObserver().addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
-                @Override
-                public boolean onPreDraw() {
-                    showResizedImageByUri();
-                    publicChatImage.getViewTreeObserver().removeOnPreDrawListener(this);
-                    return true;
-                }
-            });
-        }
     }
 
     @Override
@@ -222,6 +228,8 @@ public class RoomCreationFragment extends BaseFragment implements
         Bundle args = getArguments();
 
         myId = args.getString(ARGS_MY_ID);
+        toolbarTitle = args.getString(ARGS_TOOLBAR_TITLE);
+        argsRoom = Parcels.unwrap(args.getParcelable(ARGS_ROOM));
     }
 
     private void getDataResources(Bundle savedInstanceState) {
@@ -241,7 +249,7 @@ public class RoomCreationFragment extends BaseFragment implements
         ActionBar actionBar = activity.getSupportActionBar();
         if (actionBar != null) {
             actionBar.setDisplayHomeAsUpEnabled(true);
-            actionBar.setTitle(getString(R.string.new_public_chat));
+            actionBar.setTitle(toolbarTitle);
         }
     }
 
@@ -261,7 +269,7 @@ public class RoomCreationFragment extends BaseFragment implements
 
     @Override
     public void onCameraClick() {
-        File cameraStorage = FileUtil.getCameraStorage();
+        File cameraStorage = FileUtil.getCameraStorageDirectory();
         if (cameraStorage == null) {
             MyToast.make("Cannot use camera, no sdcard available.").show();
             return;
@@ -281,23 +289,6 @@ public class RoomCreationFragment extends BaseFragment implements
         if (imageViewerIntent != null) {
             startActivityForResult(imageViewerIntent, IMAGE_VIEWER_REQUEST_CODE);
         }
-    }
-
-    @Override
-    public void onPublicChatCreated(Room room) {
-        Intent roomIntent = ChatRoomActivity.getIntentPublicRoom(getActivity(), room, myId, true);
-        startActivity(roomIntent);
-        getActivity().finish();
-    }
-
-    @Override
-    public void onPublicChatFailed() {
-        ProgressDialogFragment progressDialog =
-                (ProgressDialogFragment) getChildFragmentManager().findFragmentByTag(TAG_PROGRESS_DIALOG);
-        if (progressDialog != null) {
-            progressDialog.dismiss();
-        }
-        MyToast.make(getString(R.string.error_creating_room)).show();
     }
 
     @SuppressWarnings("unchecked")
@@ -320,39 +311,35 @@ public class RoomCreationFragment extends BaseFragment implements
             return false;
         }
 
-        ProgressDialogFragment progressDialog = ProgressDialogFragment.newInstance();
-        progressDialog.show(getChildFragmentManager(), TAG_PROGRESS_DIALOG);
-
-        String tagValue = spinnerValues[tagSpinner.getSelectedItemPosition()];
-        Room room = new Room(FirebaseUtil.VALUE_ROOM_TYPE_PUBLIC);
-        room.setName(roomName);
-        room.setTag(tagValue);
-        if (!description.isEmpty()) {
-            room.setDescription(description);
-        }
-        newPublicChatFragment.createPublicChat(room, uriImage, absolutePath);
+        getInputRoom(roomName, description);
+        sendResultBack();
 
         return true;
     }
 
+    private void getInputRoom(String roomName, String description) {
+        String roomType = argsRoom != null ? argsRoom.getType() : FirebaseUtil.VALUE_ROOM_TYPE_PUBLIC;
+        String tagValue = spinnerValues[tagSpinner.getSelectedItemPosition()];
+
+        inputRoom = new Room(argsRoom == null ? roomType : argsRoom.getType());
+        inputRoom.setName(roomName);
+        inputRoom.setTag(tagValue);
+        
+        if (!description.isEmpty()) {
+            inputRoom.setDescription(description);
+        }
+    }
     private void onImageViewerResult(int requestCode, int resultCode, Intent data) {
         if (requestCode != IMAGE_VIEWER_REQUEST_CODE || resultCode != Activity.RESULT_OK) return;
 
         uriImage = data.getData();
         absolutePath = UriUtil.getPath(uriImage);
-        showResizedImageByUri();
+        image.setMatchedSizeImageURI(uriImage);
     }
 
     private void onCameraResult(int requestCode, int resultCode) {
         if (requestCode != CAMERA_REQUEST_CODE || resultCode != Activity.RESULT_OK) return;
-        showResizedImageByUri();
-    }
-
-    private void showResizedImageByUri() {
-        DraweeController controller = FrescoUtil.getResizeController(
-                publicChatImage.getWidth(), publicChatImage.getHeight(),
-                uriImage, publicChatImage.getController());
-        publicChatImage.setController(controller);
+        image.setMatchedSizeImageURI(uriImage);
     }
 
     public interface OnRoomCreationListener {

@@ -13,8 +13,9 @@ import android.view.ViewGroup;
 import com.oakkub.chat.R;
 import com.oakkub.chat.activities.GroupDetailDialogActivity;
 import com.oakkub.chat.managers.GridAutoFitLayoutManager;
-import com.oakkub.chat.models.EventBusPublicRoom;
 import com.oakkub.chat.models.Room;
+import com.oakkub.chat.models.eventbus.EventBusDeletePublicChat;
+import com.oakkub.chat.models.eventbus.EventBusPublicRoom;
 import com.oakkub.chat.views.adapters.GroupListAdapter;
 import com.oakkub.chat.views.adapters.presenter.OnAdapterItemClick;
 
@@ -109,6 +110,11 @@ public class PublicListFragment extends BaseFragment implements OnAdapterItemCli
         publicChatList.setLayoutManager(gridLayoutManager);
         publicChatList.setHasFixedSize(true);
         publicChatList.setAdapter(publicChatAdapter);
+    }
+
+    public void onEvent(EventBusDeletePublicChat eventBusDeletePublicChat) {
+        if (publicChatAdapter == null) return;
+        publicChatAdapter.remove(eventBusDeletePublicChat.room);
     }
 
     public void onEvent(EventBusPublicRoom eventBusPublicRoom) {

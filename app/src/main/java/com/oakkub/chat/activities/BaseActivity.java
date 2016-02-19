@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
+import android.support.annotation.IdRes;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -11,6 +12,8 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
+
+import com.oakkub.chat.views.dialogs.ProgressDialogFragment;
 
 import icepick.Icepick;
 
@@ -20,6 +23,7 @@ import icepick.Icepick;
 public class BaseActivity extends AppCompatActivity {
 
     private static final String TAG = BaseActivity.class.getSimpleName();
+    private static final String PROGRESS_DIALOG_TAG = "tag:progressDialog";
     protected static final String EXTRA_MY_ID = TAG + ":extra:myId";
 
     public static Intent getMyIdStartIntent(Context context, String myId, Class<?> cls) {
@@ -44,6 +48,63 @@ public class BaseActivity extends AppCompatActivity {
         ActionBar actionBar = getSupportActionBar();
         if (actionBar != null) {
             actionBar.setTitle(title);
+        }
+    }
+
+    public void setDisplayHomeAsUpEnabled(boolean setDisplayHomeAsUpEnabled) {
+        ActionBar actionBar = getSupportActionBar();
+        if (actionBar != null) {
+            actionBar.setDisplayHomeAsUpEnabled(setDisplayHomeAsUpEnabled);
+        }
+    }
+
+    public ProgressDialogFragment findProgressDialog() {
+        return (ProgressDialogFragment) findFragmentByTag(PROGRESS_DIALOG_TAG);
+    }
+
+    public void showProgressDialog() {
+        ProgressDialogFragment progressDialog = findProgressDialog();
+        if (progressDialog == null) {
+            progressDialog = ProgressDialogFragment.newInstance();
+        }
+        progressDialog.show(getSupportFragmentManager(), PROGRESS_DIALOG_TAG);
+    }
+
+    public void hideProgressDialog() {
+        ProgressDialogFragment progressDialog = findProgressDialog();
+        if (progressDialog != null) {
+            progressDialog.dismiss();
+        }
+    }
+
+    public Fragment findOrCreateFragmentByTag(Fragment fragment, String tag) {
+        FragmentManager fragmentManager = getSupportFragmentManager();
+        Fragment addedFragment = fragmentManager.findFragmentByTag(tag);
+
+        if (addedFragment == null) {
+            fragmentManager.beginTransaction()
+                    .add(fragment, tag)
+                    .commit();
+            return fragment;
+        } else {
+            fragment = null;
+            return addedFragment;
+        }
+    }
+
+    @SuppressWarnings("UnusedAssignment")
+    public Fragment findOrCreateFragmentByTag(@IdRes int containerId, Fragment fragment, String tag) {
+        FragmentManager fragmentManager = getSupportFragmentManager();
+        Fragment addedFragment = fragmentManager.findFragmentByTag(tag);
+
+        if (addedFragment == null) {
+            fragmentManager.beginTransaction()
+                    .add(containerId, fragment, tag)
+                    .commit();
+            return fragment;
+        } else {
+            fragment = null;
+            return addedFragment;
         }
     }
 
@@ -72,13 +133,13 @@ public class BaseActivity extends AppCompatActivity {
         overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
     }
 
-    protected void setStatusBarColor(int color) {
+    public void setStatusBarColor(int color) {
         if (Build.VERSION.SDK_INT >= 21) {
             getWindow().setStatusBarColor(color);
         }
     }
 
-    protected int getCompatColor(int color) {
+    public int getCompatColor(int color) {
         return ContextCompat.getColor(this, color);
     }
 

@@ -11,11 +11,11 @@ import com.firebase.client.Firebase;
 import com.firebase.client.FirebaseError;
 import com.firebase.client.ValueEventListener;
 import com.oakkub.chat.managers.AppController;
-import com.oakkub.chat.models.EventBusNewRoom;
-import com.oakkub.chat.models.EventBusRemovedRoom;
-import com.oakkub.chat.models.EventBusUpdatedRoom;
 import com.oakkub.chat.models.Room;
 import com.oakkub.chat.models.UserInfo;
+import com.oakkub.chat.models.eventbus.EventBusNewRoom;
+import com.oakkub.chat.models.eventbus.EventBusRemovedRoom;
+import com.oakkub.chat.models.eventbus.EventBusUpdatedRoom;
 import com.oakkub.chat.utils.FirebaseUtil;
 import com.oakkub.chat.utils.RoomUtil;
 
@@ -161,9 +161,11 @@ public class RoomListFetchingFragment extends Fragment implements ChildEventList
 
     private void fetchUpdatedRoom(final String roomKey) {
         roomFirebase.child(roomKey)
-                .addListenerForSingleValueEvent(new ValueEventListener() {
+                .addValueEventListener(new ValueEventListener() {
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
+                        if (!dataSnapshot.exists()) return;
+
                         Room room = dataSnapshot.getValue(Room.class);
                         room.setRoomId(roomKey);
 

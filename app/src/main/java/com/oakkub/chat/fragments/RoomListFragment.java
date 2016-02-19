@@ -15,10 +15,11 @@ import com.oakkub.chat.R;
 import com.oakkub.chat.activities.ChatRoomActivity;
 import com.oakkub.chat.managers.AppController;
 import com.oakkub.chat.managers.OnScrolledEventListener;
-import com.oakkub.chat.models.EventBusNewRoom;
-import com.oakkub.chat.models.EventBusRemovedRoom;
-import com.oakkub.chat.models.EventBusUpdatedRoom;
 import com.oakkub.chat.models.Room;
+import com.oakkub.chat.models.eventbus.EventBusNewRoom;
+import com.oakkub.chat.models.eventbus.EventBusRemovedRoom;
+import com.oakkub.chat.models.eventbus.EventBusRoomListEdited;
+import com.oakkub.chat.models.eventbus.EventBusUpdatedRoom;
 import com.oakkub.chat.utils.FirebaseUtil;
 import com.oakkub.chat.views.adapters.RoomListAdapter;
 import com.oakkub.chat.views.adapters.presenter.OnAdapterItemClick;
@@ -173,6 +174,11 @@ public class RoomListFragment extends BaseFragment implements OnAdapterItemClick
     public boolean onAdapterLongClick(View itemView, int position) {
         Log.e(TAG, "onAdapterLongClick: " + position);
         return false;
+    }
+
+    public void onEvent(EventBusRoomListEdited eventBusRoomListEdited) {
+        if (roomListAdapter == null) return;
+        roomListAdapter.replace(eventBusRoomListEdited.room);
     }
 
     public void onEvent(EventBusNewRoom eventBusNewRoom) {

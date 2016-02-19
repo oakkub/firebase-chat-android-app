@@ -12,9 +12,9 @@ import com.firebase.client.Firebase;
 import com.firebase.client.FirebaseError;
 import com.firebase.client.ValueEventListener;
 import com.oakkub.chat.managers.AppController;
-import com.oakkub.chat.models.EventBusNewPrivateRoomMessage;
 import com.oakkub.chat.models.Room;
 import com.oakkub.chat.models.UserInfo;
+import com.oakkub.chat.models.eventbus.EventBusNewPrivateRoomMessage;
 import com.oakkub.chat.utils.ArrayMapUtil;
 import com.oakkub.chat.utils.FirebaseUtil;
 

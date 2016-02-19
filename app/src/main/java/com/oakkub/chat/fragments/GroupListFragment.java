@@ -14,8 +14,9 @@ import com.oakkub.chat.R;
 import com.oakkub.chat.activities.GroupDetailDialogActivity;
 import com.oakkub.chat.managers.GridAutoFitLayoutManager;
 import com.oakkub.chat.managers.OnScrolledEventListener;
-import com.oakkub.chat.models.EventBusGroupRoom;
 import com.oakkub.chat.models.Room;
+import com.oakkub.chat.models.eventbus.EventBusDeleteGroupRoom;
+import com.oakkub.chat.models.eventbus.EventBusGroupRoom;
 import com.oakkub.chat.views.adapters.GroupListAdapter;
 import com.oakkub.chat.views.adapters.presenter.OnAdapterItemClick;
 import com.oakkub.chat.views.widgets.recyclerview.RecyclerViewScrollDirectionListener;
@@ -149,6 +150,11 @@ public class GroupListFragment extends BaseFragment implements OnAdapterItemClic
         });
 
         groupRecyclerView.setAdapter(groupListAdapter);
+    }
+
+    public void onEvent(EventBusDeleteGroupRoom eventBusDeleteGroupRoom) {
+        if (groupListAdapter == null) return;
+        groupListAdapter.remove(eventBusDeleteGroupRoom.room);
     }
 
     public void onEvent(EventBusGroupRoom eventBusGroupRoom) {

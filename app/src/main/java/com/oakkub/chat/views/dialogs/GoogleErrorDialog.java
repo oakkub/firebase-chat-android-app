@@ -29,8 +29,9 @@ public class GoogleErrorDialog extends DialogFragment {
 
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
-        int errorCode = getArguments().getInt(DIALOG_ERROR_CODE);
-        int requestCode = getArguments().getInt(DIALOG_REQUEST_CODE);
+        Bundle args = getArguments();
+        int errorCode = args.getInt(DIALOG_ERROR_CODE);
+        int requestCode = args.getInt(DIALOG_REQUEST_CODE);
 
         return GoogleApiAvailability.getInstance()
                 .getErrorDialog(getActivity(), errorCode, requestCode);

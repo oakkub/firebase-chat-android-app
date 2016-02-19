@@ -5,7 +5,8 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
 import android.provider.MediaStore;
-import android.widget.Toast;
+
+import com.oakkub.chat.views.widgets.MyToast;
 
 /**
  * Created by OaKKuB on 1/31/2016.
@@ -16,11 +17,12 @@ public class IntentUtil {
         Intent imageViewerIntent = new Intent(Intent.ACTION_GET_CONTENT);
         imageViewerIntent.addCategory(Intent.CATEGORY_OPENABLE);
         imageViewerIntent.setType("image/*");
+        imageViewerIntent.putExtra(Intent.EXTRA_LOCAL_ONLY, true);
         if (Build.VERSION.SDK_INT >= 18 && allowMultipleSelection) {
             imageViewerIntent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
         }
         if (imageViewerIntent.resolveActivity(context.getPackageManager()) == null) {
-            Toast.makeText(context, "Cannot open image viewer", Toast.LENGTH_LONG).show();
+            MyToast.make("Cannot open image viewer").show();
             return null;
         }
         return imageViewerIntent;
@@ -30,7 +32,7 @@ public class IntentUtil {
         Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, uriCameraImageFile);
         if (cameraIntent.resolveActivity(context.getPackageManager()) == null) {
-            Toast.makeText(context, "Cannot use camera", Toast.LENGTH_LONG).show();
+            MyToast.make("Cannot use camera").show();
             return null;
         }
         return cameraIntent;

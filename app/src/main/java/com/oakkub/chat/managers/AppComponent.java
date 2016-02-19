@@ -15,6 +15,8 @@ import com.oakkub.chat.activities.FriendDetailActivity;
 import com.oakkub.chat.activities.LoginActivity;
 import com.oakkub.chat.activities.MainActivity;
 import com.oakkub.chat.activities.NewMessagesActivity;
+import com.oakkub.chat.activities.ProfileActivity;
+import com.oakkub.chat.activities.RoomEditActivity;
 import com.oakkub.chat.dagger.PerApp;
 import com.oakkub.chat.fragments.AddAdminFragment;
 import com.oakkub.chat.fragments.AddFriendFragment;
@@ -78,6 +80,8 @@ public interface AppComponent {
     void inject(RegisterFragment registerFragment);
     void inject(MainActivity mainActivity);
     void inject(NewMessagesActivity newMessagesActivity);
+    void inject(RoomEditActivity roomEditActivity);
+    void inject(ProfileActivity profileActivity);
 
     void inject(ChatRoomActivity chatRoomActivity);
 

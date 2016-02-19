@@ -23,7 +23,7 @@
             android:orientation="vertical"
             android:showDividers="beginning|middle|end">
 
-            <com.facebook.drawee.view.SimpleDraweeView
+            <com.oakkub.chat.views.widgets.MyDraweeView
                 android:id="@+id/group_info_profile_image"
                 android:layout_width="@dimen/spacing_large"
                 android:layout_height="@dimen/spacing_large"

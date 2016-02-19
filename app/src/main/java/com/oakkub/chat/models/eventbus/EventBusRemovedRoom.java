@@ -1,4 +1,6 @@
-package com.oakkub.chat.models;
+package com.oakkub.chat.models.eventbus;
+
+import com.oakkub.chat.models.Room;
 
 /**
  * Created by OaKKuB on 2/12/2016.

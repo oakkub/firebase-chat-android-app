@@ -14,7 +14,7 @@ import com.google.android.gms.gcm.GoogleCloudMessaging;
 import com.google.android.gms.iid.InstanceID;
 import com.oakkub.chat.R;
 import com.oakkub.chat.managers.AppController;
-import com.oakkub.chat.models.GoogleInstanceID;
+import com.oakkub.chat.models.eventbus.EventBusGoogleInstanceID;
 import com.oakkub.chat.utils.FirebaseUtil;
 import com.oakkub.chat.utils.GCMUtil;
 
@@ -133,7 +133,7 @@ public class GCMRegistrationIntentService extends IntentService {
 
     private void postEventBus(Intent intent) {
         if (canPostEventBus(intent)) {
-            EventBus.getDefault().post(new GoogleInstanceID());
+            EventBus.getDefault().post(new EventBusGoogleInstanceID());
         }
     }
 

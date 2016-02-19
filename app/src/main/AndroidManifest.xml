@@ -101,6 +101,13 @@
                 android:value="com.oakkub.chat.activities.MainActivity" />
         </activity>
         <activity
+            android:name=".activities.RoomEditActivity"
+            android:parentActivityName=".activities.RoomInfoActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".activities.RoomInfoActivity" />
+        </activity>
+        <activity
             android:name=".activities.GroupDetailDialogActivity"
             android:theme="@style/AppTheme.NoActionBar.TargetSharedElementTransition" />
         <activity
@@ -137,8 +144,8 @@
 
         <activity
             android:name=".activities.ProfileActivity"
-            android:windowSoftInputMode="stateHidden"
-            android:parentActivityName=".activities.MainActivity">
+            android:parentActivityName=".activities.MainActivity"
+            android:windowSoftInputMode="stateHidden">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".activities.MainActivity" />

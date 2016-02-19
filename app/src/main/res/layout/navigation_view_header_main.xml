@@ -20,10 +20,11 @@
             android:layout_width="@dimen/spacing_bigger2"
             android:layout_height="@dimen/spacing_bigger2"
             android:layout_gravity="start|bottom"
+            android:paddingBottom="@dimen/spacing_small"
             fresco:progressBarImage="@drawable/simple_progress"
             fresco:roundAsCircle="true"
-            fresco:roundingBorderWidth="@dimen/spacing_smaller"
-            fresco:roundingBorderColor="@android:color/white" />
+            fresco:roundingBorderColor="@android:color/white"
+            fresco:roundingBorderWidth="@dimen/spacing_tiny" />
 
     </FrameLayout>
 

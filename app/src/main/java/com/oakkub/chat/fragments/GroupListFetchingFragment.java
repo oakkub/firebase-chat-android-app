@@ -7,8 +7,8 @@ import com.firebase.client.Firebase;
 import com.firebase.client.FirebaseError;
 import com.firebase.client.ValueEventListener;
 import com.oakkub.chat.managers.AppController;
-import com.oakkub.chat.models.EventBusGroupRoom;
 import com.oakkub.chat.models.Room;
+import com.oakkub.chat.models.eventbus.EventBusGroupRoom;
 import com.oakkub.chat.utils.FirebaseUtil;
 
 import java.util.ArrayList;

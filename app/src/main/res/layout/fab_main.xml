@@ -6,6 +6,7 @@
     <!-- Your FAB implementation -->
     <com.oakkub.chat.views.widgets.SheetFab
         android:id="@+id/fab"
+        style="@style/FabStyle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|end"

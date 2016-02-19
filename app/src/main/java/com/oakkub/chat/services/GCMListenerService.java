@@ -34,7 +34,6 @@ import com.oakkub.chat.models.Room;
 import com.oakkub.chat.utils.FirebaseUtil;
 import com.oakkub.chat.utils.GCMUtil;
 import com.oakkub.chat.utils.TextUtil;
-import com.oakkub.chat.views.widgets.MyToast;
 
 /**
  * Created by OaKKuB on 11/1/2015.
@@ -65,7 +64,6 @@ public class GCMListenerService extends GcmListenerService {
         Firebase firebase = AppController.getComponent(this).firebase();
         AuthData authData = firebase.getAuth();
         if (authData == null || sentBy.equals(authData.getUid())) {
-            MyToast.make("id is the same as the current user").show();
             return;
         }
 

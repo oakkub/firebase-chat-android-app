@@ -1,5 +1,5 @@
 <resources>
 
-    <dimen name="cardview_width">128dp</dimen>
+    <dimen name="cardview_width">112dp</dimen>
 
 </resources>

@@ -5,8 +5,6 @@ import android.content.Context;
 import android.support.multidex.MultiDex;
 
 import com.crashlytics.android.Crashlytics;
-import com.facebook.FacebookSdk;
-import com.facebook.common.soloader.SoLoaderShim;
 import com.facebook.drawee.backends.pipeline.Fresco;
 import com.firebase.client.Firebase;
 import com.oakkub.chat.modules.AppControllerModule;
@@ -20,14 +18,6 @@ public class AppController extends Application {
 
     private AppComponent appComponent;
 
-    static {
-        //noinspection EmptyCatchBlock
-        try {
-            SoLoaderShim.loadLibrary("webp");
-        } catch(UnsatisfiedLinkError nle) {
-        }
-    }
-
     public static AppComponent getComponent(Context context) {
         return ((AppController) context.getApplicationContext()).appComponent;
     }
@@ -37,9 +27,9 @@ public class AppController extends Application {
         super.onCreate();
 
         Contextor.getInstance().init(this);
-        initFresco();
         Fabric.with(this, new Crashlytics());
-        FacebookSdk.sdkInitialize(this);
+        initFresco();
+        initFirebase();
         Firebase.setAndroidContext(this);
         MultiDex.install(this);
 
@@ -51,6 +41,12 @@ public class AppController extends Application {
                 .setDownsampleEnabled(true)
                 .build();*/
         Fresco.initialize(this);
+    }
+
+    private void initFirebase() {
+        Firebase.setAndroidContext(this);
+        Firebase.getDefaultConfig().setPersistenceEnabled(true);
+        Firebase.getDefaultConfig().setPersistenceCacheSizeBytes(20000000);
     }
 
     private void initDependencyInjector() {

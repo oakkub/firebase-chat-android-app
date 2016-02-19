@@ -75,10 +75,12 @@ public class ChatRoomActivity extends BaseActivity
     private static final String REMOVED_FROM_CHAT_DIALOG_TAG = "tag:removedFromChatDialog";
     private static final String STATE_PRIVATE_FRIEND_INFO = "state:privateFriendInfo";
 
+    public static final String EXTRA_ROOM = "extra:room";
     public static final String CHAT_LIST_STATE = "state:chatList";
 
     private static final int CAMERA_REQUEST_CODE = 1;
     private static final int IMAGE_VIEWER_REQUEST_CODE = 2;
+    private static final int ROOM_INFO_REQUEST_CODE = 3;
 
     @Bind(R.id.simple_toolbar)
     Toolbar toolbar;
@@ -148,6 +150,12 @@ public class ChatRoomActivity extends BaseActivity
     private ChatListAdapter chatListAdapter;
     private ChatRoomFragment chatRoomFragment;
     private ProgressDialogFragment progressDialog;
+
+    public static Intent getResultIntent(Room room) {
+        Intent intent = new Intent();
+        intent.putExtra(EXTRA_ROOM, Parcels.wrap(room));
+        return intent;
+    }
 
     public static Intent getIntentPrivateRoom(Context context, Room room, String myId) {
         Intent roomIntent = new Intent(context, ChatRoomActivity.class);
@@ -315,7 +323,7 @@ public class ChatRoomActivity extends BaseActivity
 
                 Intent roomInfoIntent = RoomInfoActivity.getStartIntent(this, room, myId,
                         roomAction, isMember);
-                startActivity(roomInfoIntent);
+                startActivityForResult(roomInfoIntent, ROOM_INFO_REQUEST_CODE);
 
                 return true;
 
@@ -388,9 +396,19 @@ public class ChatRoomActivity extends BaseActivity
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        attachmentLayout.circleReveal();
+        if (attachmentLayout.isRevealed()) {
+            attachmentLayout.circleReveal();
+        }
+
+        onRoomInfoIntentResult(resultCode, requestCode, data);
         onCameraIntentResult(resultCode, requestCode);
         onImageViewerIntentResult(resultCode, requestCode, data);
+    }
+
+    private void onRoomInfoIntentResult(int resultCode, int requestCode, Intent data) {
+        if (resultCode != RESULT_OK && requestCode != ROOM_INFO_REQUEST_CODE && data == null) return;
+        Room room = Parcels.unwrap(data.getParcelableExtra(EXTRA_ROOM));
+        setToolbarTitle(room.getName());
     }
 
     @SuppressWarnings("ResultOfMethodCallIgnored")
@@ -806,7 +824,7 @@ public class ChatRoomActivity extends BaseActivity
     @Override
     public void onJoinRoomFailed() {
         progressDialog.dismiss();
-        MyToast.make(getString(R.string.error_cannot_join_chat));
+        MyToast.make(getString(R.string.error_cannot_join_chat)).show();
     }
 
     @Override

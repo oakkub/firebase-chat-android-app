@@ -164,6 +164,10 @@
         <xliff:g id="leaveName">%s</xliff:g> leaved this chat, <xliff:g id="newAdminName">%s</xliff:g> get promoted to be admin.
     </string>
     <string name="n_leave_this_chat">%s leave this chat.</string>
+    <string name="change_profile_image">Change image</string>
+    <string name="edit_name">Edit name</string>
+    <string name="display_name">Display name</string>
+    <string name="change">Change</string>
 
     <string-array name="main_tab_names">
         <item>Messages</item>

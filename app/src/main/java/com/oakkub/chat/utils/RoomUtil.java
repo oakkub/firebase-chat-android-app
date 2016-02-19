@@ -12,8 +12,14 @@ import java.util.HashMap;
  */
 public class RoomUtil {
 
+    public static final String PRIVATE_TYPE = "private";
+    public static final String GROUP_TYPE = "group";
+    public static final String PUBLIC_TYPE = "public";
+
     public static final String KEY_NAME = "name";
     public static final String KEY_TAG = "tag";
+    public static final String KEY_DESC = "description";
+    public static final String KEY_IMAGE_PATH = "imagePath";
 
     public static Room get(HashMap<String, Object> roomMap, String roomKey) {
         Room room = new Room();

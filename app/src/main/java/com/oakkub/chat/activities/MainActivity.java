@@ -142,10 +142,6 @@ public class MainActivity extends BaseActivity implements
         setupViewPager();
         setFab();
 
-        /*if (savedInstanceState == null) {
-            setupFirebaseComponent();
-        }*/
-
         addFragments();
     }
 
@@ -171,7 +167,6 @@ public class MainActivity extends BaseActivity implements
         super.onRestoreInstanceState(savedInstanceState);
 
         materialSheetFab.restoreInstanceState(savedInstanceState);
-
         myInfo = Parcels.unwrap(savedInstanceState.getParcelable(MY_INFO_STATE));
     }
 
@@ -275,7 +270,6 @@ public class MainActivity extends BaseActivity implements
         viewPager.setAdapter(mainViewPagerAdapter);
         tabLayout.setupWithViewPager(viewPager);
         viewPager.addOnPageChangeListener(this);
-        viewPager.setOffscreenPageLimit(2);
         setTabIcons();
 
         setToolbarTitle(tabNames[viewPager.getCurrentItem()]);

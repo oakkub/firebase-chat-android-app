@@ -26,10 +26,9 @@ import com.google.android.gms.common.api.Scope;
 import com.google.android.gms.common.api.Status;
 import com.oakkub.chat.R;
 import com.oakkub.chat.fragments.AuthenticationFragment;
-import com.oakkub.chat.models.GoogleLoginInfo;
+import com.oakkub.chat.models.eventbus.EventBusGoogleLoginInfo;
 import com.oakkub.chat.utils.TextUtil;
 import com.oakkub.chat.utils.Util;
-import com.oakkub.chat.views.dialogs.GoogleErrorDialog;
 
 import java.io.IOException;
 import java.util.Set;
@@ -234,17 +233,17 @@ public class GoogleLoginActivity extends BaseActivity
         return builder.toString().trim();
     }
 
-    public void onEvent(GoogleLoginInfo googleLoginInfo) {
+    public void onEvent(EventBusGoogleLoginInfo eventBusGoogleLoginInfo) {
 
-        if (googleLoginInfo == null) {
-
+        if (eventBusGoogleLoginInfo == null) {
             onBackPressed();
-
+        } else if (eventBusGoogleLoginInfo.token == null) {
+            onBackPressed();
         } else {
 
             Intent authenticateIntent = Util.intentClearActivity(this, AuthenticationActivity.class);
             authenticateIntent.putExtra(AuthenticationFragment.PROVIDER, TextUtil.GOOGLE_PROVIDER);
-            authenticateIntent.putExtra(AuthenticationFragment.TOKEN, googleLoginInfo.token);
+            authenticateIntent.putExtra(AuthenticationFragment.TOKEN, eventBusGoogleLoginInfo.token);
 
             startActivity(authenticateIntent);
             overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
@@ -272,13 +271,6 @@ public class GoogleLoginActivity extends BaseActivity
         }, 1000);
     }
 
-    private void showErrorDialog(int errorCode) {
-
-        GoogleErrorDialog googleErrorDialog =
-                GoogleErrorDialog.newInstance(errorCode, REQUEST_CODE_SOLVING_ERROR);
-        googleErrorDialog.show(getFragmentManager(), DIALOG_ERROR);
-    }
-
     public static class GetGoogleTokenService extends IntentService {
 
         public static final String EXTRA_EMAIL = "extra:email";
@@ -298,10 +290,10 @@ public class GoogleLoginActivity extends BaseActivity
 
             try {
                 String token = GoogleAuthUtil.getToken(getApplicationContext(), account, scopes);
-                GoogleLoginInfo googleLoginInfo = new GoogleLoginInfo(token);
+                EventBusGoogleLoginInfo eventBusGoogleLoginInfo = new EventBusGoogleLoginInfo(token);
 
                 // send data back to onEvent method
-                EventBus.getDefault().post(googleLoginInfo);
+                EventBus.getDefault().post(eventBusGoogleLoginInfo);
 
             } catch (UserRecoverableAuthException e) {
                 handleTokenException(e);
@@ -317,7 +309,7 @@ public class GoogleLoginActivity extends BaseActivity
 
         private void handleTokenException(Exception e) {
             Log.e("GetTokenService", e.getMessage());
-            EventBus.getDefault().post(new GoogleLoginInfo(null));
+            EventBus.getDefault().post(new EventBusGoogleLoginInfo(null));
         }
     }
 

@@ -9,9 +9,9 @@ import com.firebase.client.Firebase;
 import com.firebase.client.FirebaseError;
 import com.firebase.client.ValueEventListener;
 import com.oakkub.chat.managers.AppController;
-import com.oakkub.chat.models.EventBusFriendListInfo;
-import com.oakkub.chat.models.EventBusNewMessagesFriendInfo;
 import com.oakkub.chat.models.UserInfo;
+import com.oakkub.chat.models.eventbus.EventBusFriendListInfo;
+import com.oakkub.chat.models.eventbus.EventBusNewMessagesFriendInfo;
 import com.oakkub.chat.utils.FirebaseUtil;
 import com.oakkub.chat.utils.UserInfoUtil;
 

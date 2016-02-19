@@ -86,6 +86,8 @@ public class AddFriendActivity extends BaseActivity implements OnAdapterItemClic
         GridAutoFitLayoutManager gridAutoFitLayoutManager = new GridAutoFitLayoutManager(this, columnWidth);
         DefaultItemAnimator itemAnimator = AppController.getComponent(this).defaultItemAnimator();
 
+        int padding = getResources().getDimensionPixelOffset(R.dimen.spacing_medium);
+        addFriendList.setPadding(padding, 0, padding, 0);
         addFriendList.setHasFixedSize(true);
         addFriendList.setLayoutManager(gridAutoFitLayoutManager);
         addFriendList.setItemAnimator(itemAnimator);

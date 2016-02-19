@@ -47,13 +47,9 @@ public class ChooseImageDialog extends DialogFragment {
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_image_intent_dialog, container, false);
-    }
-
-    @Override
-    public void onViewCreated(View view, Bundle savedInstanceState) {
-        super.onViewCreated(view, savedInstanceState);
-        ButterKnife.bind(this, view);
+        View rootView = inflater.inflate(R.layout.fragment_image_intent_dialog, container, false);
+        ButterKnife.bind(this, rootView);
+        return rootView;
     }
 
     @NonNull

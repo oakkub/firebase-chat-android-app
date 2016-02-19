@@ -23,7 +23,7 @@ import com.oakkub.chat.utils.FirebaseUtil;
 
 import java.io.File;
 import java.io.FileDescriptor;
-import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.net.URI;
 
 import javax.inject.Inject;
@@ -37,6 +37,7 @@ import dagger.Lazy;
 public class NewPublicChatFragment extends BaseFragment {
 
     private static final String TAG = NewPublicChatFragment.class.getSimpleName();
+
     @Inject
     @Named(FirebaseUtil.NAMED_ROOT)
     Lazy<Firebase> firebase;
@@ -163,9 +164,11 @@ public class NewPublicChatFragment extends BaseFragment {
             if (parcelFileDescriptor == null) return null;
 
             FileDescriptor fileDescriptor = parcelFileDescriptor.getFileDescriptor();
-            return BitmapUtil.getResized(fileDescriptor, absolutePath, true);
+            Bitmap result = BitmapUtil.getResized(fileDescriptor, absolutePath, true);
 
-        } catch (FileNotFoundException e) {
+            parcelFileDescriptor.close();
+            return result;
+        } catch (IOException e) {
             Log.e(TAG, "createPublicImageFromFileDescriptor: " + e.getMessage());
             return null;
         }
@@ -183,7 +186,7 @@ public class NewPublicChatFragment extends BaseFragment {
         Message message = new Message(room.getRoomId(),
                 room.getLatestMessage(), room.getLatestMessageUser(), room.getCreated());
 
-        ArrayMap<String, Object> map = new ArrayMap<>(6);
+        ArrayMap<String, Object> map = new ArrayMap<>(7);
         ArrayMapUtil.mapUserRoom(map, myId, room.getRoomId(), room.getCreated());
         ArrayMapUtil.mapMessage(map, messageKey, room.getRoomId(), message);
         ArrayMapUtil.mapRoom(map, room, room.getRoomId());

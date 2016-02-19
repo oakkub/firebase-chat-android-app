@@ -16,7 +16,7 @@ import com.oakkub.chat.activities.BaseActivity;
 import com.oakkub.chat.activities.LoginActivity;
 import com.oakkub.chat.activities.MainActivity;
 import com.oakkub.chat.managers.AppController;
-import com.oakkub.chat.models.GoogleInstanceID;
+import com.oakkub.chat.models.eventbus.EventBusGoogleInstanceID;
 import com.oakkub.chat.services.GCMRegistrationIntentService;
 import com.oakkub.chat.utils.FirebaseUtil;
 import com.oakkub.chat.utils.PrefsUtil;
@@ -204,8 +204,8 @@ public class AuthenticationFragment extends Fragment {
         return userInfo;
     }
 
-    public void onEvent(GoogleInstanceID googleInstanceID) {
-        if (googleInstanceID == null) {
+    public void onEvent(EventBusGoogleInstanceID eventBusGoogleInstanceID) {
+        if (eventBusGoogleInstanceID == null) {
             backToLoginActivity(getString(R.string.error_message_network));
         } else {
             loginSuccess();

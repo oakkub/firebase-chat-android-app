@@ -117,6 +117,27 @@ public class Room {
         return roomId.equals(room.roomId);
     }
 
+    public boolean fullEquals(Object o) {
+        if (!equals(o)) return false;
+
+        Room room = (Room) o;
+
+        if (latestMessageTime != room.latestMessageTime) return false;
+        if (created != room.created) return false;
+        if (roomId != null ? !roomId.equals(room.roomId) : room.roomId != null) return false;
+        if (name != null ? !name.equals(room.name) : room.name != null) return false;
+        if (description != null ? !description.equals(room.description) : room.description != null)
+            return false;
+        if (tag != null ? !tag.equals(room.tag) : room.tag != null) return false;
+        if (imagePath != null ? !imagePath.equals(room.imagePath) : room.imagePath != null)
+            return false;
+        if (latestMessage != null ? !latestMessage.equals(room.latestMessage) : room.latestMessage != null)
+            return false;
+        if (latestMessageUser != null ? !latestMessageUser.equals(room.latestMessageUser) : room.latestMessageUser != null)
+            return false;
+        return type != null ? type.equals(room.type) : room.type == null;
+    }
+
     @Override
     public int hashCode() {
         return roomId.hashCode();

@@ -13,13 +13,13 @@ import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
-import com.facebook.drawee.view.SimpleDraweeView;
 import com.oakkub.chat.R;
 import com.oakkub.chat.fragments.LeavePublicChatFragment;
 import com.oakkub.chat.fragments.RoomAdminAuthenticationFragment;
 import com.oakkub.chat.models.Room;
 import com.oakkub.chat.views.dialogs.AlertDialogFragment;
 import com.oakkub.chat.views.dialogs.ProgressDialogFragment;
+import com.oakkub.chat.views.widgets.MyDraweeView;
 import com.oakkub.chat.views.widgets.MyToast;
 
 import org.parceler.Parcels;
@@ -37,6 +37,8 @@ public class RoomInfoActivity extends BaseActivity implements RoomAdminAuthentic
 
     private static final String EXTRA_ROOM = "extra:room";
     private static final String EXTRA_IS_MEMBER ="extra:isMember";
+    private static final String RESULT_EXTRA_ROOM = "resultExtra:room";
+    private static final String RESULT_EXTRA_IS_ROOM_EDIT = "resultExtra:isRoomEdit";
 
     public static final String ACTION_PRIVATE = "com.oakkub.chat.activities.RoomInfoActivity.ACTION_PRIVATE";
     public static final String ACTION_GROUP = "com.oakkub.chat.activities.RoomInfoActivity.ACTION_GROUP";
@@ -48,11 +50,13 @@ public class RoomInfoActivity extends BaseActivity implements RoomAdminAuthentic
     private static final String LEAVE_PRIVATE_FRAG_TAG = "tag:leavePrivateFragment";
     private static final String PROGRESS_DIALOG_TAG = "tag:progressDialogFragment";
 
+    private static final int EDIT_ROOM_REQUEST_CODE = 0;
+
     @Bind(R.id.simple_toolbar)
     Toolbar toolbar;
 
     @Bind(R.id.group_info_profile_image)
-    SimpleDraweeView profileImage;
+    MyDraweeView profileImage;
 
     @Bind(R.id.group_info_text_view)
     TextView roomNameTextView;
@@ -97,6 +101,14 @@ public class RoomInfoActivity extends BaseActivity implements RoomAdminAuthentic
         return intent;
     }
 
+    public static Intent getResultIntent(Room room, boolean isRoomEdit) {
+        Intent intent = new Intent();
+        intent.putExtra(RESULT_EXTRA_ROOM, Parcels.wrap(room));
+        intent.putExtra(RESULT_EXTRA_IS_ROOM_EDIT, isRoomEdit);
+
+        return intent;
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -110,6 +122,7 @@ public class RoomInfoActivity extends BaseActivity implements RoomAdminAuthentic
 
         if (savedInstanceState == null) {
             if (action.equals(ACTION_PUBLIC)) {
+                editInfoButton.setVisibility(View.GONE);
                 adminInfoButton.setVisibility(View.GONE);
                 memberInfoButton.setVisibility(View.GONE);
             }
@@ -147,7 +160,7 @@ public class RoomInfoActivity extends BaseActivity implements RoomAdminAuthentic
         memberInfoButton.setVisibility(memberVisibility);
         adminInfoButton.setVisibility(publicChatVisibility);
         roomNameTextView.setText(room.getName());
-        profileImage.setImageURI(Uri.parse(room.getImagePath()));
+        profileImage.setMatchedSizeImageURI(Uri.parse(room.getImagePath()));
     }
 
     private void addFragments() {
@@ -184,6 +197,46 @@ public class RoomInfoActivity extends BaseActivity implements RoomAdminAuthentic
     }
 
     @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        onRoomEditResult(requestCode, resultCode, data);
+    }
+
+    private void onRoomEditResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode != EDIT_ROOM_REQUEST_CODE || resultCode != RESULT_OK) return;
+
+        Room editRoom = Parcels.unwrap(data.getParcelableExtra(RESULT_EXTRA_ROOM));
+        boolean isRoomEdit = data.getBooleanExtra(RESULT_EXTRA_IS_ROOM_EDIT, false);
+        if (!isRoomEdit) return;
+
+        if (!room.getName().equals(editRoom.getName())) {
+            room.setName(editRoom.getName());
+            roomNameTextView.setText(editRoom.getName());
+        }
+
+        if (room.getDescription() != null && editRoom.getDescription() != null) {
+            if (!room.getDescription().equals(editRoom.getDescription())) {
+                room.setDescription(editRoom.getDescription());
+            }
+        }
+
+        if (editRoom.getDescription() == null) {
+            room.setDescription(null);
+        }
+
+        if (!room.getImagePath().equals(editRoom.getImagePath())) {
+            room.setImagePath(editRoom.getImagePath());
+            profileImage.setMatchedSizeImageURI(Uri.parse(editRoom.getImagePath()));
+        }
+    }
+
+    @Override
+    public void finish() {
+        setResult(RESULT_OK, ChatRoomActivity.getResultIntent(room));
+        super.finish();
+    }
+
+    @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.action_leave_chat:
@@ -208,6 +261,14 @@ public class RoomInfoActivity extends BaseActivity implements RoomAdminAuthentic
         }
 
         return true;
+    }
+
+    @OnClick(R.id.room_info_edit_button)
+    public void onEditButtonClick() {
+        if (!isAuthenticated) return;
+
+        Intent editRoomIntent = RoomEditActivity.getStartIntent(this, myId, room);
+        startActivityForResult(editRoomIntent, EDIT_ROOM_REQUEST_CODE);
     }
 
     @OnClick(R.id.room_info_member_button)

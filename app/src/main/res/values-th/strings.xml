@@ -166,6 +166,10 @@
         <xliff:g id="leaveName">%s</xliff:g> ได้ออกจากห้อง <xliff:g id="newAdminName">%s</xliff:g> ได้เลื่อนขั้นเป็นแอดมิน
     </string>
     <string name="n_leave_this_chat">%s ได้ออกจากห้อง</string>
+    <string name="change_profile_image">เปลี่ยนรูปภาพ</string>
+    <string name="edit_name">แก้ไขชื่อ</string>
+    <string name="display_name">ชื่อแสดง</string>
+    <string name="change">เปลี่ยน</string>
     <string-array name="main_tab_names">
         <item>ข้อความ</item>
         <item>เพื่อน</item>

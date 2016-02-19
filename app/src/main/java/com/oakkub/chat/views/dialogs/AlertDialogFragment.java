@@ -31,6 +31,12 @@ public class AlertDialogFragment extends DialogFragment implements DialogInterfa
 
     public static AlertDialogFragment newInstance(@NonNull String title,
                                                   @NonNull String message,
+                                                  boolean cancelable) {
+        return newInstance(title, message, "", "", cancelable);
+    }
+
+    public static AlertDialogFragment newInstance(@NonNull String title,
+                                                  @NonNull String message,
                                                   @Nullable String buttonOk,
                                                   @Nullable String buttonCancel) {
         return AlertDialogFragment.newInstance(title, message, buttonOk, buttonCancel, true);

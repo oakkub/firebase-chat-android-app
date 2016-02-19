@@ -3,6 +3,8 @@ package com.oakkub.chat.utils;
 import android.support.v4.util.ArrayMap;
 import android.util.Log;
 
+import com.oakkub.chat.managers.SparseStringArray;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -58,6 +60,22 @@ public class GCMUtil {
             JSONArray instanceIdsArray = new JSONArray();
             for (int i = 0, size = instanceIds.size(); i < size; i++) {
                 instanceIdsArray.put(instanceIds.get(i));
+            }
+            gcmBodyJson.put(KEY_REGISTRATION_IDS, instanceIdsArray);
+        } catch (JSONException e) {
+            Log.e(TAG, "initGroupGCMBody: " + e.getMessage() );
+        }
+
+        return gcmBodyJson;
+    }
+
+    public static JSONObject initGroupGCMBody(SparseStringArray instanceIds) {
+        JSONObject gcmBodyJson = new JSONObject();
+
+        try {
+            JSONArray instanceIdsArray = new JSONArray();
+            for (int i = 0, size = instanceIds.size(); i < size; i++) {
+                instanceIdsArray.put(instanceIds.valueAt(i));
             }
             gcmBodyJson.put(KEY_REGISTRATION_IDS, instanceIdsArray);
         } catch (JSONException e) {

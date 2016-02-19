@@ -8,6 +8,7 @@ import android.util.Log;
 
 import com.oakkub.chat.R;
 import com.oakkub.chat.managers.AppController;
+import com.oakkub.chat.managers.SparseStringArray;
 import com.oakkub.chat.utils.GCMUtil;
 import com.oakkub.chat.utils.NetworkUtil;
 import com.oakkub.chat.utils.UserInfoUtil;
@@ -15,7 +16,6 @@ import com.oakkub.chat.utils.UserInfoUtil;
 import org.json.JSONObject;
 
 import java.io.IOException;
-import java.util.ArrayList;
 
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -43,13 +43,13 @@ public class GCMNotifyService extends IntentService {
         final String roomId = intent.getStringExtra(GCMUtil.DATA_ROOM_ID);
 
         if (roomId != null) {
-            ArrayList<String> instanceIds = intent.getStringArrayListExtra(GCMUtil.KEY_REGISTRATION_IDS);
+            SparseStringArray instanceIds = intent.getParcelableExtra(GCMUtil.KEY_REGISTRATION_IDS);
             postAddFriendGCMRequest(token, title, message, sentBy, roomId, instanceIds);
         }
     }
 
     private void postAddFriendGCMRequest(String token, String title, String message,
-                                         String sentBy, String roomId, ArrayList<String> instanceIdList) {
+                                         String sentBy, String roomId, SparseStringArray instanceIdList) {
 
         if (title == null || title.isEmpty()) {
             SharedPreferences prefs = AppController.getComponent(this).sharedPreferences();
