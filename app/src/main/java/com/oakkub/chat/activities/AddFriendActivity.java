@@ -41,6 +41,7 @@ public class AddFriendActivity extends BaseActivity {
         super.onCreate(savedInstanceState);
         clearNotification();
         getDataIntent();
+
         AppController.getComponent(this).inject(this);
         setContentView(R.layout.empty_container);
         ButterKnife.bind(this);
