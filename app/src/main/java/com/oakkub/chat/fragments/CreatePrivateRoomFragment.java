@@ -13,12 +13,10 @@ import com.firebase.client.FirebaseError;
 import com.firebase.client.ValueEventListener;
 import com.oakkub.chat.managers.AppController;
 import com.oakkub.chat.models.Room;
-import com.oakkub.chat.models.UserInfo;
 import com.oakkub.chat.models.eventbus.EventBusNewPrivateRoomMessage;
-import com.oakkub.chat.utils.ArrayMapUtil;
+import com.oakkub.chat.utils.FirebaseMapUtil;
 import com.oakkub.chat.utils.FirebaseUtil;
-
-import org.parceler.Parcels;
+import com.oakkub.chat.utils.RoomUtil;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -31,8 +29,6 @@ import de.greenrobot.event.EventBus;
  */
 public class CreatePrivateRoomFragment extends BaseFragment {
 
-    private static final String ARGS_FRIEND_INFO = "args:friendInfo";
-
     @Inject
     @Named(FirebaseUtil.NAMED_ROOT)
     Lazy<Firebase> rootFirebase;
@@ -41,23 +37,9 @@ public class CreatePrivateRoomFragment extends BaseFragment {
     @Named(FirebaseUtil.NAMED_ROOMS_INFO)
     Lazy<Firebase> roomInfoFirebase;
 
-    private String myId;
-    private UserInfo friendInfo;
-
     private Room room;
     private OnPrivateRoomRequestListener onPrivateRoomRequestListener;
     private boolean useEventBus;
-
-    public static CreatePrivateRoomFragment newInstance(UserInfo friendInfo, String myId) {
-        Bundle args = new Bundle();
-        args.putString(ARGS_MY_ID, myId);
-        args.putParcelable(ARGS_FRIEND_INFO, Parcels.wrap(friendInfo));
-
-        CreatePrivateRoomFragment createPrivateRoomFragment = new CreatePrivateRoomFragment();
-        createPrivateRoomFragment.setArguments(args);
-
-        return createPrivateRoomFragment;
-    }
 
     @Override
     public void onAttach(Context context) {
@@ -77,10 +59,6 @@ public class CreatePrivateRoomFragment extends BaseFragment {
         super.onCreate(savedInstanceState);
         setRetainInstance(true);
         AppController.getComponent(getActivity()).inject(this);
-
-        Bundle args = getArguments();
-        myId = args.getString(ARGS_MY_ID);
-        friendInfo = Parcels.unwrap(args.getParcelable(ARGS_FRIEND_INFO));
     }
 
     @Override
@@ -105,18 +83,14 @@ public class CreatePrivateRoomFragment extends BaseFragment {
         onPrivateRoomRequestListener = null;
     }
 
-    public void createPrivateRoom(String roomKey, UserInfo friendInfo) {
-        this.friendInfo = friendInfo;
-        createPrivateRoom(roomKey);
-    }
-
     public void createPrivateRoom(final String roomKey) {
         // check if room is already created.
         roomInfoFirebase.get().child(roomKey).keepSynced(true);
         roomInfoFirebase.get().child(roomKey)
-                .addListenerForSingleValueEvent(new ValueEventListener() {
+                .addValueEventListener(new ValueEventListener() {
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
+                        dataSnapshot.getRef().removeEventListener(this);
                         isRoomAlreadyCreated(dataSnapshot, roomKey);
                     }
 
@@ -139,17 +113,14 @@ public class CreatePrivateRoomFragment extends BaseFragment {
     }
 
     private void beginCreatingPrivateRoom(final String roomKey) {
-        final Room room = new Room(FirebaseUtil.VALUE_ROOM_TYPE_PRIVATE);
+        final Room room = new Room(RoomUtil.PRIVATE_TYPE);
         room.setRoomId(roomKey);
         room.setLatestMessageTime(room.getCreated());
 
-        ArrayMap<String, Object> map = new ArrayMap<>();
-        ArrayMapUtil.mapRoom(map, room, room.getRoomId());
-        ArrayMapUtil.mapUserRoom(map, myId, roomKey, room.getCreated());
+        ArrayMap<String, Object> map = new ArrayMap<>(2);
+        FirebaseMapUtil.mapRoom(map, room, roomKey);
+        FirebaseMapUtil.mapUserRoom(map, uid, roomKey, room.getCreated());
 
-        // room id back to null.
-        // since we don't want it to be written in firebase
-        room.setRoomId(null);
         rootFirebase.get().updateChildren(map, new Firebase.CompletionListener() {
             @Override
             public void onComplete(FirebaseError firebaseError, Firebase firebase) {

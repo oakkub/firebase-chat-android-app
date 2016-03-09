@@ -25,20 +25,19 @@ public class UriUtil {
             if (!documentPath.isEmpty()) return documentPath;
         }
 
-        String[] projection = new String[] {
-                MediaStore.Files.FileColumns.DATA
-        };
+        String[] projection = { MediaStore.Files.FileColumns.DATA };
+        String path = null;
 
-        String path;
         Cursor cursor = context.getContentResolver().query(uri, projection, null, null, null);
         if (cursor == null) {
             path = uri.getPath();
             return path;
         }
 
-        cursor.moveToFirst();
         int columnIndex = cursor.getColumnIndexOrThrow(projection[0]);
-        path = cursor.getString(columnIndex);
+        if (cursor.moveToFirst()) {
+            path = cursor.getString(columnIndex);
+        }
         cursor.close();
 
         return (path == null || path.isEmpty()) ? uri.getPath() : path;

@@ -1,5 +1,6 @@
 package com.oakkub.chat.modules;
 
+import com.firebase.client.AuthData;
 import com.firebase.client.Firebase;
 import com.oakkub.chat.dagger.PerApp;
 import com.oakkub.chat.utils.FirebaseUtil;
@@ -40,6 +41,18 @@ public class NetworkModule {
     @Provides
     Firebase provideFirebaseFriends(@Named(FirebaseUtil.NAMED_USERS) Firebase firebase) {
         return firebase.child(FirebaseUtil.KEY_USERS_USER_FRIENDS);
+    }
+
+    @Named(FirebaseUtil.NAMED_USER_FRIENDS_RECEIVED_REQUESTED)
+    @Provides
+    Firebase provideFirebaseFriendsRequested(@Named(FirebaseUtil.NAMED_USERS) Firebase firebase) {
+        return firebase.child(FirebaseUtil.KEY_USERS_USER_FRIENDS_RECEIVED_REQUESTED);
+    }
+
+    @Named(FirebaseUtil.NAMED_USER_FRIENDS_PENDING_REQUEST)
+    @Provides
+    Firebase provideFirebaseFriendsPendingRequest(@Named(FirebaseUtil.NAMED_USERS) Firebase firebase) {
+        return firebase.child(FirebaseUtil.KEY_USERS_USER_FRIENDS_PENDING_REQUEST);
     }
 
     @Named(FirebaseUtil.NAMED_USER_ROOMS)
@@ -130,6 +143,11 @@ public class NetworkModule {
     @Provides
     Firebase provideFirebaseMessagesTyping(@Named(FirebaseUtil.NAMED_MESSAGES) Firebase firebase) {
         return firebase.child(FirebaseUtil.KEY_MESSAGES_TYPING);
+    }
+
+    @Provides
+    AuthData provideAuthData(@Named(FirebaseUtil.NAMED_ROOT) Firebase firebase) {
+        return firebase.getAuth();
     }
 
     @PerApp

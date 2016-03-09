@@ -2,6 +2,7 @@ package com.oakkub.chat.activities;
 
 import android.content.ClipData;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
@@ -21,8 +22,8 @@ import android.view.View;
 import android.view.ViewTreeObserver;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.FrameLayout;
 import android.widget.ImageButton;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.oakkub.chat.R;
@@ -41,6 +42,7 @@ import com.oakkub.chat.views.adapters.ChatListAdapter;
 import com.oakkub.chat.views.dialogs.AlertDialogFragment;
 import com.oakkub.chat.views.dialogs.ProgressDialogFragment;
 import com.oakkub.chat.views.widgets.MyLinearLayout;
+import com.oakkub.chat.views.widgets.MyTextView;
 import com.oakkub.chat.views.widgets.MyToast;
 import com.oakkub.chat.views.widgets.TextImageView;
 import com.oakkub.chat.views.widgets.recyclerview.RecyclerViewInfiniteScrollListener;
@@ -69,7 +71,7 @@ public class ChatRoomActivity extends BaseActivity
         AlertDialogFragment.OnAlertDialogListener {
 
     private static final String TAG = ChatRoomActivity.class.getSimpleName();
-    private static final int POSITION_OFFSET_TO_FIRST_SCROLL = 2;
+    private static final int POSITION_OFFSET_TO_SCROLL = 2;
     private static final String CHAT_ROOM_FRAGMENT_TAG = "tag:chatRoom";
     private static final String PROGRESS_DIALOG_TAG = "tag:progressDialog";
     private static final String REMOVED_FROM_CHAT_DIALOG_TAG = "tag:removedFromChatDialog";
@@ -121,20 +123,17 @@ public class ChatRoomActivity extends BaseActivity
     @Bind(R.id.private_chat_join_room_to_chat_botton)
     Button joinRoomToChatButton;
 
-    @Bind(R.id.progress_bar_chat_container)
-    FrameLayout progressBarLayout;
+    @Bind(R.id.progressBar)
+    ProgressBar progressBar;
 
-    @Bind(R.id.empty_messages_container)
-    FrameLayout emptyMessagesLayout;
+    @Bind(R.id.empty_messages_textview)
+    MyTextView emptyMessageTextView;
 
     @State
     Uri uriCameraImageFile;
 
     @State
     boolean isMember;
-
-    @State
-    String myId;
 
     @State
     String privateFriendId;
@@ -157,38 +156,38 @@ public class ChatRoomActivity extends BaseActivity
         return intent;
     }
 
-    public static Intent getIntentPrivateRoom(Context context, Room room, String myId) {
+    public static Intent getIntentPrivateRoom(Context context, Room room, String uid) {
         Intent roomIntent = new Intent(context, ChatRoomActivity.class);
 
-        setRoomData(roomIntent, room, myId, true);
+        setRoomData(roomIntent, room, true);
         roomIntent.putExtra(ChatRoomFragment.EXTRA_FRIEND_ID,
-                FirebaseUtil.getPrivateRoomFriendKey(myId, room.getRoomId()));
+                FirebaseUtil.getPrivateRoomFriendKey(uid, room.getRoomId()));
 
         return roomIntent;
     }
 
-    public static Intent getIntentGroupRoom(Context context, Room room, String myId) {
+    public static Intent getIntentGroupRoom(Context context, Room room) {
         Intent roomIntent = new Intent(context, ChatRoomActivity.class);
-        setRoomData(roomIntent, room, myId, true);
+        setRoomData(roomIntent, room, true);
         return roomIntent;
     }
 
-    public static Intent getIntentPublicRoom(Context context, Room room, String myId, boolean isMember) {
+    public static Intent getIntentPublicRoom(Context context, Room room, boolean isMember) {
         Intent roomIntent = new Intent(context, ChatRoomActivity.class);
-        setRoomData(roomIntent, room, myId, isMember);
+        setRoomData(roomIntent, room, isMember);
         return roomIntent;
     }
 
-    private static void setRoomData(Intent intent, Room room, String myId, boolean isMember) {
-        intent.putExtra(ChatRoomFragment.EXTRA_MY_ID, myId);
+    private static void setRoomData(Intent intent, Room room, boolean isMember) {
         intent.putExtra(ChatRoomFragment.EXTRA_IS_MEMBER, isMember);
         intent.putExtra(ChatRoomFragment.EXTRA_ROOM, Parcels.wrap(room));
     }
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_private_chat_room);
+        clearNotification();
         ButterKnife.bind(this);
         getDataIntent(savedInstanceState);
         findMessageFragment();
@@ -199,7 +198,7 @@ public class ChatRoomActivity extends BaseActivity
 
         if (savedInstanceState == null) {
             getViewTreeObserverAttachmentLayout();
-            emptyMessagesLayout.setVisibility(View.GONE);
+            emptyMessageTextView.setVisibility(View.GONE);
             typingNotifyTextView.setVisibility(View.GONE);
             newMessageNotifyTextView.setVisibility(View.GONE);
             joinRoomToChatButton.setVisibility(isMember ? View.GONE : View.VISIBLE);
@@ -211,7 +210,6 @@ public class ChatRoomActivity extends BaseActivity
         Intent intent = getIntent();
 
         if (savedInstanceState == null) {
-            myId = intent.getStringExtra(ChatRoomFragment.EXTRA_MY_ID);
             isMember = intent.getBooleanExtra(ChatRoomFragment.EXTRA_IS_MEMBER, false);
             privateFriendId = intent.getStringExtra(ChatRoomFragment.EXTRA_FRIEND_ID);
             isPrivateRoom = privateFriendId != null;
@@ -248,13 +246,16 @@ public class ChatRoomActivity extends BaseActivity
         recyclerViewInfiniteScrollListener = new RecyclerViewInfiniteScrollListener(linearLayoutManager) {
             @Override
             public void onLoadMore(final int page) {
-                if (isNoMoreData()) return;
-
-                Message message = chatListAdapter.getLastItem();
+                final Message message = chatListAdapter.getLastItem();
                 // if null, it is progress bar or no internet indicator or no data.
                 if (message != null) {
-                    chatListAdapter.addFooterProgressBar();
-                    chatRoomFragment.loadItemMore(message.getSentWhen());
+                    getWindow().getDecorView().getHandler().post(new Runnable() {
+                        @Override
+                        public void run() {
+                            chatListAdapter.addFooterProgressBar();
+                            chatRoomFragment.loadItemMore(message.getSentWhen());
+                        }
+                    });
                 }
             }
         };
@@ -315,13 +316,13 @@ public class ChatRoomActivity extends BaseActivity
                 switch (room.getType()) {
                     case FirebaseUtil.VALUE_ROOM_TYPE_GROUP:
                         roomAction = RoomInfoActivity.ACTION_GROUP;
-                    break;
+                        break;
                     case FirebaseUtil.VALUE_ROOM_TYPE_PUBLIC:
                         roomAction = RoomInfoActivity.ACTION_PUBLIC;
-                    break;
+                        break;
                 }
 
-                Intent roomInfoIntent = RoomInfoActivity.getStartIntent(this, room, myId,
+                Intent roomInfoIntent = RoomInfoActivity.getStartIntent(this, room,
                         roomAction, isMember);
                 startActivityForResult(roomInfoIntent, ROOM_INFO_REQUEST_CODE);
 
@@ -329,7 +330,7 @@ public class ChatRoomActivity extends BaseActivity
 
             case R.id.action_invite_friend:
 
-                Intent newMessageIntent = NewMessagesActivity.getStartIntent(this, myId, privateFriendInfo);
+                Intent newMessageIntent = NewMessagesActivity.getStartIntent(this, privateFriendInfo);
                 startActivity(newMessageIntent);
 
                 return true;
@@ -396,6 +397,7 @@ public class ChatRoomActivity extends BaseActivity
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+
         if (attachmentLayout.isRevealed()) {
             attachmentLayout.circleReveal();
         }
@@ -406,7 +408,8 @@ public class ChatRoomActivity extends BaseActivity
     }
 
     private void onRoomInfoIntentResult(int resultCode, int requestCode, Intent data) {
-        if (resultCode != RESULT_OK && requestCode != ROOM_INFO_REQUEST_CODE && data == null) return;
+        if (resultCode != RESULT_OK || requestCode != ROOM_INFO_REQUEST_CODE || data == null)
+            return;
         Room room = Parcels.unwrap(data.getParcelableExtra(EXTRA_ROOM));
         setToolbarTitle(room.getName());
     }
@@ -445,7 +448,7 @@ public class ChatRoomActivity extends BaseActivity
 
                     String absolutePath = UriUtil.getPath(uri);
                     onImageViewerUriResult(
-                            new Uri[] {uri}, new String[] {absolutePath});
+                            new Uri[]{uri}, new String[]{absolutePath});
 
                 } else if (Build.VERSION.SDK_INT >= 18 && data.getClipData() != null) {
                     // multiple selected images.
@@ -554,7 +557,7 @@ public class ChatRoomActivity extends BaseActivity
         Message oldestMessage = chatListAdapter.getLastItem();
         Message systemTimeMessage = getSystemTimeMessage(oldestMessage);
 
-        if (newOldMessage == null ||TimeUtil.isLeftDayGreaterThanRight(oldestMessage.getSentWhen(), newOldMessage.getSentWhen())) {
+        if (newOldMessage == null || TimeUtil.isLeftDayGreaterThanRight(oldestMessage.getSentWhen(), newOldMessage.getSentWhen())) {
             if (chatListAdapter.contains(systemTimeMessage)) {
                 chatListAdapter.remove(systemTimeMessage);
             }
@@ -574,7 +577,7 @@ public class ChatRoomActivity extends BaseActivity
 
     @OnClick(R.id.message_input_button)
     public void onSendButtonClick() {
-        if (progressBarLayout.getVisibility() == View.VISIBLE || !isMember()) return;
+        if (progressBar.getVisibility() == View.VISIBLE || !isMember()) return;
 
         String text = messageText.getText().toString().trim();
         if (text.isEmpty()) return;
@@ -648,7 +651,7 @@ public class ChatRoomActivity extends BaseActivity
     }
 
     private boolean isCloseToFirstPosition() {
-        return linearLayoutManager.findFirstVisibleItemPosition() <= POSITION_OFFSET_TO_FIRST_SCROLL;
+        return linearLayoutManager.findFirstVisibleItemPosition() <= POSITION_OFFSET_TO_SCROLL;
     }
 
     private void scrollToFirstPosition(final boolean smoothScroll, long delayed) {
@@ -707,8 +710,8 @@ public class ChatRoomActivity extends BaseActivity
 
     @Override
     public void onEmptyMessage() {
-        progressBarLayout.setVisibility(View.GONE);
-        emptyMessagesLayout.setVisibility(View.VISIBLE);
+        progressBar.setVisibility(View.GONE);
+        emptyMessageTextView.setVisibility(View.VISIBLE);
     }
 
     @Override
@@ -719,8 +722,8 @@ public class ChatRoomActivity extends BaseActivity
 
     @Override
     public void onNewMessage(Message newMessage) {
-        progressBarLayout.setVisibility(View.GONE);
-        emptyMessagesLayout.setVisibility(View.GONE);
+        progressBar.setVisibility(View.GONE);
+        emptyMessageTextView.setVisibility(View.GONE);
 
         if (!chatListAdapter.contains(newMessage)) {
             addNewSystemTimeDivider(newMessage);
@@ -773,7 +776,7 @@ public class ChatRoomActivity extends BaseActivity
     }
 
     @Override
-    public void onPrivateRoomReady(String myId, UserInfo friendInfo, boolean isPrivateRoom) {
+    public void onPrivateRoomReady(UserInfo friendInfo, boolean isPrivateRoom) {
         if (chatListAdapter == null) {
 
             privateFriendInfo = friendInfo;
@@ -781,16 +784,16 @@ public class ChatRoomActivity extends BaseActivity
             SparseArray<UserInfo> friendInfoList = new SparseArray<>(1);
             friendInfoList.put(friendInfo.hashCode(), friendInfo);
 
-            chatListAdapter = new ChatListAdapter(myId, friendInfoList, isPrivateRoom);
+            chatListAdapter = new ChatListAdapter(uid, friendInfoList, isPrivateRoom);
             messageList.setAdapter(chatListAdapter);
         }
     }
 
     @Override
-    public void onGroupRoomReady(String myId, SparseArray<UserInfo> userInfoList, boolean isPrivateRoom) {
+    public void onGroupRoomReady(SparseArray<UserInfo> userInfoList, boolean isPrivateRoom) {
         if (chatListAdapter == null) {
 
-            chatListAdapter = new ChatListAdapter(myId, userInfoList, isPrivateRoom);
+            chatListAdapter = new ChatListAdapter(uid, userInfoList, isPrivateRoom);
             messageList.setAdapter(chatListAdapter);
         }
     }
@@ -834,23 +837,21 @@ public class ChatRoomActivity extends BaseActivity
                     .newInstance(getString(R.string.chat),
                             getString(R.string.you_got_removed_from_this_chat),
                             "", null, false);
-            removedFromChatDialog.show(getSupportFragmentManager(), REMOVED_FROM_CHAT_DIALOG_TAG);
+            getSupportFragmentManager()
+                    .beginTransaction()
+                    .add(removedFromChatDialog, REMOVED_FROM_CHAT_DIALOG_TAG)
+                    .commitAllowingStateLoss();
+//            removedFromChatDialog.show(getSupportFragmentManager(), REMOVED_FROM_CHAT_DIALOG_TAG);
         }
     }
 
     @Override
-    public void onOkClick(String tag) {
-        switch (tag) {
-            case REMOVED_FROM_CHAT_DIALOG_TAG:
-                    Intent mainIntent = new Intent(this, MainActivity.class);
-                    mainIntent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-                    startActivity(mainIntent);
-                break;
+    public void onAlertDialogClick(String tag, int which) {
+        if (tag.equals(REMOVED_FROM_CHAT_DIALOG_TAG) && which == DialogInterface.BUTTON_POSITIVE) {
+            Intent mainIntent = new Intent(this, MainActivity.class);
+            mainIntent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+            startActivity(mainIntent);
         }
     }
 
-    @Override
-    public void onCancelClick(String tag) {
-
-    }
 }

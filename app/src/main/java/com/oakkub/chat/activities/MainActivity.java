@@ -1,11 +1,13 @@
 package com.oakkub.chat.activities;
 
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.TabLayout;
 import android.support.v4.content.ContextCompat;
@@ -28,15 +30,18 @@ import com.firebase.client.ValueEventListener;
 import com.oakkub.chat.R;
 import com.oakkub.chat.fragments.FacebookLoginActivityFragment;
 import com.oakkub.chat.fragments.FriendsFetchingFragment;
+import com.oakkub.chat.fragments.FriendsFragment;
 import com.oakkub.chat.fragments.GroupListFetchingFragment;
 import com.oakkub.chat.fragments.PublicListFetchingFragment;
 import com.oakkub.chat.fragments.RoomListFetchingFragment;
 import com.oakkub.chat.fragments.UserInfoFetchingFragment;
 import com.oakkub.chat.managers.AppController;
 import com.oakkub.chat.managers.OnScrolledEventListener;
+import com.oakkub.chat.managers.RefreshListener;
 import com.oakkub.chat.models.UserInfo;
 import com.oakkub.chat.models.UserOnlineInfo;
 import com.oakkub.chat.utils.FirebaseUtil;
+import com.oakkub.chat.utils.PrefsUtil;
 import com.oakkub.chat.utils.UserInfoUtil;
 import com.oakkub.chat.views.adapters.MainViewPagerAdapter;
 import com.oakkub.chat.views.dialogs.AlertDialogFragment;
@@ -57,19 +62,22 @@ import icepick.State;
 public class MainActivity extends BaseActivity implements
         ToolbarCommunicator, ViewPager.OnPageChangeListener,
         OnScrolledEventListener, NavigationView.OnNavigationItemSelectedListener,
-        UserInfoFetchingFragment.OnUserInfoReceivedListener, AlertDialogFragment.OnAlertDialogListener {
+        UserInfoFetchingFragment.OnUserInfoReceivedListener,
+        AlertDialogFragment.OnAlertDialogListener,
+        RefreshListener {
 
     private static final String TAG = MainActivity.class.getSimpleName();
     private static final String ALERT_LOGOUT_DIALOG_TAG = "tag:alertDialogLogout";
-    private static final String ROOM_LIST_FRAGMENT_TAG = "tag:roomList";
-    private static final String FRIEND_LIST_FRAGMENT_TAG = "tag:friendList";
-    private static final String GROUP_LIST_FRAGMENT_TAG = "tag:groupList";
-    private static final String PUBLIC_LIST_FRAGMENT_TAG = "tag:publicList";
     private static final String USER_INFO_FETCHING_FRAGMENT_TAG = "tag:userInfoFetching";
+
+    public static final String ROOM_LIST_FRAGMENT_TAG = "tag:roomList";
+    public static final String FRIEND_LIST_FRAGMENT_TAG = "tag:friendList";
+    public static final String GROUP_LIST_FRAGMENT_TAG = "tag:groupList";
+    public static final String PUBLIC_LIST_FRAGMENT_TAG = "tag:publicList";
 
     private static final String MY_INFO_STATE = "state:myInfo";
 
-    public static final String EXTRA_MY_ID = "extra:myId";
+    public static final String EXTRA_MY_ID = "extra:uid";
     public static final String EXTRA_PROVIDER = "extra:provider";
 
     private int[] tabIcons = {
@@ -84,6 +92,9 @@ public class MainActivity extends BaseActivity implements
 
     @Bind(R.id.main_navigation_view)
     NavigationView navigationView;
+
+    @Bind(R.id.main_app_bar_layout)
+    AppBarLayout appBarLayout;
 
     @Bind(R.id.main_toolbar)
     Toolbar toolbar;
@@ -110,9 +121,6 @@ public class MainActivity extends BaseActivity implements
     Firebase onlineUserFirebase;
 
     @State
-    String myId;
-
-    @State
     String provider;
 
     private UserInfo myInfo;
@@ -120,15 +128,17 @@ public class MainActivity extends BaseActivity implements
     private String[] tabNames;
 
     private MyMaterialSheetFab<SheetFab> materialSheetFab;
-    private ActionBarDrawerToggle toggle;
+    private ActionBarDrawerToggle actionBarDrawerToggle;
 
     private RoomListFetchingFragment roomListFetchingFragment;
     private FriendsFetchingFragment friendsFetchingFragment;
     private GroupListFetchingFragment groupListFetchingFragment;
     private PublicListFetchingFragment publicListFetchingFragment;
 
+    private MainViewPagerAdapter mainViewPagerAdapter;
+
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         AppController.getComponent(this).inject(this);
         getDataFromIntent(savedInstanceState);
@@ -148,7 +158,13 @@ public class MainActivity extends BaseActivity implements
     @Override
     protected void onPostCreate(@Nullable Bundle savedInstanceState) {
         super.onPostCreate(savedInstanceState);
-        toggle.syncState();
+        actionBarDrawerToggle.syncState();
+    }
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        actionBarDrawerToggle.onConfigurationChanged(newConfig);
     }
 
     @Override
@@ -170,12 +186,6 @@ public class MainActivity extends BaseActivity implements
         myInfo = Parcels.unwrap(savedInstanceState.getParcelable(MY_INFO_STATE));
     }
 
-    @Override
-    public void onConfigurationChanged(Configuration newConfig) {
-        super.onConfigurationChanged(newConfig);
-        toggle.onConfigurationChanged(newConfig);
-    }
-
     private void findNavigationHeaderViews() {
         View headerView = navigationView.getHeaderView(0);
         headerImage = ButterKnife.findById(headerView, R.id.navigation_header_image);
@@ -190,10 +200,11 @@ public class MainActivity extends BaseActivity implements
     }
 
     private void setDrawer() {
-        toggle = new ActionBarDrawerToggle(this, drawerLayout, toolbar,
+        actionBarDrawerToggle = new ActionBarDrawerToggle(this,
+                drawerLayout, toolbar,
                 R.string.navigation_drawer_open, R.string.navigation_drawer_close);
 
-        drawerLayout.setDrawerListener(toggle);
+        drawerLayout.addDrawerListener(actionBarDrawerToggle);
         navigationView.setNavigationItemSelectedListener(this);
 
         SharedPreferences prefs = AppController.getComponent(this).sharedPreferences();
@@ -217,44 +228,36 @@ public class MainActivity extends BaseActivity implements
 
     private void addFragments() {
 
-        roomListFetchingFragment = (RoomListFetchingFragment) findFragmentByTag(ROOM_LIST_FRAGMENT_TAG);
-        if (roomListFetchingFragment == null) {
-            roomListFetchingFragment = (RoomListFetchingFragment)
-                    addFragmentByTag(RoomListFetchingFragment.newInstance(myId), ROOM_LIST_FRAGMENT_TAG);
-        }
+        roomListFetchingFragment = (RoomListFetchingFragment)
+                findOrAddFragmentByTag(getSupportFragmentManager(),
+                        new RoomListFetchingFragment(), ROOM_LIST_FRAGMENT_TAG);
 
-        friendsFetchingFragment = (FriendsFetchingFragment) findFragmentByTag(FRIEND_LIST_FRAGMENT_TAG);
-        if (friendsFetchingFragment == null) {
-            friendsFetchingFragment = (FriendsFetchingFragment)
-                    addFragmentByTag(FriendsFetchingFragment.newInstance(FriendsFetchingFragment.FROM_NEW_FRIEND), FRIEND_LIST_FRAGMENT_TAG);
-        }
+        friendsFetchingFragment = (FriendsFetchingFragment)
+                findOrAddFragmentByTag(getSupportFragmentManager(),
+                    FriendsFetchingFragment.newInstance(FriendsFetchingFragment
+                            .FROM_NEW_FRIEND), FRIEND_LIST_FRAGMENT_TAG);
 
-        groupListFetchingFragment = (GroupListFetchingFragment) findFragmentByTag(GROUP_LIST_FRAGMENT_TAG);
-        if (groupListFetchingFragment == null) {
-            groupListFetchingFragment = (GroupListFetchingFragment)
-                    addFragmentByTag(new GroupListFetchingFragment(), GROUP_LIST_FRAGMENT_TAG);
-        }
+        groupListFetchingFragment = (GroupListFetchingFragment)
+                findOrAddFragmentByTag(getSupportFragmentManager(),
+                        new GroupListFetchingFragment(), GROUP_LIST_FRAGMENT_TAG);
 
-        publicListFetchingFragment = (PublicListFetchingFragment) findFragmentByTag(PUBLIC_LIST_FRAGMENT_TAG);
-        if (publicListFetchingFragment == null) {
-            publicListFetchingFragment = (PublicListFetchingFragment)
-                    addFragmentByTag(new PublicListFetchingFragment(), PUBLIC_LIST_FRAGMENT_TAG);
-        }
+        publicListFetchingFragment = (PublicListFetchingFragment)
+                findOrAddFragmentByTag(getSupportFragmentManager(),
+                        new PublicListFetchingFragment(), PUBLIC_LIST_FRAGMENT_TAG);
 
-        if (findFragmentByTag(USER_INFO_FETCHING_FRAGMENT_TAG) == null) {
-            addFragmentByTag(UserInfoFetchingFragment.newInstance(myId),
+        findOrAddFragmentByTag(getSupportFragmentManager(),
+                new UserInfoFetchingFragment(),
                     USER_INFO_FETCHING_FRAGMENT_TAG);
-        }
     }
 
     private void getDataFromIntent(Bundle savedInstanceState) {
         if (savedInstanceState != null) return;
         Intent intent = getIntent();
 
-        myId = intent.getStringExtra(EXTRA_MY_ID);
+        uid = intent.getStringExtra(EXTRA_MY_ID);
         provider = intent.getStringExtra(EXTRA_PROVIDER);
 
-        if (myId == null || provider == null) {
+        if (uid == null || provider == null) {
             Intent launchIntent = new Intent(getApplicationContext(), SplashScreenActivity.class);
             startActivity(launchIntent);
             finish();
@@ -264,14 +267,14 @@ public class MainActivity extends BaseActivity implements
     private void setupViewPager() {
         tabNames = getResources().getStringArray(R.array.main_tab_names);
 
-        MainViewPagerAdapter mainViewPagerAdapter =
-                new MainViewPagerAdapter(getSupportFragmentManager(), myId);
+        mainViewPagerAdapter =
+                new MainViewPagerAdapter(getSupportFragmentManager(), uid);
 
         viewPager.setAdapter(mainViewPagerAdapter);
         tabLayout.setupWithViewPager(viewPager);
         viewPager.addOnPageChangeListener(this);
-        setTabIcons();
 
+        setTabIcons();
         setToolbarTitle(tabNames[viewPager.getCurrentItem()]);
     }
 
@@ -284,17 +287,22 @@ public class MainActivity extends BaseActivity implements
         }
     }
 
-    @Override
-    public void startActivity(Intent intent) {
-        super.startActivity(intent);
-
-        if (materialSheetFab.isSheetVisible()) {
-            materialSheetFab.hideSheet();
+    private void hideMaterialSheet() {
+        if (materialSheetFab != null) {
+            if (materialSheetFab.isSheetVisible()) {
+                materialSheetFab.hideSheet();
+            }
         }
     }
 
+    @Override
+    public void startActivity(Intent intent) {
+        super.startActivity(intent);
+        hideMaterialSheet();
+    }
+
     private void startActivityWithMyId(Class<?> cls) {
-        Intent intent = getMyIdStartIntent(this, myId, cls);
+        Intent intent = getMyIdStartIntent(this, uid, cls);
         startActivity(intent);
     }
 
@@ -354,7 +362,7 @@ public class MainActivity extends BaseActivity implements
         drawerLayout.closeDrawer(GravityCompat.START);
 
         switch (item.getItemId()) {
-            case R.id.drawer_add_friends:
+            case R.id.drawer_add_friend:
                 startActivityWithMyId(AddFriendActivity.class);
                 return true;
             case R.id.drawer_find_public_chat:
@@ -367,8 +375,11 @@ public class MainActivity extends BaseActivity implements
                 startActivityWithMyId(NewMessagesActivity.class);
                 return true;
             case R.id.drawer_profile:
-                Intent profileIntent = ProfileActivity.getStartIntent(this, myId, myInfo);
+                Intent profileIntent = ProfileActivity.getStartIntent(this, uid, myInfo);
                 startActivity(profileIntent);
+                return true;
+            case R.id.drawer_settings:
+                startActivity(new Intent(this, SettingsActivity.class));
                 return true;
             case R.id.drawer_logout:
                 logout();
@@ -395,7 +406,7 @@ public class MainActivity extends BaseActivity implements
 
                 if (connected) {
 
-                    Firebase currentOnlineUser = onlineUserFirebase.child(myId);
+                    Firebase currentOnlineUser = onlineUserFirebase.child(uid);
 
                     UserOnlineInfo userOnlineInfo = new UserOnlineInfo(true, System.currentTimeMillis());
 
@@ -500,17 +511,10 @@ public class MainActivity extends BaseActivity implements
     }
 
     @Override
-    public void onOkClick(String tag) {
-        switch (tag) {
-            case ALERT_LOGOUT_DIALOG_TAG:
-                performLogout();
-                break;
+    public void onAlertDialogClick(String tag, int which) {
+        if (tag.equals(ALERT_LOGOUT_DIALOG_TAG) && which == DialogInterface.BUTTON_POSITIVE) {
+            performLogout();
         }
-    }
-
-    @Override
-    public void onCancelClick(String tag) {
-
     }
 
     private void performLogout() {
@@ -533,8 +537,46 @@ public class MainActivity extends BaseActivity implements
         }
     }
 
+    @Override
+    public void onRefresh(String tag) {
+        switch (tag) {
+            case ROOM_LIST_FRAGMENT_TAG:
+                fetchRoomList();
+                break;
+            case FRIEND_LIST_FRAGMENT_TAG:
+                if (mainViewPagerAdapter.getRegisteredFragment(1) != null) {
+                    FriendsFragment  friendsFragment = (FriendsFragment) mainViewPagerAdapter.getRegisteredFragment(1);
+                    friendsFragment.loadFriends();
+                }
+                break;
+            case GROUP_LIST_FRAGMENT_TAG:
+                fetchGroups();
+                break;
+            case PUBLIC_LIST_FRAGMENT_TAG:
+                fetchPublicChats();
+                break;
+        }
+    }
+
+    private void fetchRoomList() {
+        roomListFetchingFragment.fetchRoomList();
+    }
+
+    private void fetchUserFriends() {
+        friendsFetchingFragment.fetchUserFriends(uid);
+    }
+
+    private void fetchGroups() {
+        groupListFetchingFragment.fetchGroupList(uid);
+    }
+
+    private void fetchPublicChats() {
+        publicListFetchingFragment.fetchPublicList(uid);
+    }
+
     private void onSelectedFragment(int position) {
         setToolbarTitle(tabNames[position]);
+        appBarLayout.setExpanded(true);
 
         switch (position) {
 
@@ -542,15 +584,15 @@ public class MainActivity extends BaseActivity implements
                 break;
 
             case 1:
-                friendsFetchingFragment.fetchUserFriends(myId);
+                fetchUserFriends();
                 break;
 
             case 2:
-                groupListFetchingFragment.fetchGroupList(myId);
+                fetchGroups();
                 break;
 
             case 3:
-                publicListFetchingFragment.fetchPublicList(myId);
+                fetchPublicChats();
                 break;
         }
     }
@@ -567,14 +609,18 @@ public class MainActivity extends BaseActivity implements
     private void firebaseLogout() {
         UserOnlineInfo userOnlineInfo = new UserOnlineInfo(false, System.currentTimeMillis());
 
-        onlineUserFirebase.child(myId).onDisconnect().setValue(userOnlineInfo);
-        onlineUserFirebase.child(myId)
+        onlineUserFirebase.child(uid).onDisconnect().setValue(userOnlineInfo);
+        onlineUserFirebase.child(uid)
                 .setValue(userOnlineInfo);
         onlineUserFirebase.unauth();
     }
 
     private void firebaseUnAuthenticate() {
         firebaseLogout();
+
+        SharedPreferences.Editor editor = AppController.getComponent(this).sharedPreferencesEditor();
+        editor.remove(PrefsUtil.PREF_UID);
+        editor.apply();
 
         Intent loginIntent = new Intent(this, LoginActivity.class);
         loginIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);

@@ -19,6 +19,7 @@ import com.firebase.client.Firebase;
 import com.firebase.client.FirebaseError;
 import com.firebase.client.MutableData;
 import com.firebase.client.Query;
+import com.firebase.client.ServerValue;
 import com.firebase.client.Transaction;
 import com.firebase.client.ValueEventListener;
 import com.oakkub.chat.R;
@@ -32,10 +33,10 @@ import com.oakkub.chat.models.UserInfo;
 import com.oakkub.chat.models.eventbus.EventBusDeleteGroupRoom;
 import com.oakkub.chat.models.eventbus.EventBusDeletePublicChat;
 import com.oakkub.chat.services.GCMNotifyService;
-import com.oakkub.chat.utils.ArrayMapUtil;
 import com.oakkub.chat.utils.Base64Util;
 import com.oakkub.chat.utils.BitmapUtil;
 import com.oakkub.chat.utils.FileUtil;
+import com.oakkub.chat.utils.FirebaseMapUtil;
 import com.oakkub.chat.utils.FirebaseUtil;
 import com.oakkub.chat.utils.GCMUtil;
 import com.oakkub.chat.views.widgets.MyToast;
@@ -48,7 +49,6 @@ import java.io.FileDescriptor;
 import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
-import java.util.HashMap;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -58,7 +58,7 @@ import de.greenrobot.event.EventBus;
 
 public class ChatRoomFragment extends BaseFragment implements ChildEventListener {
 
-    public static final String EXTRA_MY_ID = "extra:myId";
+    public static final String EXTRA_MY_ID = "extra:uid";
     public static final String EXTRA_FRIEND_ID = "extra:friendId";
     public static final String EXTRA_IS_MEMBER = "extra:isMember";
     public static final String EXTRA_ROOM = "extra:room";
@@ -101,7 +101,6 @@ public class ChatRoomFragment extends BaseFragment implements ChildEventListener
     @Named(FirebaseUtil.NAMED_MESSAGES_TYPING)
     Lazy<Firebase> messagesTypingFirebase;
 
-    private String myId;
     private String roomId;
     private String latestMessageKey = "";
     private boolean isMember;
@@ -181,7 +180,7 @@ public class ChatRoomFragment extends BaseFragment implements ChildEventListener
 
             if (isPrivateRoom) {
                 if (privateFriendInfo != null) {
-                    messageRequestListener.onPrivateRoomReady(myId, privateFriendInfo, true);
+                    messageRequestListener.onPrivateRoomReady(privateFriendInfo, true);
                 }
                 if (savedInstanceState == null) {
                     isFriendTyping();
@@ -296,7 +295,7 @@ public class ChatRoomFragment extends BaseFragment implements ChildEventListener
         // group room preparation
         if (preservedGroupMemberList != null) {
             if (isGroupRoomFirebaseInit) {
-                messageRequestListener.onGroupRoomReady(myId, preservedGroupMemberList, isPrivateRoom);
+                messageRequestListener.onGroupRoomReady(preservedGroupMemberList, isPrivateRoom);
                 return;
             }
         }
@@ -359,9 +358,10 @@ public class ChatRoomFragment extends BaseFragment implements ChildEventListener
 
         userInfoFirebase.get().child(memberKey).keepSynced(true);
         userInfoFirebase.get().child(memberKey)
-                .addListenerForSingleValueEvent(new ValueEventListener() {
+                .addValueEventListener(new ValueEventListener() {
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
+                        dataSnapshot.getRef().removeEventListener(this);
                         onMemberInfoFetched(dataSnapshot);
                     }
 
@@ -373,23 +373,16 @@ public class ChatRoomFragment extends BaseFragment implements ChildEventListener
     }
 
     private void checkIfCurrentMember(final UserInfo friendInfo) {
-        if (eventListenerMemberList == null) {
-            eventListenerMemberList = new ArrayMap<>();
-        }
         if (eventListenerMemberList.get(friendInfo.getKey()) != null) return;
 
         eventListenerMemberList.put(friendInfo.getKey(), new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-                if (instanceIdList == null) {
-                    instanceIdList = new SparseStringArray();
-                }
-
                 String key = dataSnapshot.getKey();
                 int keyHashcode = key.hashCode();
 
                 if (dataSnapshot.exists()) {
-                    if (instanceIdList.get(keyHashcode) == null && !friendInfo.getKey().equals(myId)) {
+                    if (instanceIdList.get(keyHashcode) == null && !friendInfo.getKey().equals(uid)) {
                         instanceIdList.put(keyHashcode, friendInfo.getInstanceID());
                     }
                 } else {
@@ -408,6 +401,13 @@ public class ChatRoomFragment extends BaseFragment implements ChildEventListener
     }
 
     private void onMemberInfoFetched(DataSnapshot dataSnapshot) {
+        if (eventListenerMemberList == null) {
+            eventListenerMemberList = new ArrayMap<>();
+        }
+        if (instanceIdList == null) {
+            instanceIdList = new SparseStringArray();
+        }
+
         String friendInfoKey = dataSnapshot.getKey();
 
         UserInfo friendInfo = dataSnapshot.getValue(UserInfo.class);
@@ -447,7 +447,7 @@ public class ChatRoomFragment extends BaseFragment implements ChildEventListener
         if (preservedGroupMemberList.size() == totalGroupMember && !isGroupRoomFirebaseInit) {
 
             if (isMessageRequestAvailable()) {
-                messageRequestListener.onGroupRoomReady(myId, preservedGroupMemberList, isPrivateRoom);
+                messageRequestListener.onGroupRoomReady(preservedGroupMemberList, isPrivateRoom);
             }
 
             // initialize firebase for group room here,
@@ -460,7 +460,6 @@ public class ChatRoomFragment extends BaseFragment implements ChildEventListener
     private void getDataIntent() {
         Intent intent = getActivity().getIntent();
 
-        myId = intent.getStringExtra(EXTRA_MY_ID);
         extraRoom = Parcels.unwrap(intent.getParcelableExtra(EXTRA_ROOM));
         privateFriendId = intent.getStringExtra(EXTRA_FRIEND_ID);
         isMember = intent.getBooleanExtra(EXTRA_IS_MEMBER, false);
@@ -483,8 +482,7 @@ public class ChatRoomFragment extends BaseFragment implements ChildEventListener
             return;
         }
 
-        String friendKey = FirebaseUtil.getPrivateRoomFriendKey(myId, roomId);
-
+        String friendKey = FirebaseUtil.getPrivateRoomFriendKey(uid, roomId);
         userInfoFirebase.get().child(friendKey).keepSynced(true);
         userInfoFirebase.get().child(friendKey)
                 .addListenerForSingleValueEvent(privateFriendInfoValueEventListener);
@@ -501,7 +499,7 @@ public class ChatRoomFragment extends BaseFragment implements ChildEventListener
             setTitleToolbar(extraRoom.getName());
 
             if (isMessageRequestAvailable()) {
-                messageRequestListener.onPrivateRoomReady(myId, privateFriendInfo, isPrivateRoom);
+                messageRequestListener.onPrivateRoomReady(privateFriendInfo, isPrivateRoom);
             }
         }
 
@@ -599,7 +597,7 @@ public class ChatRoomFragment extends BaseFragment implements ChildEventListener
     }
 
     private Query getRoomMemberChecker() {
-        return roomMembersFirebase.get().child(roomId).child(myId);
+        return roomMembersFirebase.get().child(roomId).child(uid);
     }
 
     private void initRoomMemberChecker() {
@@ -610,7 +608,10 @@ public class ChatRoomFragment extends BaseFragment implements ChildEventListener
     private ValueEventListener roomMemberCheckerListener = new ValueEventListener() {
         @Override
         public void onDataChange(DataSnapshot dataSnapshot) {
+            Log.d(TAG, "onDataChange: " + dataSnapshot.getValue());
             if (!dataSnapshot.exists()) {
+                if (isPublicChat && !isMember) return;
+
                 if (isMessageRequestAvailable()) {
                     messageRequestListener.onRemovedByAdmin();
                 } else {
@@ -650,10 +651,9 @@ public class ChatRoomFragment extends BaseFragment implements ChildEventListener
     public void joinRoom() {
         if (isPrivateRoom || isMember) return;
 
-        long currentTime = System.currentTimeMillis();
         ArrayMap<String, Object> joinRoomMap = new ArrayMap<>(3);
-        ArrayMapUtil.mapUserPublicRoom(joinRoomMap, myId, roomId, currentTime);
-        ArrayMapUtil.mapUserRoom(joinRoomMap, myId, roomId, currentTime);
+        FirebaseMapUtil.mapUserPublicRoom(joinRoomMap, uid, roomId, ServerValue.TIMESTAMP);
+        FirebaseMapUtil.mapUserRoom(joinRoomMap, uid, roomId, ServerValue.TIMESTAMP);
 
         rootFirebase.updateChildren(joinRoomMap, new Firebase.CompletionListener() {
             @Override
@@ -669,12 +669,16 @@ public class ChatRoomFragment extends BaseFragment implements ChildEventListener
                         messageRequestListener.onJoinRoomFailed();
                     } else {
                         messageRequestListener.onJoinRoomSuccess();
+                        isMember = true;
+                        initRoomMemberChecker();
                     }
                 } else {
                     if (isFailed) {
                         onJoinRoomFailed = true;
                     } else {
                         onJoinRoomSuccess = true;
+                        isMember = true;
+                        initRoomMemberChecker();
                     }
                 }
             }
@@ -686,8 +690,8 @@ public class ChatRoomFragment extends BaseFragment implements ChildEventListener
         if (!isPrivateRoom || (typing && isTypingMessage)) return;
 
         isTypingMessage = typing;
-        messagesTypingFirebase.get().child(roomId).child(myId).onDisconnect().setValue(false);
-        messagesTypingFirebase.get().child(roomId).child(myId).setValue(isTypingMessage, new Firebase.CompletionListener() {
+        messagesTypingFirebase.get().child(roomId).child(uid).onDisconnect().setValue(false);
+        messagesTypingFirebase.get().child(roomId).child(uid).setValue(isTypingMessage, new Firebase.CompletionListener() {
             @Override
             public void onComplete(FirebaseError firebaseError, Firebase firebase) {
                 if (firebaseError != null) {
@@ -725,7 +729,7 @@ public class ChatRoomFragment extends BaseFragment implements ChildEventListener
         String messageKey = messagesFirebase.child(roomId).push().getKey();
         String messageText = getString(R.string.send_photo);
 
-        Message message = new Message(roomId, messageText, myId);
+        Message message = new Message(roomId, messageText, uid);
         message.setKey(messageKey);
         message.setImagePath("");
 
@@ -785,8 +789,7 @@ public class ChatRoomFragment extends BaseFragment implements ChildEventListener
     }
 
     private void sendMessageBase64ToFirebase(Bitmap bitmap, final Message message) {
-        String bitmapBase64 = Base64Util.toBase64(bitmap, 50);
-        String uriBase64 = Base64Util.toDataUri(bitmapBase64);
+        String uriBase64 = Base64Util.toDataUri(Base64Util.toBase64(bitmap, 50));
 
         String imageRatio =
                 BitmapUtil.getImageRatio(bitmap.getWidth(), bitmap.getHeight());
@@ -819,7 +822,7 @@ public class ChatRoomFragment extends BaseFragment implements ChildEventListener
         else return null;
 
         String messageKey = messagesFirebase.child(roomId).push().getKey();
-        Message message = new Message(roomId, messageText, myId);
+        Message message = new Message(roomId, messageText, uid);
         message.setKey(messageKey);
 
         sendMessage(message);
@@ -846,23 +849,23 @@ public class ChatRoomFragment extends BaseFragment implements ChildEventListener
 
         // private room: size 2
         // group room: size 3 * (total member)
-        ArrayMapUtil.mapUsersRoom(messageMap, usersKey, roomId, message.getSentWhen());
+        FirebaseMapUtil.mapUsersRoom(messageMap, usersKey, roomId, message.getSentWhen());
 
         // size 4
-        ArrayMapUtil.mapMessage(messageMap, message.getKey(), roomId, message);
+        FirebaseMapUtil.mapMessage(messageMap, message.getKey(), roomId, message);
 
         // size 3
-        ArrayMapUtil.mapRoomMessage(messageMap, message, roomId);
+        FirebaseMapUtil.mapRoomMessage(messageMap, message, roomId);
 
         /*if (isPublicChat) {
-            ArrayMapUtil.mapPublicRoomList(messageMap, roomId, message.getSentWhen());
+            FirebaseMapUtil.mapPublicRoomList(messageMap, roomId, message.getSentWhen());
         }*/
     }
 
     private String[] getUsersKeyArray() {
         String[] usersKey = new String[isPrivateRoom ? 2 : preservedGroupMemberList.size()];
         if (isPrivateRoom) {
-            usersKey[0] = myId;
+            usersKey[0] = uid;
             usersKey[1] = privateFriendId;
         } else {
             for (int i = 0, size = preservedGroupMemberList.size(); i < size; i++) {
@@ -904,12 +907,13 @@ public class ChatRoomFragment extends BaseFragment implements ChildEventListener
     }
 
     private void sendMessageNotification(Message message) {
-        Intent notifyMessageIntent = new Intent(getActivity(), GCMNotifyService.class);
+        Intent notifyMessageIntent = new Intent(Contextor.getInstance().getContext(), GCMNotifyService.class);
         notifyMessageIntent.putExtra(GCMUtil.DATA_TITLE, isPrivateRoom ?
                 "" : extraRoom.getName());
         notifyMessageIntent.putExtra(GCMUtil.DATA_MESSAGE, message.getMessage());
-        notifyMessageIntent.putExtra(GCMUtil.DATA_SENT_BY, myId);
+        notifyMessageIntent.putExtra(GCMUtil.DATA_SENT_BY, uid);
         notifyMessageIntent.putExtra(GCMUtil.DATA_ROOM_ID, roomId);
+        notifyMessageIntent.putExtra(GCMUtil.NOTIFY_TYPE, GCMUtil.CHAT_NEW_MESSAGE_NOTIFY_TYPE);
 
         if (isPrivateRoom) {
             notifyMessageIntent.putExtra(GCMUtil.KEY_TO, privateFriendInfo.getInstanceID());
@@ -924,7 +928,7 @@ public class ChatRoomFragment extends BaseFragment implements ChildEventListener
 
     public void markMessageAsRead(final Message message) {
         String sentBy = message.getSentBy();
-        if (sentBy.equals(myId) || sentBy.equals(FirebaseUtil.SYSTEM) || !isMember) return;
+        if (sentBy.equals(uid) || sentBy.equals(FirebaseUtil.SYSTEM) || !isMember) return;
 
         Firebase readTotalFirebase = messagesFirebase.child(message.getRoomId())
                 .child(message.getKey()).child(FirebaseUtil.CHILD_READ_TOTAL).getRef();
@@ -958,51 +962,9 @@ public class ChatRoomFragment extends BaseFragment implements ChildEventListener
                 }
 
                 readGroupRoomFirebase.get().child(message.getRoomId()).child(message.getKey())
-                        .child(myId).setValue(true);
+                        .child(uid).setValue(ServerValue.TIMESTAMP);
             }
         });
-    }
-
-    /*private void prepareInstanceIds() {
-        if (instanceIdList != null) return;
-
-        int size = preservedGroupMemberList.size();
-        instanceIdList = new ArrayList<>(size);
-        for (int i = 0; i < size; i++) {
-            if (preservedGroupMemberList.keyAt(i) != myId.hashCode()) {
-                instanceIdList.add(preservedGroupMemberList.valueAt(i).getInstanceID());
-            }
-        }
-    }*/
-
-    private void updateRoomInfoWhenDeleted() {
-        messagesFirebase.child(roomId)
-                .orderByChild(FirebaseUtil.CHILD_SENT_WHEN)
-                .endAt(System.currentTimeMillis())
-                .limitToLast(1)
-                .addListenerForSingleValueEvent(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(DataSnapshot dataSnapshot) {
-                        DataSnapshot childrenDataSnapshot = dataSnapshot.getChildren().iterator().next();
-
-                        Message latestMessageAfterDeleted = getMessage(childrenDataSnapshot);
-                        HashMap<String, Object> messageInfoMap = new HashMap<>();
-                        ArrayMapUtil.mapRoomMessage(messageInfoMap, latestMessageAfterDeleted, roomId);
-
-                        rootFirebase.updateChildren(messageInfoMap, new Firebase.CompletionListener() {
-                            @Override
-                            public void onComplete(FirebaseError firebaseError, Firebase firebase) {
-                                if (firebaseError != null) {
-                                    Toast.makeText(getActivity(), "Cannot remove message", Toast.LENGTH_SHORT).show();
-                                }
-                            }
-                        });
-                    }
-
-                    @Override
-                    public void onCancelled(FirebaseError firebaseError) {
-                    }
-                });
     }
 
     public Message getMessage(DataSnapshot dataSnapshot) {
@@ -1072,7 +1034,7 @@ public class ChatRoomFragment extends BaseFragment implements ChildEventListener
         super.onDestroy();
 
         if (isPrivateRoom) {
-            messagesTypingFirebase.get().child(roomId).child(myId).setValue(false);
+            messagesTypingFirebase.get().child(roomId).child(uid).setValue(false);
             messagesTypingFirebase.get().child(roomId).child(privateFriendId).removeEventListener(friendTypingValueEvent);
         } else {
             getMessagesFirebase().removeEventListener(this);
@@ -1099,8 +1061,8 @@ public class ChatRoomFragment extends BaseFragment implements ChildEventListener
         void onOldMessage(ArrayList<Message> oldMessages);
         void onMessageChanged(Message message);
         void onRemoveMessage(Message message);
-        void onPrivateRoomReady(String myId, UserInfo friendInfo, boolean isPrivateRoom);
-        void onGroupRoomReady(String myId, SparseArray<UserInfo> userInfoList, boolean isPrivateRoom);
+        void onPrivateRoomReady(UserInfo friendInfo, boolean isPrivateRoom);
+        void onGroupRoomReady(SparseArray<UserInfo> userInfoList, boolean isPrivateRoom);
         void onNewGroupMember(UserInfo friendInfo);
         void onJoinRoomSuccess();
         void onJoinRoomFailed();

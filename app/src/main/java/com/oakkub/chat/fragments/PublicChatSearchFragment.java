@@ -137,7 +137,8 @@ public class PublicChatSearchFragment extends BaseFragment {
     }
 
     public void search(String keyToBeSearched, String query) {
-        roomInfoFirebase.orderByChild(keyToBeSearched).equalTo(query)
+        roomInfoFirebase.orderByChild(keyToBeSearched)
+                .startAt(query).endAt(query + "\uf8ff").equalTo(query)
                 .addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {

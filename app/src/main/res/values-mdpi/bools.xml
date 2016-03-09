@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <bool name="not_allow_friend_pager_toolbar_scrollable">true</bool>
+
+</resources>

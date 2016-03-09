@@ -7,6 +7,7 @@ import android.support.v4.widget.SwipeRefreshLayout;
 import android.util.AttributeSet;
 import android.view.ViewTreeObserver;
 
+import com.oakkub.chat.R;
 import com.oakkub.chat.managers.BundleSavedState;
 
 /**
@@ -18,10 +19,16 @@ public class MySwipeRefreshLayout extends SwipeRefreshLayout {
 
     public MySwipeRefreshLayout(Context context) {
         super(context);
+        init();
     }
 
     public MySwipeRefreshLayout(Context context, AttributeSet attrs) {
         super(context, attrs);
+        init();
+    }
+
+    private void init() {
+        setColorSchemeResources(R.color.blue);
     }
 
     @Override
@@ -29,7 +36,7 @@ public class MySwipeRefreshLayout extends SwipeRefreshLayout {
         Parcelable superState = super.onSaveInstanceState();
         BundleSavedState savedState = new BundleSavedState(superState);
 
-        Bundle bundle = new Bundle();
+        Bundle bundle = new Bundle(1);
         bundle.putBoolean(STATE_IS_REFRESHING, isRefreshing());
         savedState.bundle = bundle;
 
@@ -42,14 +49,22 @@ public class MySwipeRefreshLayout extends SwipeRefreshLayout {
         super.onRestoreInstanceState(savedState.getSuperState());
 
         if (savedState.bundle.getBoolean(STATE_IS_REFRESHING)) {
-            getViewTreeObserver().addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
-                @Override
-                public boolean onPreDraw() {
-                    setRefreshing(true);
-                    getViewTreeObserver().removeOnPreDrawListener(this);
-                    return true;
-                }
-            });
+            show();
         }
+    }
+
+    public void show() {
+        getViewTreeObserver().addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
+            @Override
+            public boolean onPreDraw() {
+                setRefreshing(true);
+                getViewTreeObserver().removeOnPreDrawListener(this);
+                return true;
+            }
+        });
+    }
+
+    public void hide() {
+        setRefreshing(false);
     }
 }

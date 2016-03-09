@@ -1,9 +1,12 @@
 package com.oakkub.chat.activities;
 
+import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.v7.widget.Toolbar;
 import android.widget.TextView;
 
@@ -15,6 +18,7 @@ import com.oakkub.chat.models.UserInfo;
 import com.oakkub.chat.utils.FileUtil;
 import com.oakkub.chat.utils.FirebaseUtil;
 import com.oakkub.chat.utils.IntentUtil;
+import com.oakkub.chat.utils.PermissionUtil;
 import com.oakkub.chat.utils.UriUtil;
 import com.oakkub.chat.utils.UserInfoUtil;
 import com.oakkub.chat.views.dialogs.ChooseImageDialog;
@@ -49,6 +53,7 @@ public class ProfileActivity extends BaseActivity implements
     private static final String BASE64_CONVERTER_TAG = "tag:base64Converter";
     private static final int CAMERA_REQUEST_CODE = 0;
     private static final int IMAGE_VIEWER_REQUEST_CODE = 1;
+    private static final int REQUEST_CODE_WRITE_STORAGE_PERMISSION = 100;
 
     @Inject
     @Named(FirebaseUtil.NAMED_USER_INFO)
@@ -77,7 +82,7 @@ public class ProfileActivity extends BaseActivity implements
     }
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         AppController.getComponent(this).inject(this);
         setContentView(R.layout.activity_profile);
@@ -100,8 +105,9 @@ public class ProfileActivity extends BaseActivity implements
         profileImage.setMatchedSizeImageURI(Uri.parse(myInfo.getProfileImageURL()));
         displayNameTextView.setText(myInfo.getDisplayName());
 
-        base64ConverterFragment = (Base64ConverterFragment) findOrCreateFragmentByTag(
-               Base64ConverterFragment.newInstance(), BASE64_CONVERTER_TAG);
+        base64ConverterFragment = (Base64ConverterFragment) findOrAddFragmentByTag(
+                getSupportFragmentManager(),
+                Base64ConverterFragment.newInstance(), BASE64_CONVERTER_TAG);
     }
 
     @Override
@@ -159,7 +165,27 @@ public class ProfileActivity extends BaseActivity implements
     }
 
     @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        onRequestUseCameraPermission(requestCode, permissions, grantResults);
+    }
+
+    private void onRequestUseCameraPermission(int requestCode, String[] permissions, int[] grantResults) {
+        if (requestCode != REQUEST_CODE_WRITE_STORAGE_PERMISSION) return;
+        if (grantResults[0] != PackageManager.PERMISSION_GRANTED) {
+            MyToast.make("You denied write storage permission").show();
+        } else {
+            onCameraClick();
+        }
+    }
+
+    @Override
     public void onCameraClick() {
+        String neededPermission = Manifest.permission.WRITE_EXTERNAL_STORAGE;
+        if (!PermissionUtil.isPermissionAllowed(this, neededPermission, REQUEST_CODE_WRITE_STORAGE_PERMISSION)) {
+            return;
+        }
+
         File cameraStorage = FileUtil.getCameraStorageDirectory();
         if (cameraStorage == null) {
             MyToast.make("Cannot use camera, no sdcard available.").show();

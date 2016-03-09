@@ -28,9 +28,9 @@ public abstract class RecyclerViewAdapter<I> extends RecyclerView.Adapter {
     protected ArrayList<I> items = new ArrayList<>();
 
     @State
-    boolean loadMore;
+    protected boolean loadMore;
     @State
-    boolean noInternet;
+    protected boolean noInternet;
 
     @Override
     public int getItemCount() {
@@ -73,10 +73,30 @@ public abstract class RecyclerViewAdapter<I> extends RecyclerView.Adapter {
     }
 
     public void addLastAll(List<I> list) {
-        final int startPosition = getItemCount();
+        int startPosition = getItemCount();
 
         items.addAll(list);
         notifyItemRangeInserted(startPosition, list.size());
+    }
+
+    public void addNotExistLastAll(List<I> list) {
+        for (int i = 0, size = list.size(); i < size; i++) {
+            I item = list.get(i);
+
+            if (!items.contains(item)) {
+                addLast(item);
+            }
+        }
+    }
+
+    public void addNotExistFirstAll(List<I> list) {
+        for (int i = 0, size = list.size(); i < size; i++) {
+            I item = list.get(i);
+
+            if (!items.contains(item)) {
+                addFirst(item);
+            }
+        }
     }
 
     public void addFirstAll(List<I> list) {
@@ -129,11 +149,13 @@ public abstract class RecyclerViewAdapter<I> extends RecyclerView.Adapter {
     public void removeLast() {
         int lastPosition = getLastPosition();
 
-        items.remove(lastPosition);
-        notifyItemRemoved(lastPosition);
+        if (lastPosition > 0 && lastPosition < getItemCount()) {
+            items.remove(lastPosition);
+            notifyItemRemoved(lastPosition);
+        }
     }
 
-    public int findById(String key) {
+    public int findByKey(String key) {
         int size = getItemCount();
         int keyHash = key.hashCode();
         for (int i = 0; i < size; i++) {
@@ -145,7 +167,7 @@ public abstract class RecyclerViewAdapter<I> extends RecyclerView.Adapter {
     }
 
     public void clear() {
-        final int itemCount = items.size();
+        int itemCount = items.size();
 
         if (itemCount > 0) {
             items.clear();
@@ -215,7 +237,10 @@ public abstract class RecyclerViewAdapter<I> extends RecyclerView.Adapter {
 
     public void removeFooter() {
         reset();
-        removeLast();
+
+        if (!isEmpty() && getLastItem() == null) {
+            removeLast();
+        }
     }
 
     private void reset() {

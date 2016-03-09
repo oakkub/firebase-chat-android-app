@@ -2,6 +2,7 @@ package com.oakkub.chat.utils;
 
 import android.support.v4.util.ArrayMap;
 
+import com.firebase.client.ServerValue;
 import com.oakkub.chat.models.Message;
 import com.oakkub.chat.models.Room;
 import com.oakkub.chat.models.UserInfo;
@@ -23,7 +24,23 @@ import static com.oakkub.chat.utils.FirebaseUtil.KEY_USERS_USER_ROOMS;
 /**
  * Created by OaKKuB on 1/12/2016.
  */
-public class ArrayMapUtil {
+public class FirebaseMapUtil {
+
+    public static void mapSendFriendRequested(ArrayMap<String, Object> map, String friendKey, String myId, boolean isRemove) {
+        map.put(TextUtil.getPath(FirebaseUtil.KEY_USERS,
+                FirebaseUtil.KEY_USERS_USER_FRIENDS_RECEIVED_REQUESTED, friendKey, myId), isRemove ? null : ServerValue.TIMESTAMP);
+    }
+
+    public static void mapFriendReceivedRequest(ArrayMap<String, Object> map, String friendKey, String myId, boolean isRemove) {
+        map.put(TextUtil.getPath(FirebaseUtil.KEY_USERS,
+                FirebaseUtil.KEY_USERS_USER_FRIENDS_RECEIVED_REQUESTED,
+                myId, friendKey), isRemove ? null : ServerValue.TIMESTAMP);
+    }
+
+    public static void mapFriendPendingRequest(ArrayMap<String, Object> map, String friendKey, String myId, boolean isRemove) {
+        map.put(TextUtil.getPath(FirebaseUtil.KEY_USERS, FirebaseUtil.KEY_USERS_USER_FRIENDS_PENDING_REQUEST,
+                myId, friendKey), isRemove ? null : ServerValue.TIMESTAMP);
+    }
 
     public static void mapPublicRoomList(ArrayMap<String, Object> map, Room room) {
         map.put(TextUtil.getPath(FirebaseUtil.KEY_ROOMS, FirebaseUtil.KEY_ROOMS_PUBLIC, room.getRoomId()), room.getCreated());
@@ -187,6 +204,12 @@ public class ArrayMapUtil {
 
     private static String getMessageUserRoomPath(String userId, String roomKey) {
         return TextUtil.getPath(FirebaseUtil.KEY_USERS, FirebaseUtil.KEY_USERS_USER_ROOMS, userId, roomKey);
+    }
+
+    public static void mapUserFriend(Map<String, Object> map, String myId, String friendKey, boolean isRemove) {
+        map.put(TextUtil.getPath(FirebaseUtil.KEY_USERS,
+                FirebaseUtil.KEY_USERS_USER_FRIENDS, myId, friendKey),
+                isRemove ? null : ServerValue.TIMESTAMP);
     }
 
 }

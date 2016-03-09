@@ -34,12 +34,12 @@ public class ChatListAdapter extends RecyclerViewAdapter<Message> {
     public static final int SYSTEM_MESSAGE_TYPE = 4;
     public static final int SYSTEM_TIME_DIVIDER_TYPE = 5;
 
-    private String myId;
+    private String uid;
     private boolean isPrivateRoom;
     private SparseArray<UserInfo> friendInfoList;
 
-    public ChatListAdapter(String myId, SparseArray<UserInfo> friendInfoList, boolean isPrivateRoom) {
-        this.myId = myId;
+    public ChatListAdapter(String uid, SparseArray<UserInfo> friendInfoList, boolean isPrivateRoom) {
+        this.uid = uid;
         this.friendInfoList = friendInfoList;
         this.isPrivateRoom = isPrivateRoom;
     }
@@ -57,12 +57,12 @@ public class ChatListAdapter extends RecyclerViewAdapter<Message> {
         Message message = items.get(position);
 
         if (message != null) {
-            if (message.getSentBy().equals(myId)) {
+            if (message.getSentBy().equals(uid)) {
                 if (message.getImagePath() != null) return MY_IMAGE_TYPE;
                 return MY_MESSAGE_TYPE;
             } else if (message.getSentBy().equals(FirebaseUtil.SYSTEM)) {
                 return message.getMessage() == null ? SYSTEM_TIME_DIVIDER_TYPE : SYSTEM_MESSAGE_TYPE;
-            } else if (!message.getSentBy().equals(myId)) {
+            } else if (!message.getSentBy().equals(uid)) {
                 if (message.getImagePath() != null) return FRIEND_IMAGE_TYPE;
                 else return FRIEND_MESSAGE_TYPE;
             }
@@ -144,7 +144,7 @@ public class ChatListAdapter extends RecyclerViewAdapter<Message> {
             switch (message.getLanguageRes()) {
                 case MessageUtil.LAST_ADMIN_LEAVED:
                     // message = leaveId:promotedId
-                    systemMessage = MessageUtil.lastAdminLeavedRes(message, friendInfoList, myId);
+                    systemMessage = MessageUtil.lastAdminLeavedRes(message, friendInfoList, uid);
                     break;
                 case MessageUtil.REMOVED_MEMBER:
                     systemMessage = getStringRes(R.string.n_removed_n_from_room, message);
@@ -166,7 +166,7 @@ public class ChatListAdapter extends RecyclerViewAdapter<Message> {
 
     private String getStringRes(int stringRes, Message message) {
         return MessageUtil.getStringResTwoParam(stringRes,
-                message, friendInfoList, myId);
+                message, friendInfoList, uid);
     }
 
     private void onBindMyMessageHolder(MyMessageHolder holder, Message message, int position) {
@@ -192,7 +192,9 @@ public class ChatListAdapter extends RecyclerViewAdapter<Message> {
     private void onBindFriendMessageHolder(FriendMessageHolder holder, Message message) {
         holder.message.setText(message.getMessage());
         holder.messageTimeTextView.setText(TimeUtil.getOnlyTime(message.getSentWhen()));
-        setImage(holder, message);
+        holder.friendProfileImage.setVisibility(View.VISIBLE);
+        holder.friendProfileImage.setImageURI(
+                Uri.parse(friendInfoList.get(message.getSentBy().hashCode()).getProfileImageURL()));
     }
 
     private void onBindFriendImageMessageHolder(FriendImageMessageHolder holder, Message message) {
@@ -201,12 +203,6 @@ public class ChatListAdapter extends RecyclerViewAdapter<Message> {
                 Uri.parse(friendInfoList.get(message.getSentBy().hashCode()).getProfileImageURL()));
         SimpleDraweeView messageImage = holder.messageImage;
         setResizeImage(messageImage, message);
-    }
-
-    private void setImage(FriendMessageHolder holder, Message message) {
-        holder.friendProfileImage.setVisibility(View.VISIBLE);
-        holder.friendProfileImage.setImageURI(
-                Uri.parse(friendInfoList.get(message.getSentBy().hashCode()).getProfileImageURL()));
     }
 
     private boolean shouldShowReadImage(Message message, int position) {

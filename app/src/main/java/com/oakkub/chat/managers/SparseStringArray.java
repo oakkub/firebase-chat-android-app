@@ -15,7 +15,7 @@ public class SparseStringArray extends SparseArray<String> implements Parcelable
         super();
     }
 
-    protected SparseStringArray(Parcel in) {
+    private SparseStringArray(Parcel in) {
         int size = in.readInt();
         int[] keys = new int[size];
         String[] values = new String[size];

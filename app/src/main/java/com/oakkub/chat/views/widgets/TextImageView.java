@@ -71,11 +71,15 @@ public class TextImageView extends FrameLayout {
         try {
 
             String textName = typedArray.getString(R.styleable.TextImageView_textName);
-            Drawable drawable = typedArray.getDrawable(R.styleable.TextImageView_image);
+            int imageResourceId = typedArray.getResourceId(R.styleable.TextImageView_image, 0);
 
-            if (drawable != null) {
-                image.setImageDrawable(drawable);
+            if (imageResourceId != 0) {
+                image.setImageResource(imageResourceId);
             }
+
+            /*if (imageResourceId != 0) {
+                image.setImageResource(imageResourceId);
+            }*/
 
             if (textName != null) {
                 text.setText(textName);

@@ -36,22 +36,18 @@ public class TextUtil {
 
     public static String implodeArray(String regularExpression, String[] strings) {
         int size = strings.length;
+
         StringBuilder builder = new StringBuilder(size * 12);
         for (int i = 0; i < size; i++) {
             builder.append(strings[i]);
             builder.append(i == size - 1 ? "" : regularExpression);
         }
+
         return builder.toString();
     }
 
     public static String implode(String regularExpression, String... strings) {
-        int size = strings.length;
-        StringBuilder builder = new StringBuilder(size * 12);
-        for (int i = 0; i < size; i++) {
-            builder.append(strings[i]);
-            builder.append(i == size - 1 ? "" : regularExpression);
-        }
-        return builder.toString();
+        return implodeArray(regularExpression, strings);
     }
 
     public static String getPath(String... strings) {

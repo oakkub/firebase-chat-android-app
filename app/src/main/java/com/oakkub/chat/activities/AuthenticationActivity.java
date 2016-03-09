@@ -27,7 +27,7 @@ public class AuthenticationActivity extends BaseActivity {
     String provider;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.login_process);
         ButterKnife.bind(this);

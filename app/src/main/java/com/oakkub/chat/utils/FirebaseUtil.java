@@ -12,6 +12,8 @@ public class FirebaseUtil {
     public static final String NAMED_USERS = "firebaseUser";
     public static final String NAMED_USER_INFO = "firebaseUserInfo";
     public static final String NAMED_USER_FRIENDS = "firebaseUserFriends";
+    public static final String NAMED_USER_FRIENDS_RECEIVED_REQUESTED = "firebaseUserFriendsReceivedRequested";
+    public static final String NAMED_USER_FRIENDS_PENDING_REQUEST = "firebaseUserFriendsPendingRequest";
     public static final String NAMED_USER_ROOMS = "firebaseUserRooms";
     public static final String NAMED_MESSAGES = "firebaseMessages";
     public static final String NAMED_MESSAGES_LIST = "firebaseMessagesList";
@@ -34,6 +36,8 @@ public class FirebaseUtil {
     public static final String KEY_USERS_USER_INFO = "userInfo";
     public static final String KEY_USERS_USER_FRIENDS = "userFriends";
     public static final String KEY_USERS_USER_ROOMS = "userRooms";
+    public static final String KEY_USERS_USER_FRIENDS_RECEIVED_REQUESTED = "userFriendsReceivedRequested";
+    public static final String KEY_USERS_USER_FRIENDS_PENDING_REQUEST = "userFriendsPendingRequest";
     public static final String KEY_USERS_USER_GROUP_ROOMS = "userGroupRooms";
     public static final String KEY_USERS_USER_PUBLIC_ROOMS = "userPublicRooms";
     public static final String KEY_ONLINE_USER = "onlineUsers";

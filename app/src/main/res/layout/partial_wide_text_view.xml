@@ -5,6 +5,8 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:background="@drawable/black_background"
+    android:clickable="true"
+    android:focusable="true"
     android:fontFamily="sans-serif-light"
     android:freezesText="true"
     android:gravity="center"

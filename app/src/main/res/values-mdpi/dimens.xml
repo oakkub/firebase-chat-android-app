@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="layer_fake_toolbar_bottom_inset">400dp</dimen>
+</resources>

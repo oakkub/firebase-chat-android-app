@@ -7,4 +7,5 @@
 
     <dimen name="image_port_width">253dp</dimen>
     <dimen name="image_port_height">450dp</dimen>
+    <dimen name="layer_fake_toolbar_bottom_inset">640dp</dimen>
 </resources>

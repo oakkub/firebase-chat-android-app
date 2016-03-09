@@ -51,9 +51,15 @@ public class GroupListFetchingFragment extends BaseFragment {
     public void fetchGroupList(String myId) {
         userGroupsFirebase.get().child(myId).keepSynced(true);
         userGroupsFirebase.get().child(myId)
-                .addListenerForSingleValueEvent(new ValueEventListener() {
+                .addValueEventListener(new ValueEventListener() {
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
+                        dataSnapshot.getRef().removeEventListener(this);
+                        if (!dataSnapshot.exists()) {
+                            sendGroupRoom();
+                            return;
+                        }
+
                         totalRoom = (int) dataSnapshot.getChildrenCount();
                         groupRoomFetching(dataSnapshot);
                     }

@@ -9,7 +9,8 @@ import com.oakkub.chat.managers.AppController;
  */
 public class PrefsUtil {
 
-    public static final String PREF_EMAIL = "prefsEmail";
+    public static final String PREF_UID = "prefs:uid";
+    public static final String PREF_EMAIL = "prefs:email";
     public static final String PREF_SHOULD_UPDATE_INSTANCE_ID = "prefs:shouldUpdateInstanceId";
 
     public static boolean shouldUpdateInstanceId(Context context) {

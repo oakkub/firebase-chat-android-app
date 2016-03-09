@@ -66,9 +66,6 @@ public class RoomMemberActivity extends BaseActivity implements RoomMemberFragme
     FrameLayout frameProgressBarLayout;
 
     @State
-    String myId;
-
-    @State
     String roomId;
 
     @State
@@ -83,33 +80,32 @@ public class RoomMemberActivity extends BaseActivity implements RoomMemberFragme
     @State
     boolean isMember;
 
+    @State
+    boolean isAuthenticated;
+
     private FriendSelectableAdapter memberAdapter;
 
-    public static Intent getGroupIntent(Context context, String roomId, String myId, boolean isMember) {
+    public static Intent getGroupIntent(Context context, String roomId, boolean isMember, boolean isAuthenticated) {
         Intent intent = new Intent(context, RoomMemberActivity.class);
         intent.setAction(ACTION_MEMBER);
+        intent.putExtra(EXTRA_ROOM_ID, roomId);
+        intent.putExtra(EXTRA_IS_AUTHENTICATED, isAuthenticated);
         intent.putExtra(EXTRA_IS_MEMBER, isMember);
-        setData(intent, myId, roomId);
 
         return intent;
     }
 
-    public static Intent getPublicIntent(Context context, String roomId, String myId, boolean isAuthenticated) {
+    public static Intent getPublicIntent(Context context, String roomId, boolean isAuthenticated) {
         Intent intent = new Intent(context, RoomMemberActivity.class);
         intent.setAction(isAuthenticated ? ACTION_PUBLIC_ADMIN : ACTION_PUBLIC_MEMBER);
+        intent.putExtra(EXTRA_ROOM_ID, roomId);
         intent.putExtra(EXTRA_IS_AUTHENTICATED, isAuthenticated);
-        setData(intent, myId, roomId);
 
         return intent;
-    }
-
-    private static void setData(Intent intent, String myId, String roomId) {
-        intent.putExtra(EXTRA_ROOM_ID, roomId);
-        intent.putExtra(EXTRA_MY_ID, myId);
     }
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.toolbar_with_recyclerview);
         ButterKnife.bind(this);
@@ -125,9 +121,9 @@ public class RoomMemberActivity extends BaseActivity implements RoomMemberFragme
             Intent intent = getIntent();
 
             action = intent.getAction();
-            myId = intent.getStringExtra(EXTRA_MY_ID);
             roomId = intent.getStringExtra(EXTRA_ROOM_ID);
             isMember = intent.getBooleanExtra(EXTRA_IS_MEMBER, false);
+            isAuthenticated = intent.getBooleanExtra(EXTRA_IS_AUTHENTICATED, false);
         }
     }
 
@@ -165,7 +161,7 @@ public class RoomMemberActivity extends BaseActivity implements RoomMemberFragme
     private void addFragment(String tag, String roomMemberPath, String userInfoPath) {
         if (findFragmentByTag(tag) == null) {
             addFragmentByTag(KeyToValueFirebaseFetchingFragment.newInstance(
-                    myId, roomMemberPath, userInfoPath), tag);
+                    uid, roomMemberPath, userInfoPath), tag);
         }
     }
 
@@ -193,25 +189,31 @@ public class RoomMemberActivity extends BaseActivity implements RoomMemberFragme
     }
 
     private void addMemberOptionSelected() {
-        Intent inviteMemberIntent = MemberManagerActivity.getStartIntent(this, myId,
+        Intent inviteMemberIntent = MemberManagerActivity.getStartIntent(this,
                 roomId, MemberManagerActivity.ACTION_MEMBER_INVITE);
         startActivityForResult(inviteMemberIntent, RC_MEMBER_ADDED);
     }
 
-    private void addAdminOptionSelected() {
-        Intent addAdminIntent = MemberManagerActivity.getStartIntent(this, myId,
-                roomId, MemberManagerActivity.ACTION_ADMIN_PROMOTE);
-        startActivityForResult(addAdminIntent, RC_ADMIN_ADDED);
-    }
-
     private void removeMemberOptionSelected() {
-        Intent removeMemberIntent = MemberManagerActivity.getStartIntent(this, myId,
+        if (!isAuthenticated) return;
+
+        Intent removeMemberIntent = MemberManagerActivity.getStartIntent(this,
                 roomId, MemberManagerActivity.ACTION_MEMBER_REMOVE);
         startActivityForResult(removeMemberIntent, RC_MEMBER_REMOVED);
     }
 
+    private void addAdminOptionSelected() {
+        if (!isAuthenticated) return;
+
+        Intent addAdminIntent = MemberManagerActivity.getStartIntent(this,
+                roomId, MemberManagerActivity.ACTION_ADMIN_PROMOTE);
+        startActivityForResult(addAdminIntent, RC_ADMIN_ADDED);
+    }
+
     private void removeAdminOptionSelected() {
-        Intent removeAdminIntent = MemberManagerActivity.getStartIntent(this, myId,
+        if (!isAuthenticated) return;
+
+        Intent removeAdminIntent = MemberManagerActivity.getStartIntent(this,
                 roomId, MemberManagerActivity.ACTION_ADMIN_DEMOTE);
         startActivityForResult(removeAdminIntent, RC_ADMIN_REMOVED);
     }
@@ -223,8 +225,10 @@ public class RoomMemberActivity extends BaseActivity implements RoomMemberFragme
 
         if (action.equals(ACTION_MEMBER) && !isMember) {
             menu.removeItem(R.id.action_add_member);
+        }
+
+        if (!isAuthenticated) {
             menu.removeItem(R.id.action_remove_member);
-        } else if (action.equals(ACTION_PUBLIC_MEMBER)) {
             menu.removeItem(R.id.action_add_admin);
             menu.removeItem(R.id.action_remove_admin);
         }
@@ -297,7 +301,7 @@ public class RoomMemberActivity extends BaseActivity implements RoomMemberFragme
     @Override
     public void onAdapterClick(View itemView, int position) {
         UserInfo memberInfo = memberAdapter.getItem(position);
-        FriendDetailActivity.launch(this, null, memberInfo, myId);
+        FriendDetailActivity.launch(this, null, memberInfo);
     }
 
     @Override

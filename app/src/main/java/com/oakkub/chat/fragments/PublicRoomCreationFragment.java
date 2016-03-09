@@ -7,8 +7,10 @@ import android.content.res.Resources;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.design.widget.TextInputLayout;
 import android.support.v7.app.ActionBar;
 import android.support.v7.widget.Toolbar;
+import android.text.Editable;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -17,6 +19,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
+import android.widget.TextView;
 
 import com.oakkub.chat.R;
 import com.oakkub.chat.activities.BaseActivity;
@@ -24,6 +27,7 @@ import com.oakkub.chat.models.Room;
 import com.oakkub.chat.utils.FileUtil;
 import com.oakkub.chat.utils.FirebaseUtil;
 import com.oakkub.chat.utils.IntentUtil;
+import com.oakkub.chat.utils.RoomUtil;
 import com.oakkub.chat.utils.UriUtil;
 import com.oakkub.chat.views.dialogs.ChooseImageDialog;
 import com.oakkub.chat.views.widgets.MyDraweeView;
@@ -37,13 +41,16 @@ import java.io.File;
 import butterknife.Bind;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
+import butterknife.OnTextChanged;
 import icepick.State;
 
 public class PublicRoomCreationFragment extends BaseFragment implements
-        ChooseImageDialog.ChooseImageDialogListener {
+        ChooseImageDialog.ChooseImageDialogListener,
+        TextBitmapCreationFragment.OnTextBitmapCreationListener {
 
     private static final String TAG = PublicRoomCreationFragment.class.getSimpleName();
     private static final String CHOOSE_IMAGE_DIALOG_TAG = "tag:chooseImageDialog";
+    private static final String TEXT_BITMAP_CREATION_TAG = "tag:textBitmapCreationFragment";
     private static final String INPUT_ROOM_STATE = "state:inputRoom";
     private static final String ARGS_ROOM = "args:room";
     private static final String ARGS_TOOLBAR_TITLE = "args:toolbarTitle";
@@ -56,11 +63,20 @@ public class PublicRoomCreationFragment extends BaseFragment implements
     @Bind(R.id.public_chat_image)
     MyDraweeView image;
 
+    @Bind(R.id.public_chat_name_text_input_layout)
+    TextInputLayout nameEditTextLayout;
+
     @Bind(R.id.public_chat_name_edittext)
     EditText nameEditText;
 
+    @Bind(R.id.public_chat_optional_desc_text_input_layout)
+    TextInputLayout descriptionTextLayout;
+
     @Bind(R.id.public_chat_optional_desc_edittext)
     EditText descriptionEditText;
+
+    @Bind(R.id.public_chat_type_room_textview)
+    TextView typeTextView;
 
     @Bind(R.id.public_chat_type_spinner)
     MySpinner tagSpinner;
@@ -89,9 +105,19 @@ public class PublicRoomCreationFragment extends BaseFragment implements
     @State
     String[] spinnerValues;
 
+    @State
+    boolean isPublicChat;
+
+    @State
+    boolean isImageUploaded;
+
+    @State
+    boolean useDefaultImage;
+
     private Room inputRoom;
     private Room argsRoom;
 
+    private TextBitmapCreationFragment textBitmapCreationFragment;
     private OnRoomCreationListener onRoomCreationListener;
 
     public static PublicRoomCreationFragment newInstance(String myId, String toolbarTitle) {
@@ -132,6 +158,16 @@ public class PublicRoomCreationFragment extends BaseFragment implements
                 inputRoom = Parcels.unwrap(savedInstanceState.getParcelable(INPUT_ROOM_STATE));
             }
         }
+
+        textBitmapCreationFragment = (TextBitmapCreationFragment)
+                getChildFragmentManager().findFragmentByTag(TEXT_BITMAP_CREATION_TAG);
+        if (textBitmapCreationFragment == null) {
+            textBitmapCreationFragment = new TextBitmapCreationFragment();
+            getChildFragmentManager().beginTransaction()
+                    .add(textBitmapCreationFragment, TEXT_BITMAP_CREATION_TAG)
+                    .commit();
+        }
+        textBitmapCreationFragment.setOnTextBitmapCreationListener(this);
     }
 
     @Nullable
@@ -153,8 +189,12 @@ public class PublicRoomCreationFragment extends BaseFragment implements
     }
 
     private void setArgsRoomData(Bundle savedInstanceState) {
-        if (argsRoom == null || savedInstanceState != null) return;
+        int visibility = isPublicChat ? View.VISIBLE : View.GONE;
+        descriptionTextLayout.setVisibility(visibility);
+        typeTextView.setVisibility(visibility);
+        tagSpinner.setVisibility(visibility);
 
+        if (argsRoom == null || savedInstanceState != null) return;
         image.setMatchedSizeImageURI(Uri.parse(argsRoom.getImagePath()));
         nameEditText.setText(argsRoom.getName());
         descriptionEditText.setText(argsRoom.getDescription());
@@ -197,6 +237,8 @@ public class PublicRoomCreationFragment extends BaseFragment implements
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+
+        isImageUploaded = true;
         onCameraResult(requestCode, resultCode);
         onImageViewerResult(requestCode, resultCode, data);
     }
@@ -230,6 +272,7 @@ public class PublicRoomCreationFragment extends BaseFragment implements
         myId = args.getString(ARGS_MY_ID);
         toolbarTitle = args.getString(ARGS_TOOLBAR_TITLE);
         argsRoom = Parcels.unwrap(args.getParcelable(ARGS_ROOM));
+        isPublicChat = argsRoom == null || argsRoom.getType().equals(RoomUtil.PUBLIC_TYPE);
     }
 
     private void getDataResources(Bundle savedInstanceState) {
@@ -265,6 +308,24 @@ public class PublicRoomCreationFragment extends BaseFragment implements
     public void onPublicChatImageClick() {
         ChooseImageDialog chooseImageDialog = ChooseImageDialog.newInstance(this);
         chooseImageDialog.show(getChildFragmentManager(), CHOOSE_IMAGE_DIALOG_TAG);
+    }
+
+    @OnTextChanged(value = R.id.public_chat_name_edittext,
+                   callback = OnTextChanged.Callback.AFTER_TEXT_CHANGED)
+    public void onRoomNameTyped(Editable editable) {
+        if (argsRoom != null || isImageUploaded) return;
+
+        if (textBitmapCreationFragment.isAdded()) {
+            textBitmapCreationFragment.create(editable.toString().trim());
+        }
+    }
+
+    @Override
+    public void onTextBitmapBase64UriSend(String base64) {
+        if (argsRoom != null || isImageUploaded) return;
+
+        image.setMatchedSizeImageURI(Uri.parse(base64));
+        useDefaultImage = true;
     }
 
     @Override
@@ -312,6 +373,10 @@ public class PublicRoomCreationFragment extends BaseFragment implements
         }
 
         getInputRoom(roomName, description);
+        if (useDefaultImage) {
+            inputRoom.setImagePath(image.getUriImage().toString());
+        }
+
         sendResultBack();
 
         return true;
@@ -323,7 +388,7 @@ public class PublicRoomCreationFragment extends BaseFragment implements
 
         inputRoom = new Room(argsRoom == null ? roomType : argsRoom.getType());
         inputRoom.setName(roomName);
-        inputRoom.setTag(tagValue);
+        inputRoom.setTag(isPublicChat ? tagValue : null);
         
         if (!description.isEmpty()) {
             inputRoom.setDescription(description);
@@ -332,6 +397,7 @@ public class PublicRoomCreationFragment extends BaseFragment implements
     private void onImageViewerResult(int requestCode, int resultCode, Intent data) {
         if (requestCode != IMAGE_VIEWER_REQUEST_CODE || resultCode != Activity.RESULT_OK) return;
 
+        useDefaultImage = false;
         uriImage = data.getData();
         absolutePath = UriUtil.getPath(uriImage);
         image.setMatchedSizeImageURI(uriImage);
@@ -339,6 +405,7 @@ public class PublicRoomCreationFragment extends BaseFragment implements
 
     private void onCameraResult(int requestCode, int resultCode) {
         if (requestCode != CAMERA_REQUEST_CODE || resultCode != Activity.RESULT_OK) return;
+        useDefaultImage = false;
         image.setMatchedSizeImageURI(uriImage);
     }
 

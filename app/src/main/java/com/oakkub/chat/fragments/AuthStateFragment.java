@@ -1,6 +1,7 @@
 package com.oakkub.chat.fragments;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 
@@ -8,6 +9,7 @@ import com.firebase.client.AuthData;
 import com.firebase.client.Firebase;
 import com.oakkub.chat.managers.AppController;
 import com.oakkub.chat.utils.FirebaseUtil;
+import com.oakkub.chat.utils.PrefsUtil;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -79,11 +81,18 @@ public class AuthStateFragment extends BaseFragment implements Firebase.AuthStat
     }
 
     private void auth(AuthData authData) {
+        SharedPreferences.Editor editor =
+                AppController.getComponent(getActivity()).sharedPreferencesEditor();
+
         if (authData == null) {
+            editor.remove(PrefsUtil.PREF_UID);
             onFirebaseAuthentication.onUnauthenticated();
         } else {
+            editor.putString(PrefsUtil.PREF_UID, authData.getUid());
             onFirebaseAuthentication.onAuthenticated(authData);
         }
+
+        editor.apply();
     }
 
     public interface OnFirebaseAuthentication {

@@ -16,7 +16,7 @@ import com.oakkub.chat.R;
 import com.oakkub.chat.managers.AppController;
 import com.oakkub.chat.models.Message;
 import com.oakkub.chat.models.UserInfo;
-import com.oakkub.chat.utils.ArrayMapUtil;
+import com.oakkub.chat.utils.FirebaseMapUtil;
 import com.oakkub.chat.utils.FirebaseUtil;
 import com.oakkub.chat.utils.MessageUtil;
 import com.oakkub.chat.utils.TextUtil;
@@ -55,7 +55,6 @@ public class InviteMemberFragment extends BaseFragment {
     @Named(FirebaseUtil.NAMED_MESSAGES_LIST)
     Lazy<Firebase> messageFirebase;
 
-    private String myId;
     private String roomId;
 
     private int totalExistedFriends;
@@ -70,9 +69,8 @@ public class InviteMemberFragment extends BaseFragment {
 
     private OnInviteMemberFetchingListener inviteMemberFetchingListener;
 
-    public static InviteMemberFragment newInstance(String myId, String roomId) {
+    public static InviteMemberFragment newInstance(String roomId) {
         Bundle args = new Bundle();
-        args.putString(ARGS_MY_ID, myId);
         args.putString(ARGS_ROOM_ID, roomId);
 
         InviteMemberFragment fragment = new InviteMemberFragment();
@@ -111,8 +109,6 @@ public class InviteMemberFragment extends BaseFragment {
 
     private void getDataIntent() {
         Bundle args = getArguments();
-
-        myId = args.getString(ARGS_MY_ID);
         roomId = args.getString(ARGS_ROOM_ID);
     }
 
@@ -179,8 +175,8 @@ public class InviteMemberFragment extends BaseFragment {
     }
 
     private void fetchAddableFriendKey() {
-        userFriendFirebase.child(myId).keepSynced(true);
-        userFriendFirebase.child(myId).addListenerForSingleValueEvent(new ValueEventListener() {
+        userFriendFirebase.child(uid).keepSynced(true);
+        userFriendFirebase.child(uid).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 if (!dataSnapshot.exists()) return;
@@ -284,21 +280,21 @@ public class InviteMemberFragment extends BaseFragment {
         Message invitedMessage = new Message(roomId, "", FirebaseUtil.SYSTEM, when);
 
         for (String friendKey : totalFriendKeyToBeInvited) {
-            ArrayMapUtil.mapUserRoomMember(map, friendKey, roomId, when);
-            ArrayMapUtil.mapUserPreservedMemberRoom(map, friendKey, roomId, when);
-            ArrayMapUtil.mapUserRoom(map, friendKey, roomId, when);
+            FirebaseMapUtil.mapUserRoomMember(map, friendKey, roomId, when);
+            FirebaseMapUtil.mapUserPreservedMemberRoom(map, friendKey, roomId, when);
+            FirebaseMapUtil.mapUserRoom(map, friendKey, roomId, when);
         }
-        invitedMessage.setMessage(myId + "/" + TextUtil.implodeArray("/", totalFriendKeyToBeInvited));
+        invitedMessage.setMessage(uid + "/" + TextUtil.implodeArray("/", totalFriendKeyToBeInvited));
         invitedMessage.setLanguageRes(MessageUtil.INVITE_MEMBER);
 
-        ArrayMapUtil.mapUserRoom(map, myId, roomId, when);
-        ArrayMapUtil.mapMessage(map, messageKey, roomId, invitedMessage);
+        FirebaseMapUtil.mapUserRoom(map, uid, roomId, when);
+        FirebaseMapUtil.mapMessage(map, messageKey, roomId, invitedMessage);
 
         Message roomInvitedMessage = new Message(roomId, "", FirebaseUtil.SYSTEM, when);
         roomInvitedMessage.setMessage(prefs.getString(UserInfoUtil.DISPLAY_NAME, "").split(" ")[0] +
                 MessageUtil.getStringResTwoParam(R.string.n_invited_n_to_room,
-                        invitedMessage, addableFriendInfoList, myId));
-        ArrayMapUtil.mapRoomMessage(map, roomInvitedMessage, roomId);
+                        invitedMessage, addableFriendInfoList, uid));
+        FirebaseMapUtil.mapRoomMessage(map, roomInvitedMessage, roomId);
     }
 
     public interface OnInviteMemberFetchingListener {

@@ -22,7 +22,7 @@ import icepick.State;
  */
 public class GroupDetailDialogActivity extends BaseActivity {
 
-    private static final String EXTRA_MY_ID = "extra:myId";
+    private static final String EXTRA_MY_ID = "extra:uid";
     private static final String EXTRA_ROOM = "extra:room";
     private static final String EXTRA_IS_MEMBER = "extra:isMember";
 
@@ -36,9 +36,6 @@ public class GroupDetailDialogActivity extends BaseActivity {
     TextView roomNameTextView;
 
     @State
-    String myId;
-
-    @State
     String action;
 
     @State
@@ -46,10 +43,9 @@ public class GroupDetailDialogActivity extends BaseActivity {
 
     private Room room;
 
-    public static Intent getStartIntent(Context context, Room room, String myId, boolean isMember, String action) {
+    public static Intent getStartIntent(Context context, Room room, boolean isMember, String action) {
         Intent intent = new Intent(context, GroupDetailDialogActivity.class);
         intent.setAction(action);
-        intent.putExtra(EXTRA_MY_ID, myId);
         intent.putExtra(EXTRA_IS_MEMBER, isMember);
         intent.putExtra(EXTRA_ROOM, Parcels.wrap(room));
 
@@ -57,7 +53,7 @@ public class GroupDetailDialogActivity extends BaseActivity {
     }
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_group_detail);
         ButterKnife.bind(this);
@@ -72,7 +68,6 @@ public class GroupDetailDialogActivity extends BaseActivity {
 
         if (savedInstanceState == null) {
             action = intent.getAction();
-            myId = intent.getStringExtra(EXTRA_MY_ID);
             isMember = intent.getBooleanExtra(EXTRA_IS_MEMBER, false);
         }
         room = Parcels.unwrap(intent.getParcelableExtra(EXTRA_ROOM));
@@ -80,7 +75,7 @@ public class GroupDetailDialogActivity extends BaseActivity {
 
     @OnClick(R.id.group_detail_chat_button)
     public void onChatButtonClick() {
-        Intent groupRoomIntent = ChatRoomActivity.getIntentGroupRoom(this, room, myId);
+        Intent groupRoomIntent = ChatRoomActivity.getIntentGroupRoom(this, room);
         startActivity(groupRoomIntent);
         fadeOutFinish();
     }
@@ -90,7 +85,7 @@ public class GroupDetailDialogActivity extends BaseActivity {
         String intentAction = action.equals(ACTION_GROUP) ?
                 RoomInfoActivity.ACTION_GROUP : RoomInfoActivity.ACTION_PUBLIC;
 
-        Intent groupInfoIntent = RoomInfoActivity.getStartIntent(this, room, myId, intentAction, isMember);
+        Intent groupInfoIntent = RoomInfoActivity.getStartIntent(this, room, intentAction, isMember);
         startActivity(groupInfoIntent);
         fadeOutFinish();
     }

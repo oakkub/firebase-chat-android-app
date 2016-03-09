@@ -12,6 +12,8 @@ import com.oakkub.chat.fragments.PublicRoomCreationFragment;
 import com.oakkub.chat.managers.AppController;
 import com.oakkub.chat.models.Room;
 import com.oakkub.chat.models.eventbus.EventBusRoomListEdited;
+import com.oakkub.chat.models.eventbus.EventBusUpdatedGroupRoom;
+import com.oakkub.chat.models.eventbus.EventBusUpdatedPublicRoom;
 import com.oakkub.chat.utils.FirebaseUtil;
 import com.oakkub.chat.utils.RoomUtil;
 
@@ -50,6 +52,9 @@ public class RoomEditActivity extends BaseActivity implements
     @State
     boolean isRoomEdit;
 
+    @State
+    boolean isPublicChat;
+
     private Room room;
     private PublicRoomCreationFragment publicRoomCreationFragment;
     private Base64ConverterFragment base64ConverterFragment;
@@ -61,7 +66,7 @@ public class RoomEditActivity extends BaseActivity implements
     }
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         AppController.getComponent(this).inject(this);
         setContentView(R.layout.empty_container);
@@ -74,15 +79,17 @@ public class RoomEditActivity extends BaseActivity implements
             myId = intent.getStringExtra(EXTRA_MY_ID);
         }
         room = Parcels.unwrap(intent.getParcelableExtra(EXTRA_ROOM));
+        isPublicChat = room.getType().equals(RoomUtil.PUBLIC_TYPE);
 
         ButterKnife.findById(this, R.id.empty_container)
                 .setBackgroundColor(getCompatColor(android.R.color.white));
 
-        publicRoomCreationFragment = (PublicRoomCreationFragment) findOrCreateFragmentByTag(
+        publicRoomCreationFragment = (PublicRoomCreationFragment) findOrAddFragmentByTag(
                 R.id.empty_container, PublicRoomCreationFragment.newInstance(
                         myId, getString(R.string.edit), room), ROOM_CREATE_TAG);
 
-        base64ConverterFragment = (Base64ConverterFragment) findOrCreateFragmentByTag(
+        base64ConverterFragment = (Base64ConverterFragment) findOrAddFragmentByTag(
+                getSupportFragmentManager(),
                 Base64ConverterFragment.newInstance(), BASE64_CONVERTER_TAG);
     }
 
@@ -108,9 +115,7 @@ public class RoomEditActivity extends BaseActivity implements
         }
 
         showProgressDialog();
-
         saveRoomData(room);
-
         boolean isEditedImage = false;
 
         if (absolutePath == null && uriImage != null) {
@@ -125,6 +130,12 @@ public class RoomEditActivity extends BaseActivity implements
         if (!isEditedImage) {
             hideProgressDialog();
             sendResult();
+        }
+
+        if (isPublicChat) {
+            EventBus.getDefault().post(new EventBusUpdatedPublicRoom(room));
+        } else {
+            EventBus.getDefault().post(new EventBusUpdatedGroupRoom(room));
         }
     }
 
@@ -148,7 +159,7 @@ public class RoomEditActivity extends BaseActivity implements
             room.setDescription(null);
         }
 
-        if (editedTag != null) {
+        if (editedTag != null && room.getTag() != null) {
             if (!room.getTag().equals(editedTag)) {
                 updateRoomInfo(RoomUtil.KEY_TAG, editedTag);
                 room.setTag(editedTag);

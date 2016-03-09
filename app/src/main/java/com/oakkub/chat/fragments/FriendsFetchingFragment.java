@@ -89,6 +89,11 @@ public class FriendsFetchingFragment extends Fragment {
     }
 
     private void fetchFriendKey(DataSnapshot dataSnapshot) {
+        if (!dataSnapshot.exists()) {
+            sendFriend(new ArrayList<UserInfo>());
+            return;
+        }
+
         totalFriend = (int) dataSnapshot.getChildrenCount();
 
         for (DataSnapshot snapshot : dataSnapshot.getChildren()) {

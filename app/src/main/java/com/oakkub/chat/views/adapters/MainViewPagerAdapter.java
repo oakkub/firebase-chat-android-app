@@ -29,19 +29,19 @@ public class MainViewPagerAdapter extends SmartFragmentStatePagerAdapter {
 
             case 0:
 
-                return RoomListFragment.newInstance(myId);
+                return new RoomListFragment();
 
             case 1:
 
-                return FriendsFragment.newInstance(myId);
+                return new FriendsFragment();
 
             case 2:
 
-                return GroupListFragment.newInstance(myId);
+                return new GroupListFragment();
 
             case 3:
 
-                return PublicListFragment.newInstance(myId);
+                return new PublicListFragment();
 
         }
 

@@ -16,9 +16,9 @@ import com.oakkub.chat.managers.AppController;
 import com.oakkub.chat.managers.Contextor;
 import com.oakkub.chat.models.Message;
 import com.oakkub.chat.models.Room;
-import com.oakkub.chat.utils.ArrayMapUtil;
 import com.oakkub.chat.utils.Base64Util;
 import com.oakkub.chat.utils.BitmapUtil;
+import com.oakkub.chat.utils.FirebaseMapUtil;
 import com.oakkub.chat.utils.FirebaseUtil;
 
 import java.io.File;
@@ -128,19 +128,28 @@ public class NewPublicChatFragment extends BaseFragment {
         new Thread(new Runnable() {
             @Override
             public void run() {
-                Bitmap imageBitmap = getBitmapPublicImage(imageUri, absolutePath);
-                if (imageBitmap == null) {
-                    failedCreatePublicChat();
-                    return;
-                }
+                String base64Uri = getBase64UriImage(room, imageUri, absolutePath);
+                if (base64Uri.isEmpty()) return;
 
-                String base64 = Base64Util.toBase64(imageBitmap, 50);
-                String uriBase64 =  Base64Util.toDataUri(base64);
-
-                imageBitmap.recycle();
-                onRoomImageCreated(room, uriBase64);
+                onRoomImageCreated(room, base64Uri);
             }
         }).start();
+    }
+
+    private String getBase64UriImage(Room room, Uri imageUri, String absolutePath) {
+        if (room.getImagePath() == null) {
+            Bitmap imageBitmap = getBitmapPublicImage(imageUri, absolutePath);
+            if (imageBitmap == null) {
+                failedCreatePublicChat();
+                return "";
+            }
+            String uriBase64 =  Base64Util.toDataUri(Base64Util.toBase64(imageBitmap, 50));
+            imageBitmap.recycle();
+
+            return uriBase64;
+        } else {
+            return room.getImagePath();
+        }
     }
 
     private Bitmap getBitmapPublicImage(Uri imageUri, String absolutePath) {
@@ -187,13 +196,13 @@ public class NewPublicChatFragment extends BaseFragment {
                 room.getLatestMessage(), room.getLatestMessageUser(), room.getCreated());
 
         ArrayMap<String, Object> map = new ArrayMap<>(7);
-        ArrayMapUtil.mapUserRoom(map, myId, room.getRoomId(), room.getCreated());
-        ArrayMapUtil.mapMessage(map, messageKey, room.getRoomId(), message);
-        ArrayMapUtil.mapRoom(map, room, room.getRoomId());
-        ArrayMapUtil.mapPublicRoomList(map, room);
-        ArrayMapUtil.mapUserPublicRoom(map, myId, room.getRoomId(), room.getCreated());
-        ArrayMapUtil.mapUserPreservedMemberRoom(map, myId, room.getRoomId(), room.getCreated());
-        ArrayMapUtil.mapUserRoomAdminMember(map, myId, room.getRoomId(), room.getCreated());
+        FirebaseMapUtil.mapUserRoom(map, myId, room.getRoomId(), room.getCreated());
+        FirebaseMapUtil.mapMessage(map, messageKey, room.getRoomId(), message);
+        FirebaseMapUtil.mapRoom(map, room, room.getRoomId());
+        FirebaseMapUtil.mapPublicRoomList(map, room);
+        FirebaseMapUtil.mapUserPublicRoom(map, myId, room.getRoomId(), room.getCreated());
+        FirebaseMapUtil.mapUserPreservedMemberRoom(map, myId, room.getRoomId(), room.getCreated());
+        FirebaseMapUtil.mapUserRoomAdminMember(map, myId, room.getRoomId(), room.getCreated());
 
         firebase.get().updateChildren(map, new Firebase.CompletionListener() {
             @Override

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
@@ -11,7 +12,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|end"
         android:layout_margin="@dimen/fab_margin"
-        android:src="@drawable/ic_mode_edit_white_24dp" />
+        app:srcCompat="@drawable/ic_mode_edit_white_24dp" />
 
     <!-- Overlay that dims the screen -->
     <com.gordonwong.materialsheetfab.DimOverlayFrameLayout
@@ -43,8 +44,8 @@
                     style="@style/SheetItemStyle"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:drawableLeft="@drawable/ic_search_red_24dp"
-                    android:drawableStart="@drawable/ic_search_red_24dp"
+                    android:drawableLeft="@drawable/layer_ic_search_red_24dp"
+                    android:drawableStart="@drawable/layer_ic_search_red_24dp"
                     android:text="@string/find_public_chat" />
 
                 <TextView
@@ -52,8 +53,8 @@
                     style="@style/SheetItemStyle"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:drawableLeft="@drawable/ic_public_red_24dp"
-                    android:drawableStart="@drawable/ic_public_red_24dp"
+                    android:drawableLeft="@drawable/layer_ic_public_red_24dp"
+                    android:drawableStart="@drawable/layer_ic_public_red_24dp"
                     android:text="@string/new_public_chat" />
 
                 <TextView
@@ -61,8 +62,8 @@
                     style="@style/SheetItemStyle"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:drawableLeft="@drawable/ic_person_add_24dp"
-                    android:drawableStart="@drawable/ic_person_add_24dp"
+                    android:drawableLeft="@drawable/layer_ic_person_add_24dp"
+                    android:drawableStart="@drawable/layer_ic_person_add_24dp"
                     android:text="@string/add_friend" />
 
                 <TextView
@@ -71,8 +72,8 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:background="@color/colorAccent"
-                    android:drawableLeft="@drawable/ic_mode_edit_white_24dp"
-                    android:drawableStart="@drawable/ic_mode_edit_white_24dp"
+                    android:drawableLeft="@drawable/layer_ic_mode_edit_white_24dp"
+                    android:drawableStart="@drawable/layer_ic_mode_edit_white_24dp"
                     android:gravity="center_vertical"
                     android:text="@string/new_messages"
                     android:textColor="@android:color/white" />

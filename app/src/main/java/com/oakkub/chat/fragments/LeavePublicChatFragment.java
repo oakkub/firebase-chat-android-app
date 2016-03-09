@@ -15,7 +15,7 @@ import com.firebase.client.ValueEventListener;
 import com.oakkub.chat.R;
 import com.oakkub.chat.managers.AppController;
 import com.oakkub.chat.models.Message;
-import com.oakkub.chat.utils.ArrayMapUtil;
+import com.oakkub.chat.utils.FirebaseMapUtil;
 import com.oakkub.chat.utils.FirebaseUtil;
 import com.oakkub.chat.utils.MessageUtil;
 import com.oakkub.chat.utils.TextUtil;
@@ -228,7 +228,7 @@ public class LeavePublicChatFragment extends BaseFragment {
         boolean isLastAdminNotLastMember = isAdmin && isLastAdmin && !isLastMember;
 
         if (isAdmin) {
-            ArrayMapUtil.mapUserRoomAdminMember(map, myId, roomId, null);
+            FirebaseMapUtil.mapUserRoomAdminMember(map, myId, roomId, null);
         }
 
         if (isLastAdminNotLastMember) {
@@ -236,41 +236,41 @@ public class LeavePublicChatFragment extends BaseFragment {
                     FirebaseUtil.SYSTEM, when);
             message.setLanguageRes(MessageUtil.LAST_ADMIN_LEAVED);
 
-            ArrayMapUtil.mapMessage(map, messageKey, roomId, message);
-            ArrayMapUtil.mapUserRoomAdminMember(map, promotedMemberId, roomId, when);
+            FirebaseMapUtil.mapMessage(map, messageKey, roomId, message);
+            FirebaseMapUtil.mapUserRoomAdminMember(map, promotedMemberId, roomId, when);
         }
 
         if (isLastMember) {
-            ArrayMapUtil.mapRoom(map, null, roomId);
+            FirebaseMapUtil.mapRoom(map, null, roomId);
             roomsPublicFirebase.get().child(roomId).removeValue();
             preservedMemberFirebase.get().child(roomId).removeValue();
             messageFirebase.get().child(roomId).removeValue();
             messageReadTotalGroupRoomFirebase.get().child(roomId).removeValue();
         } else {
             Message message = getRoomMessage(when);
-            ArrayMapUtil.mapRoomMessage(map, message, roomId);
+            FirebaseMapUtil.mapRoomMessage(map, message, roomId);
 
             if (!isAdmin) {
                 Message memberMessage = new Message(roomId, "", FirebaseUtil.SYSTEM, when);
                 memberMessage.setMessage(myId);
                 memberMessage.setLanguageRes(MessageUtil.LEAVE_CHAT);
 
-                ArrayMapUtil.mapMessage(map, messageKey, roomId, memberMessage);
+                FirebaseMapUtil.mapMessage(map, messageKey, roomId, memberMessage);
             }
 
             if (!isLastAdminNotLastMember) {
-                ArrayMapUtil.mapMessage(map, messageKey, roomId, message);
+                FirebaseMapUtil.mapMessage(map, messageKey, roomId, message);
             }
         }
 
         for (int i = 0, size = memberIds.size(); i < size; i++) {
-            ArrayMapUtil.mapUserRoom(map, memberIds.valueAt(i), roomId, when);
+            FirebaseMapUtil.mapUserRoom(map, memberIds.valueAt(i), roomId, when);
         }
 
-        ArrayMapUtil.mapUserGroupRoom(map, myId, roomId, null);
-        ArrayMapUtil.mapUserPublicRoom(map, myId, roomId, null);
-        ArrayMapUtil.mapUserRoomMember(map, myId, roomId, null);
-        ArrayMapUtil.mapUserRoom(map, myId, roomId, null);
+        FirebaseMapUtil.mapUserGroupRoom(map, myId, roomId, null);
+        FirebaseMapUtil.mapUserPublicRoom(map, myId, roomId, null);
+        FirebaseMapUtil.mapUserRoomMember(map, myId, roomId, null);
+        FirebaseMapUtil.mapUserRoom(map, myId, roomId, null);
 
         rootFirebase.get().updateChildren(map, new Firebase.CompletionListener() {
             @Override

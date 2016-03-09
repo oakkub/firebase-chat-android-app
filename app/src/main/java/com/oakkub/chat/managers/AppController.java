@@ -5,6 +5,7 @@ import android.content.Context;
 import android.support.multidex.MultiDex;
 
 import com.crashlytics.android.Crashlytics;
+import com.facebook.FacebookSdk;
 import com.facebook.drawee.backends.pipeline.Fresco;
 import com.firebase.client.Firebase;
 import com.oakkub.chat.modules.AppControllerModule;
@@ -27,26 +28,23 @@ public class AppController extends Application {
         super.onCreate();
 
         Contextor.getInstance().init(this);
+
         Fabric.with(this, new Crashlytics());
-        initFresco();
+        FacebookSdk.sdkInitialize(this);
+        Fresco.initialize(this);
         initFirebase();
         Firebase.setAndroidContext(this);
         MultiDex.install(this);
 
-        initDependencyInjector();
-    }
+        registerActivityLifecycleCallbacks(new MyLifeCycleHandler());
 
-    private void initFresco() {
-        /*ImagePipelineConfig config = ImagePipelineConfig.newBuilder(this)
-                .setDownsampleEnabled(true)
-                .build();*/
-        Fresco.initialize(this);
+        initDependencyInjector();
     }
 
     private void initFirebase() {
         Firebase.setAndroidContext(this);
         Firebase.getDefaultConfig().setPersistenceEnabled(true);
-        Firebase.getDefaultConfig().setPersistenceCacheSizeBytes(20000000);
+        Firebase.getDefaultConfig().setPersistenceCacheSizeBytes(20000000); // 20 MB
     }
 
     private void initDependencyInjector() {

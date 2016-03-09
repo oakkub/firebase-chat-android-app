@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <PreferenceCategory
+        android:key="@string/pref_category_notification"
+        android:title="Notification">
+
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="@string/pref_notification_enable"
+            android:summary="@null"
+            android:title="@string/enabled" />
+
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:dependency="@string/pref_notification_enable"
+            android:title="@string/vibrate"
+            android:key="pref_notification_vibrate"
+            android:summary="@null" />
+
+        <RingtonePreference
+            android:defaultValue="content://settings/system/notification_sound"
+            android:dependency="pref_notification_enable"
+            android:key="pref_notification_ringtone"
+            android:ringtoneType="notification"
+            android:title="@string/ringtone" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:key="pref_category_language"
+        android:title="@string/language">
+
+        <ListPreference
+            android:key="@string/pref_language_list"
+            android:dialogTitle="@string/language"
+            android:entries="@array/entries_languages"
+            android:entryValues="@array/values_languages" />
+
+    </PreferenceCategory>
+
+</PreferenceScreen>

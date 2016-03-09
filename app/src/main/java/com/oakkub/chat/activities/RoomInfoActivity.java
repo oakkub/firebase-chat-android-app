@@ -1,6 +1,7 @@
 package com.oakkub.chat.activities;
 
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
@@ -18,7 +19,6 @@ import com.oakkub.chat.fragments.LeavePublicChatFragment;
 import com.oakkub.chat.fragments.RoomAdminAuthenticationFragment;
 import com.oakkub.chat.models.Room;
 import com.oakkub.chat.views.dialogs.AlertDialogFragment;
-import com.oakkub.chat.views.dialogs.ProgressDialogFragment;
 import com.oakkub.chat.views.widgets.MyDraweeView;
 import com.oakkub.chat.views.widgets.MyToast;
 
@@ -74,9 +74,6 @@ public class RoomInfoActivity extends BaseActivity implements RoomAdminAuthentic
     ProgressBar progressBar;
 
     @State
-    String myId;
-
-    @State
     String action;
 
     @State
@@ -85,16 +82,15 @@ public class RoomInfoActivity extends BaseActivity implements RoomAdminAuthentic
     @State
     boolean isMember;
 
+    @State
+    boolean isSetResult;
+
     private Room room;
-
-    private RoomAdminAuthenticationFragment authenticationFragment;
     private LeavePublicChatFragment leavePublicChatFragment;
-    private ProgressDialogFragment progressDialog;
 
-    public static Intent getStartIntent(Context context, Room room, String myId, String action, boolean isMember) {
+    public static Intent getStartIntent(Context context, Room room, String action, boolean isMember) {
         Intent intent = new Intent(context, RoomInfoActivity.class);
         intent.setAction(action);
-        intent.putExtra(EXTRA_MY_ID, myId);
         intent.putExtra(EXTRA_IS_MEMBER, isMember);
         intent.putExtra(EXTRA_ROOM, Parcels.wrap(room));
 
@@ -110,7 +106,7 @@ public class RoomInfoActivity extends BaseActivity implements RoomAdminAuthentic
     }
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_group_info);
         ButterKnife.bind(this);
@@ -138,7 +134,6 @@ public class RoomInfoActivity extends BaseActivity implements RoomAdminAuthentic
 
         if (savedInstanceState == null) {
             action = intent.getAction();
-            myId = intent.getStringExtra(EXTRA_MY_ID);
             isMember = intent.getBooleanExtra(EXTRA_IS_MEMBER, false);
         }
         room = Parcels.unwrap(intent.getParcelableExtra(EXTRA_ROOM));
@@ -154,8 +149,10 @@ public class RoomInfoActivity extends BaseActivity implements RoomAdminAuthentic
     }
 
     private void initInstances() {
-        int memberVisibility = action.equals(ACTION_PUBLIC) || action.equals(ACTION_GROUP) ? View.VISIBLE : View.GONE;
-        int publicChatVisibility = action.equals(ACTION_PUBLIC) ? View.VISIBLE : View.GONE;
+        int memberVisibility = action.equals(ACTION_PUBLIC) || action.equals(ACTION_GROUP) ?
+                View.VISIBLE : View.GONE;
+        int publicChatVisibility = action.equals(ACTION_PUBLIC) ?
+                View.VISIBLE : View.GONE;
 
         memberInfoButton.setVisibility(memberVisibility);
         adminInfoButton.setVisibility(publicChatVisibility);
@@ -164,29 +161,23 @@ public class RoomInfoActivity extends BaseActivity implements RoomAdminAuthentic
     }
 
     private void addFragments() {
-        progressDialog = (ProgressDialogFragment) findFragmentByTag(PROGRESS_DIALOG_TAG);
-        if (progressDialog == null) {
-            progressDialog = ProgressDialogFragment.newInstance();
-        }
-
         if (action.equals(ACTION_PUBLIC)) {
-            authenticationFragment = (RoomAdminAuthenticationFragment) findFragmentByTag(ADMIN_AUTHEN_FRAG_TAG);
-            if (authenticationFragment == null) {
-                authenticationFragment = (RoomAdminAuthenticationFragment) addFragmentByTag(
-                        RoomAdminAuthenticationFragment.newInstance(myId, room.getRoomId()), ADMIN_AUTHEN_FRAG_TAG);
-            }
-
+                findOrAddFragmentByTag(getSupportFragmentManager(),
+                        RoomAdminAuthenticationFragment.newInstance(uid, room.getRoomId()),
+                        ADMIN_AUTHEN_FRAG_TAG);
         }
 
-        leavePublicChatFragment = (LeavePublicChatFragment) findFragmentByTag(LEAVE_PUBLIC_FRAG_TAG);
-        if (leavePublicChatFragment == null) {
-            leavePublicChatFragment = (LeavePublicChatFragment) addFragmentByTag(
-                    LeavePublicChatFragment.newInstance(myId, room.getRoomId()), LEAVE_PUBLIC_FRAG_TAG);
-        }
+        leavePublicChatFragment = (LeavePublicChatFragment) findOrAddFragmentByTag(getSupportFragmentManager(),
+                LeavePublicChatFragment.newInstance(uid, room.getRoomId()),
+                LEAVE_PUBLIC_FRAG_TAG);
     }
 
     private void leaveChat() {
-        progressDialog.show(getSupportFragmentManager(), PROGRESS_DIALOG_TAG);
+        if (!isMember) {
+            MyToast.make(getString(R.string.not_member_of_this_chat)).show();
+            return;
+        }
+        showProgressDialog();
         leavePublicChatFragment.leave();
     }
 
@@ -199,11 +190,14 @@ public class RoomInfoActivity extends BaseActivity implements RoomAdminAuthentic
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        onRoomEditResult(requestCode, resultCode, data);
+        if (resultCode != RESULT_OK) return;
+
+        isSetResult = true;
+        onRoomEditResult(requestCode, data);
     }
 
-    private void onRoomEditResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode != EDIT_ROOM_REQUEST_CODE || resultCode != RESULT_OK) return;
+    private void onRoomEditResult(int requestCode, Intent data) {
+        if (requestCode != EDIT_ROOM_REQUEST_CODE) return;
 
         Room editRoom = Parcels.unwrap(data.getParcelableExtra(RESULT_EXTRA_ROOM));
         boolean isRoomEdit = data.getBooleanExtra(RESULT_EXTRA_IS_ROOM_EDIT, false);
@@ -232,13 +226,16 @@ public class RoomInfoActivity extends BaseActivity implements RoomAdminAuthentic
 
     @Override
     public void finish() {
-        setResult(RESULT_OK, ChatRoomActivity.getResultIntent(room));
+        setResult(isSetResult ? RESULT_OK : RESULT_CANCELED, ChatRoomActivity.getResultIntent(room));
         super.finish();
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
+            case android.R.id.home:
+                finish();
+                return true;
             case R.id.action_leave_chat:
 
                 AlertDialogFragment dialog = AlertDialogFragment.newInstance(
@@ -256,7 +253,7 @@ public class RoomInfoActivity extends BaseActivity implements RoomAdminAuthentic
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_room_info, menu);
 
-        if (action.equals(ACTION_PRIVATE)) {
+        if (action.equals(ACTION_PRIVATE) || !isMember) {
             menu.removeItem(R.id.action_leave_chat);
         }
 
@@ -265,9 +262,10 @@ public class RoomInfoActivity extends BaseActivity implements RoomAdminAuthentic
 
     @OnClick(R.id.room_info_edit_button)
     public void onEditButtonClick() {
-        if (!isAuthenticated) return;
+        if (action.equals(ACTION_PUBLIC) && !isAuthenticated) return;
+        if (action.equals(ACTION_PRIVATE)) return;
 
-        Intent editRoomIntent = RoomEditActivity.getStartIntent(this, myId, room);
+        Intent editRoomIntent = RoomEditActivity.getStartIntent(this, uid, room);
         startActivityForResult(editRoomIntent, EDIT_ROOM_REQUEST_CODE);
     }
 
@@ -275,7 +273,7 @@ public class RoomInfoActivity extends BaseActivity implements RoomAdminAuthentic
     public void onMemberButtonClick() {
         if (action.equals(ACTION_PRIVATE)) return;
 
-        Intent groupMemberIntent = RoomMemberActivity.getGroupIntent(this, room.getRoomId(), myId, isMember);
+        Intent groupMemberIntent = RoomMemberActivity.getGroupIntent(this, room.getRoomId(), isMember, isAuthenticated);
         startActivity(groupMemberIntent);
     }
 
@@ -284,7 +282,7 @@ public class RoomInfoActivity extends BaseActivity implements RoomAdminAuthentic
         if (action.equals(ACTION_GROUP) || action.equals(ACTION_PRIVATE)) return;
 
         Intent adminMemberIntent = RoomMemberActivity.getPublicIntent(this,
-                room.getRoomId(), myId, isAuthenticated);
+                room.getRoomId(), isAuthenticated);
         startActivity(adminMemberIntent);
     }
 
@@ -299,28 +297,22 @@ public class RoomInfoActivity extends BaseActivity implements RoomAdminAuthentic
     }
 
     @Override
-    public void onOkClick(String tag) {
-        switch (tag) {
-            case LEAVE_ROOM_DIALOG_TAG:
-                leaveChat();
-                break;
+    public void onAlertDialogClick(String tag, int which) {
+        if (tag.equals(LEAVE_ROOM_DIALOG_TAG) && which == DialogInterface.BUTTON_POSITIVE) {
+            leaveChat();
         }
     }
 
     @Override
-    public void onCancelClick(String tag) {
-    }
-
-    @Override
     public void onPublicLeaveSuccess() {
-        progressDialog.dismiss();
+        hideProgressDialog();
         MyToast.make(getString(R.string.successfullly_leave_n, room.getName())).show();
         startMainIntent();
     }
 
     @Override
     public void onPublicLeaveFailed() {
-        progressDialog.dismiss();
+        hideProgressDialog();
         MyToast.make(getString(R.string.error_leaving_chat)).show();
     }
 }

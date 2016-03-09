@@ -28,7 +28,7 @@ public class ChooseImageDialog extends DialogFragment {
     @Bind(R.id.image_intent_image_viewer)
     TextView galleryTextView;
 
-    private ChooseImageDialogListener listener;
+    private ChooseImageDialogListener chooseImageDialogListener;
 
     public static ChooseImageDialog newInstance(ChooseImageDialogListener listener) {
         Bundle args = new Bundle();
@@ -40,8 +40,15 @@ public class ChooseImageDialog extends DialogFragment {
         return chooseImageDialog;
     }
 
-    private void setChooseImageDialogListener(ChooseImageDialogListener listener) {
-        this.listener = listener;
+    private void setChooseImageDialogListener(ChooseImageDialogListener chooseImageDialogListener) {
+        this.chooseImageDialogListener = chooseImageDialogListener;
+    }
+
+    @Override
+    public void onDetach() {
+        super.onDetach();
+
+        chooseImageDialogListener = null;
     }
 
     @Nullable
@@ -64,15 +71,15 @@ public class ChooseImageDialog extends DialogFragment {
     @OnClick(R.id.image_intent_camera)
     public void onImageCameraClick() {
         dismiss();
-        if (listener == null) return;
-        listener.onCameraClick();
+        if (chooseImageDialogListener == null) return;
+        chooseImageDialogListener.onCameraClick();
     }
 
     @OnClick(R.id.image_intent_image_viewer)
     public void onImageGalleryClick() {
         dismiss();
-        if (listener == null) return;
-        listener.onGalleryClick();
+        if (chooseImageDialogListener == null) return;
+        chooseImageDialogListener.onGalleryClick();
     }
 
     public interface ChooseImageDialogListener {

@@ -16,17 +16,19 @@ public abstract class RecyclerViewInfiniteScrollListener extends RecyclerView.On
 
     @State
     int previousItemCount;
+
     @State
     int page;
+
     @State
     boolean isLoadMore;
+
     @State
     boolean noMoreData;
 
     private LinearLayoutManager layoutManager;
 
     /**
-     * For RecyclerView,
      * Only LinearLayoutManager and GridLayoutManager can use this scroll listener.
      */
     public RecyclerViewInfiniteScrollListener(LinearLayoutManager layoutManager) {
@@ -40,12 +42,19 @@ public abstract class RecyclerViewInfiniteScrollListener extends RecyclerView.On
         int totalItem = layoutManager.getItemCount();
         int lastVisibleItemPosition = layoutManager.findLastVisibleItemPosition();
 
+        checkPreviousItemCount(totalItem);
+        loadItem(totalItem, lastVisibleItemPosition);
+    }
+
+    private void checkPreviousItemCount(int totalItem) {
         if (totalItem > previousItemCount) {
-            // if totalItem is greater than previousItemCount = new item inserted.
+            // if totalItem is greater than previousItemCount then there is new item.
             previousItemCount = totalItem;
             isLoadMore = true;
         }
+    }
 
+    private void loadItem(int totalItem, int lastVisibleItemPosition) {
         if (isLoadMore && lastVisibleItemPosition >= (totalItem - VISIBLE_THRESHOLD)) {
             isLoadMore = false;
             onLoadMore(++page);
@@ -60,6 +69,13 @@ public abstract class RecyclerViewInfiniteScrollListener extends RecyclerView.On
         Icepick.restoreInstanceState(this, savedInstanceState);
     }
 
+    public void reset() {
+        noMoreData = false;
+        isLoadMore = false;
+        page = 0;
+        previousItemCount = 0;
+    }
+
     public void setLoadMore(boolean isLoadMore) {
         this.isLoadMore = isLoadMore;
     }
@@ -70,6 +86,14 @@ public abstract class RecyclerViewInfiniteScrollListener extends RecyclerView.On
 
     public boolean isNoMoreData() {
         return noMoreData;
+    }
+
+    public void setPage(int page) {
+        this.page = page;
+    }
+
+    public int getPage() {
+        return page;
     }
 
     public abstract void onLoadMore(int page);

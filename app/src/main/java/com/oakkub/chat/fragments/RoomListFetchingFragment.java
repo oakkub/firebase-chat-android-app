@@ -2,7 +2,6 @@ package com.oakkub.chat.fragments;
 
 import android.os.Bundle;
 import android.support.annotation.Nullable;
-import android.support.v4.app.Fragment;
 import android.util.SparseArray;
 
 import com.firebase.client.ChildEventListener;
@@ -13,11 +12,15 @@ import com.firebase.client.ValueEventListener;
 import com.oakkub.chat.managers.AppController;
 import com.oakkub.chat.models.Room;
 import com.oakkub.chat.models.UserInfo;
+import com.oakkub.chat.models.eventbus.EventBusEmptyRoomList;
 import com.oakkub.chat.models.eventbus.EventBusNewRoom;
+import com.oakkub.chat.models.eventbus.EventBusOlderRoom;
 import com.oakkub.chat.models.eventbus.EventBusRemovedRoom;
+import com.oakkub.chat.models.eventbus.EventBusRoomListLoadingMore;
 import com.oakkub.chat.models.eventbus.EventBusUpdatedRoom;
 import com.oakkub.chat.utils.FirebaseUtil;
 import com.oakkub.chat.utils.RoomUtil;
+import com.oakkub.chat.views.widgets.MyToast;
 
 import java.util.ArrayList;
 
@@ -29,10 +32,9 @@ import de.greenrobot.event.EventBus;
 /**
  * Created by OaKKuB on 12/6/2015.
  */
-public class RoomListFetchingFragment extends Fragment implements ChildEventListener {
+    public class RoomListFetchingFragment extends BaseFragment implements ChildEventListener {
 
-    private static final int MESSAGE_LIMIT = 20;
-    private static final String ARGS_MY_ID = "args:myId";
+    public static final int MESSAGE_LIMIT = 20;
     private static final String TAG = RoomListFetchingFragment.class.getSimpleName();
 
     @Inject
@@ -49,18 +51,8 @@ public class RoomListFetchingFragment extends Fragment implements ChildEventList
 
     private SparseArray<Long> latestRoomActiveTimeList;
     private ArrayList<Room> roomList;
-    private ArrayList<Room> changeRoomList;
-    private String myId;
 
-    public static RoomListFetchingFragment newInstance(String myId) {
-        Bundle args = new Bundle();
-        args.putString(ARGS_MY_ID, myId);
-
-        RoomListFetchingFragment roomListFetchingFragment = new RoomListFetchingFragment();
-        roomListFetchingFragment.setArguments(args);
-
-        return roomListFetchingFragment;
-    }
+    private boolean isFromLoadingMore;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -70,38 +62,99 @@ public class RoomListFetchingFragment extends Fragment implements ChildEventList
 
         roomList = new ArrayList<>();
         latestRoomActiveTimeList = new SparseArray<>();
-    }
-
-    @Override
-    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-
-        Bundle args = getArguments();
-        myId = args.getString(ARGS_MY_ID);
+        EventBus.getDefault().register(this);
     }
 
     @Override
     public void onStart() {
         super.onStart();
-        fetchUserRoomsFromServer();
+        fetchRoomList();
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
-        userRoomsFirebase.child(myId).removeEventListener(this);
+        EventBus.getDefault().unregister(this);
+        userRoomsFirebase.child(uid).removeEventListener(this);
+    }
+
+    public void fetchRoomList() {
+        checkIfRoomExists();
+        fetchUserRoomsFromServer();
+    }
+
+    private void checkIfRoomExists() {
+        userRoomsFirebase.child(uid).limitToLast(1).addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                EventBus.getDefault().post(new EventBusEmptyRoomList(dataSnapshot.exists()));
+            }
+
+            @Override
+            public void onCancelled(FirebaseError firebaseError) {}
+        });
     }
 
     private void fetchUserRoomsFromServer() {
         userRoomsFirebase.keepSynced(true);
-        userRoomsFirebase.child(myId)
+        userRoomsFirebase.child(uid)
                 .orderByValue()
                 .limitToLast(MESSAGE_LIMIT)
                 .addChildEventListener(this);
     }
 
+    public void onEvent(EventBusRoomListLoadingMore eventBusRoomListLoadingMore) {
+        fetchOlderUserRoomsFromServer(eventBusRoomListLoadingMore.oldestTime);
+    }
+
+    private void sendEmptyData() {
+        EventBus.getDefault().post(new EventBusOlderRoom(null, -1));
+    }
+
+    private void fetchOlderUserRoomsFromServer(long when) {
+        userRoomsFirebase.child(uid)
+                .orderByValue()
+                .limitToLast(MESSAGE_LIMIT)
+                .endAt(when)
+                .addValueEventListener(new ValueEventListener() {
+                    @SuppressWarnings("UnusedAssignment")
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                        dataSnapshot.getRef().removeEventListener(this);
+
+                        if (!dataSnapshot.exists()) {
+                            sendEmptyData();
+                            return;
+                        }
+
+                        isFromLoadingMore = true;
+
+                        int size = (int) dataSnapshot.getChildrenCount();
+                        ArrayList<DataSnapshot> dataSnapshotList = new ArrayList<>(size);
+                        for (DataSnapshot children : dataSnapshot.getChildren()) {
+                            dataSnapshotList.add(children);
+                        }
+
+                        dataSnapshotList.remove(dataSnapshotList.size() - 1);
+                        for (int i = 0, sizeList = dataSnapshotList.size(); i < sizeList; i++) {
+                            fetchRoomIdUser(dataSnapshotList.get(i));
+                        }
+
+                        if (size < MESSAGE_LIMIT) {
+                            MyToast.make("no more data").show();
+                            sendEmptyData();
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(FirebaseError firebaseError) {
+
+                    }
+                });
+    }
+
     private void fetchRoomIdUser(DataSnapshot dataSnapshot) {
-        final String roomId = dataSnapshot.getKey();
+        String roomId = dataSnapshot.getKey();
 
         latestRoomActiveTimeList.put(roomId.hashCode(), dataSnapshot.getValue(Long.class));
         fetchUserRoomById(roomId);
@@ -109,9 +162,10 @@ public class RoomListFetchingFragment extends Fragment implements ChildEventList
 
     private void fetchUserRoomById(final String roomId) {
         roomFirebase.child(roomId)
-                .addListenerForSingleValueEvent(new ValueEventListener() {
+                .addValueEventListener(new ValueEventListener() {
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
+                        dataSnapshot.getRef().removeEventListener(this);
                         initRoom(dataSnapshot, roomId);
                     }
 
@@ -129,13 +183,13 @@ public class RoomListFetchingFragment extends Fragment implements ChildEventList
         // check type of room
         // if room type == 'private', it means this room is private room 1 - 1 chat
         // we gonna get name of friend to be use as room name
-        if (room.getType().equals(FirebaseUtil.VALUE_ROOM_TYPE_PRIVATE)) {
+        if (room.getType().equals(RoomUtil.PRIVATE_TYPE)) {
 
-            String friendId = RoomUtil.findFriendIdFromPrivateRoom(myId, room.getRoomId());
+            String friendId = RoomUtil.findFriendIdFromPrivateRoom(uid, room.getRoomId());
             fetchFriendInfoForPrivateRoom(friendId, room);
         } else {
             addRoom(room);
-            EventBus.getDefault().post(new EventBusNewRoom(room, latestRoomActiveTimeList.get(room.hashCode())));
+            sendData(room, latestRoomActiveTimeList.get(room.hashCode()));
         }
     }
 
@@ -149,8 +203,7 @@ public class RoomListFetchingFragment extends Fragment implements ChildEventList
                 room.setImagePath(friendInfo.getProfileImageURL());
 
                 addRoom(room);
-
-                EventBus.getDefault().post(new EventBusNewRoom(room, latestRoomActiveTimeList.get(room.hashCode())));
+                sendData(room, latestRoomActiveTimeList.get(room.hashCode()));
             }
 
             @Override
@@ -168,11 +221,13 @@ public class RoomListFetchingFragment extends Fragment implements ChildEventList
 
                         Room room = dataSnapshot.getValue(Room.class);
                         room.setRoomId(roomKey);
+                        long latestActiveTime = latestRoomActiveTimeList.get(room.hashCode());
 
                         if (roomList.contains(room)) {
-                            EventBus.getDefault().post(new EventBusUpdatedRoom(room, latestRoomActiveTimeList.get(room.hashCode())));
+                            EventBus.getDefault().post(new EventBusUpdatedRoom(room,
+                                    latestActiveTime));
                         } else {
-                            EventBus.getDefault().post(new EventBusNewRoom(room, latestRoomActiveTimeList.get(room.hashCode())));
+                            sendData(room, latestActiveTime);
                             addRoom(room);
                         }
                     }
@@ -184,8 +239,17 @@ public class RoomListFetchingFragment extends Fragment implements ChildEventList
                 });
     }
 
+    private void sendData(Room room, long latestActiveTime) {
+        if (isFromLoadingMore) {
+            EventBus.getDefault().post(new EventBusOlderRoom(room, latestActiveTime));
+        } else {
+            EventBus.getDefault().post(new EventBusNewRoom(room, latestActiveTime));
+        }
+    }
+
     @Override
     public void onChildAdded(DataSnapshot dataSnapshot, String previousChildKey) {
+        isFromLoadingMore = false;
         fetchRoomIdUser(dataSnapshot);
     }
 
@@ -199,11 +263,12 @@ public class RoomListFetchingFragment extends Fragment implements ChildEventList
     @Override
     public void onChildRemoved(DataSnapshot dataSnapshot) {
         String roomKey = dataSnapshot.getKey();
+
         for (int i = 0, size = roomList.size(); i < size; i++) {
             Room room = roomList.get(i);
             if (room.getRoomId().equals(roomKey)) {
-                EventBus.getDefault().post(new EventBusRemovedRoom(room));
                 roomList.remove(i);
+                EventBus.getDefault().post(new EventBusRemovedRoom(room));
                 break;
             }
         }
@@ -223,11 +288,6 @@ public class RoomListFetchingFragment extends Fragment implements ChildEventList
         if (!roomList.contains(room)) {
             roomList.add(room);
         }
-    }
-
-    public interface OnRoomListChangeListener {
-        void onNewRoom(Room room);
-        void onRoomChange(Room room);
     }
 
 }

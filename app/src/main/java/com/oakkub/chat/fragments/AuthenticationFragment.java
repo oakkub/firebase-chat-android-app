@@ -1,6 +1,7 @@
 package com.oakkub.chat.fragments;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.util.ArrayMap;
@@ -134,7 +135,7 @@ public class AuthenticationFragment extends Fragment {
         firebaseUserInfo.child(authData.getUid()).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-                if (dataSnapshot.getValue() == null ||
+                if (!dataSnapshot.exists() ||
                         PrefsUtil.shouldUpdateInstanceId(getActivity())) {
                     /*user not logged in before, there is no data.
                       or instance id should be updated*/
@@ -156,7 +157,6 @@ public class AuthenticationFragment extends Fragment {
     private void saveUserData() {
 
         Map<String, Object> userInfo = getUserInfo(authData);
-
         firebaseUserInfo.child(authData.getUid()).setValue(userInfo,
                 new Firebase.CompletionListener() {
             @Override
@@ -282,6 +282,14 @@ public class AuthenticationFragment extends Fragment {
 
         private final String TAG = AuthenticationResultHandler.class.getSimpleName();
 
+        private SharedPreferences prefs;
+        private SharedPreferences.Editor editor;
+
+        public AuthenticationResultHandler() {
+            prefs = AppController.getComponent(getActivity()).sharedPreferences();
+            editor = prefs.edit();
+        }
+
         @Override
         public void onAuthenticated(AuthData authDataResult) {
             Log.e(TAG, "onAuthenticated");
@@ -289,6 +297,13 @@ public class AuthenticationFragment extends Fragment {
             // check if user is newcomer or not.
             checkUserData(authDataResult);
             authData = authDataResult;
+
+            if (authDataResult != null) {
+                editor.putString(PrefsUtil.PREF_UID, authDataResult.getUid());
+            } else {
+                editor.remove(PrefsUtil.PREF_UID);
+            }
+            editor.apply();
         }
 
         @Override
@@ -297,6 +312,9 @@ public class AuthenticationFragment extends Fragment {
 
             unAuthenticateWithFirebase();
             handleFirebaseError(firebaseError);
+
+            editor.remove(PrefsUtil.PREF_UID);
+            editor.apply();
         }
     }
 

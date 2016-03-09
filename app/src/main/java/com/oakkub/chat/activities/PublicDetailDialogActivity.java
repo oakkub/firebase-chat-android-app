@@ -15,14 +15,12 @@ import org.parceler.Parcels;
 import butterknife.Bind;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
-import icepick.State;
 
 /**
  * Created by OaKKuB on 1/8/2016.
  */
 public class PublicDetailDialogActivity extends BaseActivity {
 
-    private static final String EXTRA_MY_ID = "extra:myId";
     private static final String EXTRA_ROOM = "extra:room";
 
     @Bind(R.id.group_detail_profile_image_view)
@@ -31,49 +29,42 @@ public class PublicDetailDialogActivity extends BaseActivity {
     @Bind(R.id.group_detail_display_name_text_view)
     TextView roomNameTextView;
 
-    @State
-    String myId;
-
     private Room room;
 
-    public static Intent getStartIntent(Context context, Room room, String myId) {
+    public static Intent getStartIntent(Context context, Room room) {
         Intent intent = new Intent(context, GroupDetailDialogActivity.class);
-        intent.putExtra(EXTRA_MY_ID, myId);
         intent.putExtra(EXTRA_ROOM, Parcels.wrap(room));
 
         return intent;
     }
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_group_detail);
         ButterKnife.bind(this);
-        getDataFromIntent(savedInstanceState);
+        getDataIntent();
 
         roomNameTextView.setText(room.getName());
         roomImage.setImageURI(Uri.parse(room.getImagePath()));
     }
 
-    private void getDataFromIntent(Bundle savedInstanceState) {
+    private void getDataIntent() {
         Intent intent = getIntent();
-
-        if (savedInstanceState == null) {
-            myId = intent.getStringExtra(EXTRA_MY_ID);
-        }
         room = Parcels.unwrap(intent.getParcelableExtra(EXTRA_ROOM));
     }
 
     @OnClick(R.id.group_detail_chat_button)
     public void onChatButtonClick() {
-        Intent groupRoomIntent = ChatRoomActivity.getIntentGroupRoom(this, room, myId);
+        Intent groupRoomIntent = ChatRoomActivity.getIntentGroupRoom(this, room);
         startActivity(groupRoomIntent);
         fadeOutFinish();
     }
 
     @OnClick(R.id.group_detail_info_button)
     public void onInfoButtonClick() {
-        Intent groupInfoIntent = RoomInfoActivity.getStartIntent(this, room, myId, RoomInfoActivity.ACTION_PUBLIC, true);
+        Intent groupInfoIntent = RoomInfoActivity.getStartIntent(this, room,
+                RoomInfoActivity.ACTION_PUBLIC, true);
         startActivity(groupInfoIntent);
         fadeOutFinish();
     }

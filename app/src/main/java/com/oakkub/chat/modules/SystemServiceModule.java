@@ -1,9 +1,10 @@
 package com.oakkub.chat.modules;
 
 import android.app.Application;
-import android.app.NotificationManager;
 import android.content.Context;
 import android.net.ConnectivityManager;
+import android.os.Vibrator;
+import android.support.v4.app.NotificationManagerCompat;
 import android.view.inputmethod.InputMethodManager;
 
 import com.oakkub.chat.dagger.PerApp;
@@ -31,8 +32,14 @@ public class SystemServiceModule {
 
     @PerApp
     @Provides
-    NotificationManager provideNotificationManager(Application application) {
-        return (NotificationManager) application.getSystemService(Context.NOTIFICATION_SERVICE);
+    NotificationManagerCompat provideNotificationManager(Application application) {
+        return NotificationManagerCompat.from(application);
+    }
+
+    @PerApp
+    @Provides
+    Vibrator provideVibrator(Application application) {
+        return (Vibrator) application.getSystemService(Context.VIBRATOR_SERVICE);
     }
 
 }

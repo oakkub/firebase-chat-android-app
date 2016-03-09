@@ -49,7 +49,7 @@ public class LoginActivity extends BaseActivity implements ViewPagerCommunicator
     boolean isErrorToastShowed;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
         AppController.getComponent(this).inject(this);

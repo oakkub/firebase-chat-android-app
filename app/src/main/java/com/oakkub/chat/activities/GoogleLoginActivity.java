@@ -72,7 +72,7 @@ public class GoogleLoginActivity extends BaseActivity
     private GoogleApiClient googleApiClient;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.login_process);
         ButterKnife.bind(this);
@@ -135,7 +135,7 @@ public class GoogleLoginActivity extends BaseActivity
     }
 
     @Override
-    protected void onResume() {
+    public void onResume() {
         super.onResume();
 
         EventBus.getDefault().register(this);

@@ -16,7 +16,7 @@ import com.oakkub.chat.R;
 import com.oakkub.chat.managers.AppController;
 import com.oakkub.chat.models.Message;
 import com.oakkub.chat.models.UserInfo;
-import com.oakkub.chat.utils.ArrayMapUtil;
+import com.oakkub.chat.utils.FirebaseMapUtil;
 import com.oakkub.chat.utils.FirebaseUtil;
 import com.oakkub.chat.utils.MessageUtil;
 import com.oakkub.chat.utils.TextUtil;
@@ -55,7 +55,6 @@ public class AddAdminFragment extends BaseFragment {
     @Named(FirebaseUtil.NAMED_MESSAGES_LIST)
     Lazy<Firebase> messageFirebase;
 
-    private String myId;
     private String roomId;
 
     private int totalExistedAdmin;
@@ -70,9 +69,8 @@ public class AddAdminFragment extends BaseFragment {
 
     private OnPromoteAdminListener inviteMemberFetchingListener;
 
-    public static AddAdminFragment newInstance(String myId, String roomId) {
+    public static AddAdminFragment newInstance(String roomId) {
         Bundle args = new Bundle();
-        args.putString(ARGS_MY_ID, myId);
         args.putString(ARGS_ROOM_ID, roomId);
 
         AddAdminFragment fragment = new AddAdminFragment();
@@ -111,8 +109,6 @@ public class AddAdminFragment extends BaseFragment {
 
     private void getDataIntent() {
         Bundle args = getArguments();
-
-        myId = args.getString(ARGS_MY_ID);
         roomId = args.getString(ARGS_ROOM_ID);
     }
 
@@ -283,21 +279,21 @@ public class AddAdminFragment extends BaseFragment {
         String messageKey = messageFirebase.get().child(roomId).push().getKey();
         Message invitedMessage = new Message(roomId, "", FirebaseUtil.SYSTEM, when);
         invitedMessage.setLanguageRes(MessageUtil.PROMOTED_MEMBER);
-        invitedMessage.setMessage(myId + "/" + TextUtil.implodeArray("/", totalFriendKeyToBeInvited));
+        invitedMessage.setMessage(uid + "/" + TextUtil.implodeArray("/", totalFriendKeyToBeInvited));
 
-        ArrayMapUtil.mapMessage(map, messageKey, roomId, invitedMessage);
+        FirebaseMapUtil.mapMessage(map, messageKey, roomId, invitedMessage);
 
         Message roomPromotedMessage = new Message(roomId, "", FirebaseUtil.SYSTEM, when);
         roomPromotedMessage.setMessage(prefs.getString(UserInfoUtil.DISPLAY_NAME, "").split(" ")[0] +
                 MessageUtil.getStringResTwoParam(R.string.n_promoted_n_to_be_admin,
-                        invitedMessage, promotableMemberInfoList, myId));
+                        invitedMessage, promotableMemberInfoList, uid));
 
-        ArrayMapUtil.mapRoomMessage(map, roomPromotedMessage, roomId);
+        FirebaseMapUtil.mapRoomMessage(map, roomPromotedMessage, roomId);
 
-        ArrayMapUtil.mapUserRoom(map, myId, roomId, when);
+        FirebaseMapUtil.mapUserRoom(map, uid, roomId, when);
         for (String friendKey : totalFriendKeyToBeInvited) {
-            ArrayMapUtil.mapUserRoomAdminMember(map, friendKey, roomId, when);
-            ArrayMapUtil.mapUserRoom(map, friendKey, roomId, when);
+            FirebaseMapUtil.mapUserRoomAdminMember(map, friendKey, roomId, when);
+            FirebaseMapUtil.mapUserRoom(map, friendKey, roomId, when);
         }
     }
 

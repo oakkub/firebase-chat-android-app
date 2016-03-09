@@ -28,7 +28,6 @@ import com.oakkub.chat.utils.SortUtil;
 import com.oakkub.chat.views.adapters.FriendSelectableAdapter;
 import com.oakkub.chat.views.adapters.UserImageAdapter;
 import com.oakkub.chat.views.adapters.presenter.OnAdapterItemClick;
-import com.oakkub.chat.views.dialogs.ProgressDialogFragment;
 import com.oakkub.chat.views.widgets.EmptyTextProgressBar;
 import com.oakkub.chat.views.widgets.MyToast;
 
@@ -84,9 +83,6 @@ public class NewMessagesActivity extends BaseActivity implements OnAdapterItemCl
     int totalSelectedItems;
 
     @State
-    String myId;
-
-    @State
     boolean filteredFirstTime;
 
     private UserInfo friendInfo;
@@ -97,9 +93,8 @@ public class NewMessagesActivity extends BaseActivity implements OnAdapterItemCl
     private FriendSelectableAdapter friendSelectableAdapter;
     private UserImageAdapter userImageAdapter;
 
-    public static Intent getStartIntent(Context context, String myId, UserInfo friendInfo) {
+    public static Intent getStartIntent(Context context, UserInfo friendInfo) {
         Intent newMessageIntent = new Intent(context, NewMessagesActivity.class);
-        newMessageIntent.putExtra(EXTRA_MY_ID, myId);
         newMessageIntent.putExtra(EXTRA_FRIEND_ID, Parcels.wrap(friendInfo));
 
         return newMessageIntent;
@@ -108,7 +103,7 @@ public class NewMessagesActivity extends BaseActivity implements OnAdapterItemCl
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        getDataIntent(savedInstanceState);
+        getData();
         setContentView(R.layout.activity_selectable_list);
         ButterKnife.bind(this);
 
@@ -122,7 +117,7 @@ public class NewMessagesActivity extends BaseActivity implements OnAdapterItemCl
 
         if (savedInstanceState == null) {
             if (friendInfo != null) {
-                friendSelectableAdapter.setSelection(0, friendInfo.hashCode());
+                friendSelectableAdapter.setSelection(friendInfo.hashCode());
                 showSelectedItem(friendInfo);
             }
         }
@@ -145,7 +140,7 @@ public class NewMessagesActivity extends BaseActivity implements OnAdapterItemCl
         createPrivateRoomFragment = (CreatePrivateRoomFragment) findFragmentByTag(CREATE_PRIVATE_ROOM_TAG);
         if (createPrivateRoomFragment == null) {
             createPrivateRoomFragment = (CreatePrivateRoomFragment)
-                    addFragmentByTag(CreatePrivateRoomFragment.newInstance(null, myId),
+                    addFragmentByTag(new CreatePrivateRoomFragment(),
                     CREATE_PRIVATE_ROOM_TAG);
         }
     }
@@ -154,7 +149,7 @@ public class NewMessagesActivity extends BaseActivity implements OnAdapterItemCl
     protected void onStart() {
         super.onStart();
 
-        friendsFetchingFragment.fetchUserFriends(myId);
+        friendsFetchingFragment.fetchUserFriends(uid);
     }
 
     @Override
@@ -231,11 +226,8 @@ public class NewMessagesActivity extends BaseActivity implements OnAdapterItemCl
         }
     }
 
-    private void getDataIntent(Bundle savedInstanceState) {
-        if (savedInstanceState != null) return;
+    private void getData() {
         Intent intent = getIntent();
-
-        myId = intent.getStringExtra(EXTRA_MY_ID);
         friendInfo = Parcels.unwrap(intent.getParcelableExtra(EXTRA_FRIEND_ID));
 
         Resources res = getResources();
@@ -365,20 +357,20 @@ public class NewMessagesActivity extends BaseActivity implements OnAdapterItemCl
                 membersInfo[i] = userImageAdapter.getItem(totalSelectedItemsPosition[i - 1]);
             } else {
                 UserInfo myInfo = new UserInfo();
-                myInfo.setKey(myId);
+                myInfo.setKey(uid);
 
                 membersInfo[i] = myInfo;
             }
         }
 
-        newMessagesFragment.createGroupRoom(myId, membersInfo);
+        newMessagesFragment.createGroupRoom(membersInfo);
     }
 
     private void createPrivateRoom(int[] totalSelectedItemsPosition) {
         UserInfo friendInfo = userImageAdapter.getItem(totalSelectedItemsPosition[0]);
-        newMessagesFragment.createPrivateRoom(myId, friendInfo);
+        newMessagesFragment.createPrivateRoom(friendInfo);
         createPrivateRoomFragment.createPrivateRoom(
-                RoomUtil.getPrivateRoomKey(this, myId, friendInfo.getKey()), friendInfo);
+                RoomUtil.getPrivateRoomKey(this, uid, friendInfo.getKey()));
     }
 
     @Override
@@ -393,17 +385,14 @@ public class NewMessagesActivity extends BaseActivity implements OnAdapterItemCl
 
     @Override
     public void onRoomCreated(Room room) {
-        ProgressDialogFragment dialog = (ProgressDialogFragment) getSupportFragmentManager().findFragmentByTag(TAG_CREATING_ROOM_DIALOG);
-        if (dialog != null) {
-            dialog.dismiss();
-        }
+        hideProgressDialog();
 
-        if (room.getName() != null) {
-            Intent privateRoomIntent = ChatRoomActivity.getIntentGroupRoom(this, room, myId);
-            startActivity(privateRoomIntent);
-        } else {
-            Intent groupRoomIntent = ChatRoomActivity.getIntentPrivateRoom(this, room, myId);
+        if (room.getType().equals(RoomUtil.PRIVATE_TYPE)) {
+            Intent groupRoomIntent = ChatRoomActivity.getIntentPrivateRoom(this, room, uid);
             startActivity(groupRoomIntent);
+        } else {
+            Intent privateRoomIntent = ChatRoomActivity.getIntentGroupRoom(this, room);
+            startActivity(privateRoomIntent);
         }
 
         fadeOutFinish();
@@ -411,8 +400,7 @@ public class NewMessagesActivity extends BaseActivity implements OnAdapterItemCl
 
     @Override
     public void onShowLoading() {
-        ProgressDialogFragment dialog = ProgressDialogFragment.newInstance();
-        dialog.show(getSupportFragmentManager(), TAG_CREATING_ROOM_DIALOG);
+        showProgressDialog();
     }
 
     public void onEvent(EventBusNewMessagesFriendInfo eventBusNewMessagesFriendInfo) {

@@ -3,7 +3,6 @@ package com.oakkub.chat.managers;
 import android.content.Context;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 
 import com.oakkub.chat.R;
 
@@ -14,7 +13,6 @@ public class GridAutoFitLayoutManager extends GridLayoutManager {
 
     private int columnWidth;
     private boolean columnWidthChanged = true;
-    private boolean debug = false;
 
     public GridAutoFitLayoutManager(Context context, int columnWidth) {
         super(context, 1);
@@ -39,7 +37,6 @@ public class GridAutoFitLayoutManager extends GridLayoutManager {
 
         if (newColumnWidth > 0 && newColumnWidth != columnWidth) {
             columnWidth = newColumnWidth;
-            columnWidthChanged = true;
         }
     }
 
@@ -51,10 +48,6 @@ public class GridAutoFitLayoutManager extends GridLayoutManager {
             int spanCount = Math.max(1, totalSpace / columnWidth);
             setSpanCount(spanCount);
 
-            if (debug) {
-                Log.e("TOTAL SPACE", String.valueOf(totalSpace));
-                Log.e("SPAN COUNT", String.format("%d / %d = %d", totalSpace, columnWidth, spanCount));
-            }
             columnWidthChanged = false;
         }
 
@@ -62,11 +55,6 @@ public class GridAutoFitLayoutManager extends GridLayoutManager {
     }
 
     private int getTotalSpace() {
-        if (debug) {
-            Log.e("TOTALSPACE VERTICAL", String.format("Width:%d, PaddingLeft:%d, PaddingRight:%d", getWidth(), getPaddingLeft(), getPaddingRight()));
-            Log.e("TOTALSPACE HORIZONTAL", String.format("Width:%d, PaddingTop:%d, PaddingBottom:%d", getHeight(), getPaddingTop(), getPaddingBottom()));
-        }
-
         if (getOrientation() == VERTICAL) return getWidth() - getPaddingLeft() - getPaddingRight();
         else return getHeight() - getPaddingTop() - getPaddingBottom();
     }

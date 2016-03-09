@@ -16,6 +16,8 @@ import com.oakkub.chat.views.adapters.viewholders.RoomHolder;
  */
 public class RoomListAdapter extends RecyclerViewAdapter<Room>  {
 
+    private static final int ROOM_TYPE = 0;
+
     private OnAdapterItemClick onAdapterItemClick;
     private String myId;
 
@@ -25,28 +27,49 @@ public class RoomListAdapter extends RecyclerViewAdapter<Room>  {
     }
 
     @Override
+    public int getItemViewType(int position) {
+        Room room = getItem(position);
+
+        if (room != null) {
+            return ROOM_TYPE;
+        } else {
+            return LOAD_MORE_TYPE;
+        }
+    }
+
+    @Override
     public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
 
-        View view = inflateLayout(parent, R.layout.room_list);
-        return new RoomHolder(view, onAdapterItemClick);
+        switch (viewType) {
+            case ROOM_TYPE:
+                View view = inflateLayout(parent, R.layout.room_list);
+                return new RoomHolder(view, onAdapterItemClick);
+            case LOAD_MORE_TYPE:
+                return getProgressBarHolder(parent);
+        }
+
+        return null;
     }
 
     @Override
     public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
         Room room = getItem(position);
-        RoomHolder roomHolder = (RoomHolder) holder;
 
-        setRoomMessage(roomHolder, room);
+        if (room != null) {
+            RoomHolder roomHolder = (RoomHolder) holder;
 
-        long time = room.getLatestMessageTime();
-        if (time > 0) {
-            roomHolder.latestMessageTime.setText(
-                    TimeUtil.readableTime(roomHolder.itemView.getContext(),
-                            room.getLatestMessageTime()));
+            setRoomMessage(roomHolder, room);
+
+            long time = room.getLatestMessageTime();
+            if (time > 0) {
+                roomHolder.latestMessageTime.setText(
+                        TimeUtil.readableTime(roomHolder.itemView.getContext(),
+                                room.getLatestMessageTime()));
+            }
+
+            roomHolder.roomImage.setImageURI(Uri.parse(room.getImagePath()));
+            roomHolder.roomName.setText(room.getName());
         }
-
-        roomHolder.roomImage.setImageURI(Uri.parse(room.getImagePath()));
-        roomHolder.roomName.setText(room.getName());
     }
 
     private void setRoomMessage(RoomHolder holder, Room room) {

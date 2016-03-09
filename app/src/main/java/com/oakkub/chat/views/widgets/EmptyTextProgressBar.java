@@ -63,6 +63,7 @@ public class EmptyTextProgressBar extends FrameLayout {
         text = (TextView) findViewById(R.id.emptyTextProgressbarText);
 
         text.setVisibility(View.GONE);
+        text.setFreezesText(true);
     }
 
     private void initAttrs(AttributeSet attrs, int defStyleAttr, int defStyleRes) {
@@ -162,13 +163,17 @@ public class EmptyTextProgressBar extends FrameLayout {
         progressBar.setVisibility(View.GONE);
     }
 
+    public void hideEmptyText() {
+        text.setVisibility(View.GONE);
+    }
+
     public void showEmptyText() {
         setVisibility(View.VISIBLE);
         progressBar.setVisibility(View.GONE);
         text.setVisibility(View.VISIBLE);
     }
 
-    public void setErrorText(String text) {
+    public void setEmptyText(String text) {
         this.text.setText(text);
     }
 

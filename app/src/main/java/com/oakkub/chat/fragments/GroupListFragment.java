@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -12,13 +13,18 @@ import android.view.ViewGroup;
 
 import com.oakkub.chat.R;
 import com.oakkub.chat.activities.GroupDetailDialogActivity;
+import com.oakkub.chat.activities.MainActivity;
 import com.oakkub.chat.managers.GridAutoFitLayoutManager;
 import com.oakkub.chat.managers.OnScrolledEventListener;
+import com.oakkub.chat.managers.RefreshListener;
 import com.oakkub.chat.models.Room;
 import com.oakkub.chat.models.eventbus.EventBusDeleteGroupRoom;
 import com.oakkub.chat.models.eventbus.EventBusGroupRoom;
+import com.oakkub.chat.models.eventbus.EventBusUpdatedGroupRoom;
 import com.oakkub.chat.views.adapters.GroupListAdapter;
 import com.oakkub.chat.views.adapters.presenter.OnAdapterItemClick;
+import com.oakkub.chat.views.widgets.MySwipeRefreshLayout;
+import com.oakkub.chat.views.widgets.MyTextView;
 import com.oakkub.chat.views.widgets.recyclerview.RecyclerViewScrollDirectionListener;
 
 import java.util.ArrayList;
@@ -27,45 +33,40 @@ import java.util.Collections;
 import butterknife.Bind;
 import butterknife.ButterKnife;
 import de.greenrobot.event.EventBus;
-import icepick.State;
 
 /**
  * A simple {@link Fragment} subclass.
  */
-public class GroupListFragment extends BaseFragment implements OnAdapterItemClick {
+public class GroupListFragment extends BaseFragment implements OnAdapterItemClick,
+        SwipeRefreshLayout.OnRefreshListener {
 
-    private static final String ARGS_MY_ID = "args:myId";
+    private static final String ARGS_MY_ID = "args:uid";
     private static final String TAG = GroupListFragment.class.getSimpleName();
+
+    @Bind(R.id.swipe_refresh_progress_bar_recycler_view_layout)
+    MySwipeRefreshLayout swipeRefreshLayout;
 
     @Bind(R.id.recyclerview)
     RecyclerView groupRecyclerView;
 
-    @State
-    String myId;
+    @Bind(R.id.swipe_refresh_text_view)
+    MyTextView alertTextView;
 
     private GroupListAdapter groupListAdapter;
     private OnScrolledEventListener onScrolledEventListener;
-
-    public static GroupListFragment newInstance(String myId) {
-        Bundle args = new Bundle();
-        args.putString(ARGS_MY_ID, myId);
-
-        GroupListFragment groupListFragment = new GroupListFragment();
-        groupListFragment.setArguments(args);
-        return groupListFragment;
-    }
+    private RefreshListener refreshListener;
 
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
 
         onScrolledEventListener = (OnScrolledEventListener) getActivity();
+        refreshListener = (RefreshListener) getActivity();
     }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        getDataFromArgs(savedInstanceState);
         EventBus.getDefault().register(this);
     }
 
@@ -73,7 +74,7 @@ public class GroupListFragment extends BaseFragment implements OnAdapterItemClic
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
-        View rootView = inflater.inflate(R.layout.recyclerview, container, false);
+        View rootView = inflater.inflate(R.layout.swipe_refresh_progressbar_recyclerview, container, false);
         ButterKnife.bind(this, rootView);
 
         return rootView;
@@ -83,7 +84,11 @@ public class GroupListFragment extends BaseFragment implements OnAdapterItemClic
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        setGroupRecyclerView();
+        initInstances();
+
+        if (savedInstanceState == null) {
+            swipeRefreshLayout.show();
+        }
     }
 
     @Override
@@ -110,6 +115,7 @@ public class GroupListFragment extends BaseFragment implements OnAdapterItemClic
         super.onDetach();
 
         onScrolledEventListener = null;
+        refreshListener = null;
     }
 
     @Override
@@ -119,14 +125,16 @@ public class GroupListFragment extends BaseFragment implements OnAdapterItemClic
         super.onDestroy();
     }
 
-    private void getDataFromArgs(Bundle savedInstanceState) {
-        if (savedInstanceState != null) return;
-
-        Bundle args = getArguments();
-        myId = args.getString(ARGS_MY_ID);
+    @Override
+    public void onRefresh() {
+        if (refreshListener != null) {
+            refreshListener.onRefresh(MainActivity.GROUP_LIST_FRAGMENT_TAG);
+        }
     }
 
-    private void setGroupRecyclerView() {
+    private void initInstances() {
+        swipeRefreshLayout.setOnRefreshListener(this);
+
         int columnWidth = (int) getResources().getDimension(R.dimen.cardview_width);
 
         groupListAdapter = new GroupListAdapter(this);
@@ -152,6 +160,11 @@ public class GroupListFragment extends BaseFragment implements OnAdapterItemClic
         groupRecyclerView.setAdapter(groupListAdapter);
     }
 
+    public void onEvent(EventBusUpdatedGroupRoom eventBusUpdatedGroupRoom) {
+        if (groupListAdapter == null) return;
+        groupListAdapter.replace(eventBusUpdatedGroupRoom.room);
+    }
+
     public void onEvent(EventBusDeleteGroupRoom eventBusDeleteGroupRoom) {
         if (groupListAdapter == null) return;
         groupListAdapter.remove(eventBusDeleteGroupRoom.room);
@@ -159,13 +172,24 @@ public class GroupListFragment extends BaseFragment implements OnAdapterItemClic
 
     public void onEvent(EventBusGroupRoom eventBusGroupRoom) {
         ArrayList<Room> roomList = eventBusGroupRoom.roomList;
-        Collections.reverse(roomList);
+        swipeRefreshLayout.hide();
 
-        if (groupListAdapter != null) {
-            for (int i = 0, size = roomList.size(); i < size; i++) {
-                Room room = roomList.get(i);
-                if (!groupListAdapter.contains(room)) {
-                    groupListAdapter.addLast(room);
+        if (roomList.isEmpty()) {
+
+            alertTextView.setText(R.string.you_dont_have_groups);
+            alertTextView.visible();
+
+        } else {
+            alertTextView.gone();
+
+            Collections.reverse(roomList);
+
+            if (groupListAdapter != null) {
+                for (int i = 0, size = roomList.size(); i < size; i++) {
+                    Room room = roomList.get(i);
+                    if (!groupListAdapter.contains(room)) {
+                        groupListAdapter.addLast(room);
+                    }
                 }
             }
         }
@@ -175,7 +199,7 @@ public class GroupListFragment extends BaseFragment implements OnAdapterItemClic
     public void onAdapterClick(View itemView, int position) {
         Room room = groupListAdapter.getItem(position);
 
-        Intent groupDetailIntent = GroupDetailDialogActivity.getStartIntent(getActivity(), room, myId,
+        Intent groupDetailIntent = GroupDetailDialogActivity.getStartIntent(getActivity(), room,
                 true, GroupDetailDialogActivity.ACTION_GROUP);
         startActivity(groupDetailIntent);
     }

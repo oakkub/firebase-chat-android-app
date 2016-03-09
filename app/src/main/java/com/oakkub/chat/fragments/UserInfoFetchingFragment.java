@@ -27,19 +27,8 @@ public class UserInfoFetchingFragment extends BaseFragment implements ValueEvent
     @Named(FirebaseUtil.NAMED_USER_INFO)
     Firebase userInfoFirebase;
 
-    private String userId;
     private UserInfo userInfoResult;
     private OnUserInfoReceivedListener onUserInfoReceivedListener;
-
-    public static UserInfoFetchingFragment newInstance(String userId) {
-        Bundle args = new Bundle();
-        args.putString(ARGS_MY_ID, userId);
-
-        UserInfoFetchingFragment userInfoFetchingFragment = new UserInfoFetchingFragment();
-        userInfoFetchingFragment.setArguments(args);
-
-        return userInfoFetchingFragment;
-    }
 
     @Override
     public void onAttach(Context context) {
@@ -53,7 +42,6 @@ public class UserInfoFetchingFragment extends BaseFragment implements ValueEvent
         super.onCreate(savedInstanceState);
         AppController.getComponent(getActivity()).inject(this);
         setRetainInstance(true);
-        getDataIntent();
     }
 
     @Override
@@ -77,17 +65,12 @@ public class UserInfoFetchingFragment extends BaseFragment implements ValueEvent
     @Override
     public void onDestroy() {
         super.onDestroy();
-        userInfoFirebase.child(userId).removeEventListener(this);
-    }
-
-    private void getDataIntent() {
-        Bundle args = getArguments();
-        userId = args.getString(ARGS_MY_ID);
+        userInfoFirebase.child(uid).removeEventListener(this);
     }
 
     public void fetch() {
-        userInfoFirebase.child(userId).keepSynced(true);
-        userInfoFirebase.child(userId).addValueEventListener(this);
+        userInfoFirebase.child(uid).keepSynced(true);
+        userInfoFirebase.child(uid).addValueEventListener(this);
     }
 
     @Override

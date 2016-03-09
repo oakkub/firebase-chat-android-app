@@ -2,6 +2,7 @@ package com.oakkub.chat.activities;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.IdRes;
@@ -9,22 +10,29 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
+import android.support.v4.app.NotificationManagerCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.ActionBar;
-import android.support.v7.app.AppCompatActivity;
 
+import com.akexorcist.localizationactivity.LocalizationActivity;
+import com.oakkub.chat.managers.AppController;
+import com.oakkub.chat.utils.PrefsUtil;
 import com.oakkub.chat.views.dialogs.ProgressDialogFragment;
 
 import icepick.Icepick;
+import icepick.State;
 
 /**
  * Created by OaKKuB on 11/5/2015.
  */
-public class BaseActivity extends AppCompatActivity {
+public class BaseActivity extends LocalizationActivity {
 
     private static final String TAG = BaseActivity.class.getSimpleName();
-    private static final String PROGRESS_DIALOG_TAG = "tag:progressDialog";
+    private static final String PROGRESS_DIALOG_TAG = TAG + ":tag:progressDialog";
     protected static final String EXTRA_MY_ID = TAG + ":extra:myId";
+
+    @State
+    String uid;
 
     public static Intent getMyIdStartIntent(Context context, String myId, Class<?> cls) {
         Intent intent = new Intent(context, cls);
@@ -33,15 +41,25 @@ public class BaseActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Icepick.restoreInstanceState(this, savedInstanceState);
+
+        if (savedInstanceState == null) {
+            SharedPreferences prefs = AppController.getComponent(this).sharedPreferences();
+            uid = prefs.getString(PrefsUtil.PREF_UID, null);
+        }
     }
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
         Icepick.saveInstanceState(this, outState);
+    }
+
+    public void clearNotification() {
+        NotificationManagerCompat notificationManager = AppController.getComponent(this).notificationManager();
+        notificationManager.cancelAll();
     }
 
     public void setToolbarTitle(String title) {
@@ -77,10 +95,8 @@ public class BaseActivity extends AppCompatActivity {
         }
     }
 
-    public Fragment findOrCreateFragmentByTag(Fragment fragment, String tag) {
-        FragmentManager fragmentManager = getSupportFragmentManager();
+    public Fragment findOrAddFragmentByTag(FragmentManager fragmentManager, Fragment fragment, String tag) {
         Fragment addedFragment = fragmentManager.findFragmentByTag(tag);
-
         if (addedFragment == null) {
             fragmentManager.beginTransaction()
                     .add(fragment, tag)
@@ -93,7 +109,7 @@ public class BaseActivity extends AppCompatActivity {
     }
 
     @SuppressWarnings("UnusedAssignment")
-    public Fragment findOrCreateFragmentByTag(@IdRes int containerId, Fragment fragment, String tag) {
+    public Fragment findOrAddFragmentByTag(@IdRes int containerId, Fragment fragment, String tag) {
         FragmentManager fragmentManager = getSupportFragmentManager();
         Fragment addedFragment = fragmentManager.findFragmentByTag(tag);
 

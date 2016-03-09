@@ -30,4 +30,9 @@
         <item name="android:maxHeight">@dimen/spacing_big</item>
     </style>
 
+    <style name="AppTheme.NoActionBar.Launcher">
+        <item name="android:statusBarColor">@color/colorPrimaryDark</item>
+        <item name="android:windowBackground">@drawable/window_background</item>
+    </style>
+
 </resources>

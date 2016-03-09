@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
-    <string name="app_name">Vitcom</string>
-    <string name="simple_chat_for_everyone">Simple chat for everyone</string>
+    <string name="app_name">Vc-Chat</string>
+    <string name="simple_chat_for_everyone"></string>
     <string name="facebook_app_id">1646438208961419</string>
     <string name="google_project_id">490800630447</string>
     <string name="google_web_client_id">490800630447-o3sol0ou9bi194qtnk1df5lm9f17rj73.apps.googleusercontent.com</string>
@@ -26,5 +26,24 @@
     <string name="user_message">
         <xliff:g id="friendName">%s</xliff:g>: <xliff:g id="message">%s</xliff:g>
     </string>
+
+    <string name="pref_category_notification">pref_category_notification</string>
+    <string name="pref_notification_enable">pref_notification_enable</string>
+    <string name="pref_notification_vibrate">pref_notification_vibrate</string>
+    <string name="pref_notification_ringtone">pref_notification_ringtone</string>
+    <string name="pref_language_list">pref_language_list</string>
+
+    <string-array name="entries_languages">
+        <item>English</item>
+        <item>ไทย</item>
+    </string-array>
+
+    <string-array name="values_languages">
+        <item>@string/value_english</item>
+        <item>@string/value_thai</item>
+    </string-array>
+
+    <string name="value_english">en</string>
+    <string name="value_thai">th</string>
 
 </resources>

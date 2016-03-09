@@ -1,33 +1,37 @@
 package com.oakkub.chat.views.adapters;
 
 import android.os.Bundle;
-import android.util.SparseIntArray;
 
-import com.oakkub.chat.managers.SparseIntArrayParcelableWrapper;
+import com.oakkub.chat.managers.MySparseBooleanArray;
+
+import icepick.Icepick;
+import icepick.State;
 
 /**
  * Created by OaKKuB on 12/22/2015.
  */
 public abstract class RecyclerViewMultipleSelectionAdapter<I> extends RecyclerViewAdapter<I> {
 
-    private static final String STATE_SELECTED_ITEMS = "state:selectedItems";
+    private static final String TAG = RecyclerViewMultipleSelectionAdapter.class.getSimpleName();
+    private static final String PACKAGE_NAME = RecyclerViewMultipleSelectionAdapter.class.getPackage().getName();
 
-    private SparseIntArray selectedItems = new SparseIntArray();
+    @State
+    MySparseBooleanArray selectedItems = new MySparseBooleanArray();
 
     @Override
     public void onSaveInstanceState(String key, Bundle outState) {
         super.onSaveInstanceState(key, outState);
-        outState.putParcelable(STATE_SELECTED_ITEMS, new SparseIntArrayParcelableWrapper(selectedItems));
+        Icepick.saveInstanceState(this, outState);
     }
 
     @Override
     public void onRestoreInstanceState(String key, Bundle savedInstanceState) {
         super.onRestoreInstanceState(key, savedInstanceState);
-        selectedItems = savedInstanceState.getParcelable(STATE_SELECTED_ITEMS);
+        Icepick.restoreInstanceState(this, savedInstanceState);
     }
 
     public boolean isSelected(int position) {
-        return selectedItems.get(position, -1) != -1;
+        return selectedItems.get(position);
     }
 
     public int getSelectedItemCount() {
@@ -35,25 +39,19 @@ public abstract class RecyclerViewMultipleSelectionAdapter<I> extends RecyclerVi
     }
 
     public void toggleSelection(int position, int hashCode) {
-        setSelection(position, hashCode);
+        setSelection(hashCode);
         notifyItemChanged(position);
     }
 
-    public void setSelection(int position, int hashCode) {
+    public void setSelection(int hashCode) {
         if (isSelected(hashCode)) {
             selectedItems.delete(hashCode);
         } else {
-            selectedItems.put(hashCode, position);
+            selectedItems.put(hashCode, true);
         }
     }
 
     public void clearSelection() {
-        /*int[] selectedItemsPosition = getSelectedItemsKey();
-        selectedItems.clear();
-
-        for (int itemPosition : selectedItemsPosition) {
-            notifyItemChanged(itemPosition);
-        }*/
         selectedItems.clear();
         notifyDataSetChanged();
     }

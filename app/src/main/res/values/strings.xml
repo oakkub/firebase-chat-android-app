@@ -168,6 +168,54 @@
     <string name="edit_name">Edit name</string>
     <string name="display_name">Display name</string>
     <string name="change">Change</string>
+    <string name="add">Add</string>
+    <string name="success_friend_requested_sent">Friend requested sent.</string>
+    <string name="error.friend_requested_sent">Friend requested failed to send, Please try again</string>
+    <string name="friend_request">Friend request</string>
+    <string name="send_friend_request_to_n">Send friend request to %s ?</string>
+    <string name="send">Send</string>
+    <string name="about">About</string>
+    <string name="friends">Friends</string>
+    <string name="your_requests">Your request</string>
+    <string name="request_received">Request received</string>
+    <string name="you_are_not_send_any_friend_request">You didn\'t send any friend requests.</string>
+    <string name="your_friend_requests">Your friend requests</string>
+    <string name="accept_friend">Accept friend</string>
+    <string name="accept_n_as_friend">Accept %s as a friend?</string>
+    <string name="accept">Accept</string>
+    <string name="you_accept_n_as_friend">You accept %s as a friend!!</string>
+    <string name="error.accept_friend">Error occurred, while accepting %s as a friend. Please try again.</string>
+    <string name="error.no_new_requests">No new requests.</string>
+    <string name="error.n_remove_request_cannot_accept_friend">Cannot accept friend request, Because %s removed friend request.</string>
+    <string name="n_send_you_a_friend_request">%s send you a friend request.</string>
+    <string name="reject">Reject</string>
+    <string name="you_need_to_login_in_order_to_n">Cannot %s, You need to manually do it in app.</string>
+    <string name="remove_request">Remove request</string>
+    <string name="remove">Remove</string>
+    <string name="are_you_sure_to_remove_friend_request_for_n">Are you sure to remove your friend request for %s ?</string>
+    <string name="cannot_remove_requst_try_again">Cannot remove request, Please try again.</string>
+    <string name="search_result">Search result</string>
+    <string name="result_n">Result: %s</string>
+    <string name="n_accepted_you_as_friend">%s accepted you as a friend!!</string>
+    <string name="accept_friend_request">Accept friend request</string>
+    <string name="not_member_of_this_chat">You are not member of this chat</string>
+    <string name="enabled">Enabled</string>
+    <string name="disabled">Disabled</string>
+    <string name="ringtone">Ringtone</string>
+    <string name="vibrate">Vibrate</string>
+    <string name="n_sent_friend_request_go_check_received_requests_tab">%s already sent friend request to you, Go check received requests tab.</string>
+    <string name="language">Language</string>
+    <string name="error._cannot_register_try_again">Cannot register, Please try again.</string>
+    <string name="you_dont_have_messages">You don\'t have any messages.</string>
+    <string name="you_dont_have_any_friends">You don\'t have any friends</string>
+    <string name="you_dont_have_groups">You don\'t have any groups.</string>
+    <string name="you_dont_have_public_chat">You don\'t have any public chats</string>
+
+    <string-array name="friend_tab_names">
+        <item>Recommended Friends</item>
+        <item>Wait for response</item>
+        <item>Received Requests</item>
+    </string-array>
 
     <string-array name="main_tab_names">
         <item>Messages</item>

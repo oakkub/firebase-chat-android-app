@@ -19,7 +19,8 @@ public class MyToast {
     public static Toast make(Object object) {
         Context applicationContext = Contextor.getInstance().getContext();
 
-        View view = LayoutInflater.from(applicationContext).inflate(R.layout.card_view_toast, null);
+        View view = LayoutInflater.from(applicationContext)
+                .inflate(R.layout.card_view_toast, null);
         TextView message = ButterKnife.findById(view, R.id.card_view_toast_textview);
         message.setText(String.valueOf(object));
 

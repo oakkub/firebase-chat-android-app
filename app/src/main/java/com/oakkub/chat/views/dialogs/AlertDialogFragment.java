@@ -12,17 +12,18 @@ import android.support.v7.app.AlertDialog;
 import com.oakkub.chat.R;
 
 /**
- * Created by OaKKuB on 2/11/2016.
+ * Created by OaKKuB onAlertDialogListener 2/11/2016.
  */
 public class AlertDialogFragment extends DialogFragment implements DialogInterface.OnClickListener {
 
     private static final String ARGS_TITLE = "args:title";
     private static final String ARGS_MESSAGE = "args:message";
     private static final String ARGS_BUTTON_OK = "args:buttonOk";
+    private static final String ARGS_BUTTON_NEUTRAL = "args:buttonNatural";
     private static final String ARGS_BUTTON_CANCEL = "args:buttonCancel";
     private static final String ARGS_CANCELABLE = "args:cancelable";
 
-    private OnAlertDialogListener listener;
+    private OnAlertDialogListener onAlertDialogListener;
 
     public static AlertDialogFragment newInstance(@NonNull String title,
                                                   @NonNull String message) {
@@ -47,10 +48,20 @@ public class AlertDialogFragment extends DialogFragment implements DialogInterfa
                                                   @Nullable String buttonOk,
                                                   @Nullable String buttonCancel,
                                                   boolean cancelable) {
+        return newInstance(title, message, buttonOk, null, buttonCancel, cancelable);
+    }
+
+    public static AlertDialogFragment newInstance(@NonNull String title,
+                                                  @NonNull String message,
+                                                  @Nullable String buttonOk,
+                                                  @Nullable String buttonNewtral,
+                                                  @Nullable String buttonCancel,
+                                                  boolean cancelable) {
         Bundle args = new Bundle();
         args.putString(ARGS_TITLE, title);
         args.putString(ARGS_MESSAGE, message);
         args.putString(ARGS_BUTTON_OK, buttonOk);
+        args.putString(ARGS_BUTTON_NEUTRAL, buttonNewtral);
         args.putString(ARGS_BUTTON_CANCEL, buttonCancel);
         args.putBoolean(ARGS_CANCELABLE, cancelable);
 
@@ -60,15 +71,29 @@ public class AlertDialogFragment extends DialogFragment implements DialogInterfa
         return dialogFragment;
     }
 
+
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
 
         try {
-            listener = (OnAlertDialogListener) getActivity();
+            if (getParentFragment() != null) {
+                onAlertDialogListener = (OnAlertDialogListener) getParentFragment();
+            } else if (getTargetFragment() != null) {
+                onAlertDialogListener = (OnAlertDialogListener) getTargetFragment();
+            } else {
+                onAlertDialogListener = (OnAlertDialogListener) getActivity();
+            }
         } catch (ClassCastException e) {
-            throw new ClassCastException("You did not implement OnAlertDialogListener.");
+            e.printStackTrace();
         }
+    }
+
+    @Override
+    public void onDetach() {
+        super.onDetach();
+
+        onAlertDialogListener = null;
     }
 
     @NonNull
@@ -78,6 +103,7 @@ public class AlertDialogFragment extends DialogFragment implements DialogInterfa
         String title = args.getString(ARGS_TITLE);
         String message = args.getString(ARGS_MESSAGE);
         String btnOK = args.getString(ARGS_BUTTON_OK);
+        String btnNeutral = args.getString(ARGS_BUTTON_NEUTRAL);
         String btnCancel = args.getString(ARGS_BUTTON_CANCEL);
         boolean cancelable = args.getBoolean(ARGS_CANCELABLE);
 
@@ -97,6 +123,9 @@ public class AlertDialogFragment extends DialogFragment implements DialogInterfa
                 .setPositiveButton(
                         btnOK == null ? null : btnOK,
                         btnOK == null ? null : this)
+                .setNeutralButton(
+                        btnNeutral == null ? null : btnNeutral,
+                        btnNeutral == null ? null : this)
                 .setNegativeButton(
                         btnCancel == null ? null : btnCancel,
                         btnCancel == null ? null : this)
@@ -109,16 +138,18 @@ public class AlertDialogFragment extends DialogFragment implements DialogInterfa
 
         switch (which) {
             case DialogInterface.BUTTON_POSITIVE:
-                listener.onOkClick(getTag());
+                onAlertDialogListener.onAlertDialogClick(getTag(), DialogInterface.BUTTON_POSITIVE);
+                break;
+            case DialogInterface.BUTTON_NEUTRAL:
+                onAlertDialogListener.onAlertDialogClick(getTag(), DialogInterface.BUTTON_NEUTRAL);
                 break;
             case DialogInterface.BUTTON_NEGATIVE:
-                listener.onCancelClick(getTag());
+                onAlertDialogListener.onAlertDialogClick(getTag(), DialogInterface.BUTTON_NEGATIVE);
                 break;
         }
     }
 
     public interface OnAlertDialogListener {
-        void onOkClick(String tag);
-        void onCancelClick(String tag);
+        void onAlertDialogClick(String tag, int which);
     }
 }

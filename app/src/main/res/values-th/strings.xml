@@ -170,6 +170,55 @@
     <string name="edit_name">แก้ไขชื่อ</string>
     <string name="display_name">ชื่อแสดง</string>
     <string name="change">เปลี่ยน</string>
+    <string name="add">เพิ่ม</string>
+    <string name="success_friend_requested_sent">ส่งคำขอเพื่อนสำเร็จ</string>
+    <string name="error.friend_requested_sent">ไม่สามารถส่งคำขอเพื่อนได้ กรุณาลองใหม่อีกครั้ง</string>
+    <string name="friend_request">ขอเป็นเพื่อน</string>
+    <string name="send_friend_request_to_n">ส่งคำขอเป็นเพื่อนให้ %s ?</string>
+    <string name="send">ส่ง</string>
+    <string name="about">เกี่ยวกับ</string>
+    <string name="friends">เพื่อน</string>
+    <string name="your_requests">คำขอของคุณ</string>
+    <string name="request_received">คำขอที่ได้รับ</string>
+    <string name="you_are_not_send_any_friend_request">คุณยังไม่ได้ส่งคำขอเป็นเพื่อน</string>
+    <string name="your_friend_requests">คำขอเป็นเพื่อนของคุณ</string>
+    <string name="accept_friend">ยอมรับเพื่อน</string>
+    <string name="accept_n_as_friend">ยอมรับ %s เป็นเพื่อน?</string>
+    <string name="accept">ยอมรับ</string>
+    <string name="you_accept_n_as_friend">คุณรับ %s เป็นเพื่อน!!</string>
+    <string name="error.accept_friend">เกิดข้อผิดพลาดขณะรับ %s เปิดเพื่อน กรุณาลองใหม่อีกครั้ง</string>
+    <string name="error.no_new_requests">ไม่มีคำขอใหม่</string>
+    <string name="error.n_remove_request_cannot_accept_friend">ไม่สามารถรับเป็นเพื่อนได้ เนื่องจาก %s ได้ลบคำขอเป็นเพื่อน</string>
+    <string name="n_send_you_a_friend_request">%s ส่งคำขอเป็นเพื่อนมาให้คุณ</string>
+    <string name="reject">ปฏิเสธ</string>
+    <string name="you_need_to_login_in_order_to_n">ไม่สามารถ%sเพื่อนได้ คุณจำเป็นต้องเข้าไปทำการเองในแอป</string>
+    <string name="remove_request">ลบคำขอเป็นเพื่อน</string>
+    <string name="remove">ลบ</string>
+    <string name="are_you_sure_to_remove_friend_request_for_n">คุณแน่ใจที่จะลบคำขอเป็นเพื่อนของคุณสำหรับ %s ?</string>
+    <string name="cannot_remove_requst_try_again">ไม่สามารถลบคำขอได้ กรุณาลองใหม่อีกครั้ง</string>
+    <string name="search_result">ผลลัพธ์การค้นหา</string>
+    <string name="result_n">ผลลัพธ์: %s</string>
+    <string name="n_accepted_you_as_friend">%s รับคุณเป็นเพื่อน!!</string>
+    <string name="accept_friend_request">ตอบรับคำขอเป็นเพื่อน</string>
+    <string name="not_member_of_this_chat">คุณไม่ใช่สมาชิกของแชทนี้</string>
+    <string name="enabled">ใช้งาน</string>
+    <string name="disabled">ปิดการใช้งาน</string>
+    <string name="ringtone">ริงโทน</string>
+    <string name="vibrate">การสั่น</string>
+    <string name="n_sent_friend_request_go_check_received_requests_tab">%s ส่งคำขอเป็นเพื่อนมาให้คุณแล้ว, ตรวจสอบได้ที่แท็บคำขอที่ได้รับ</string>
+    <string name="language">ภาษา</string>
+    <string name="error._cannot_register_try_again">ไม่สามารถสมัครสมาชิกได้ กรุณาลองใหม่อีกครั้ง</string>
+    <string name="you_dont_have_messages">คุณยังไม่มีข้อความ</string>
+    <string name="you_dont_have_any_friends">คุณยังไม่มีเพื่อน</string>
+    <string name="you_dont_have_groups">คุณยังไม่มีกลุ่ม</string>
+    <string name="you_dont_have_public_chat">คุณยังไม่มีกลุ่มสาธารณะ</string>
+
+    <string-array name="friend_tab_names">
+        <item>เพื่อนแนะนำ</item>
+        <item>รอคำตอบรับ</item>
+        <item>คำขอที่ได้รับ</item>
+    </string-array>
+
     <string-array name="main_tab_names">
         <item>ข้อความ</item>
         <item>เพื่อน</item>

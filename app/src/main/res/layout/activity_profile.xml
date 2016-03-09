@@ -29,12 +29,14 @@
                 android:id="@+id/user_profile_image"
                 android:layout_width="@dimen/spacing_large"
                 android:layout_height="@dimen/spacing_large"
+                android:layout_gravity="center_horizontal"
                 app:roundAsCircle="true" />
 
             <Button
                 android:id="@+id/user_profile_change_image"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
                 android:text="@string/change_profile_image"
                 android:textAllCaps="false"
                 android:textAppearance="@style/TextAppearance.AppCompat.Button"

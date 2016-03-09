@@ -3,11 +3,8 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:fresco="http://schemas.android.com/apk/res-auto"
     xmlns:textInputLayout="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:fitsSystemWindows="true"
-    tools:context=".activities.NewPublicChatActivity">
+    android:layout_height="match_parent">
 
     <include layout="@layout/partial_toolbar" />
 
@@ -30,6 +27,7 @@
                 android:layout_gravity="center_horizontal|top"
                 android:clickable="true"
                 fresco:actualImageScaleType="fitXY"
+                fresco:fadeDuration="@android:integer/config_shortAnimTime"
                 fresco:placeholderImage="@drawable/ic_camera_alt_red_48dp"
                 fresco:roundAsCircle="true" />
 

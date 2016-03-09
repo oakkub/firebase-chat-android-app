@@ -10,6 +10,7 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.util.ArrayMap;
+import android.util.Log;
 import android.widget.Toast;
 
 import com.facebook.common.executors.CallerThreadExecutor;
@@ -33,8 +34,8 @@ import com.oakkub.chat.models.Message;
 import com.oakkub.chat.models.Room;
 import com.oakkub.chat.models.UserInfo;
 import com.oakkub.chat.models.eventbus.EventBusNewPrivateRoomMessage;
-import com.oakkub.chat.utils.ArrayMapUtil;
 import com.oakkub.chat.utils.Base64Util;
+import com.oakkub.chat.utils.FirebaseMapUtil;
 import com.oakkub.chat.utils.FirebaseUtil;
 
 import javax.inject.Inject;
@@ -65,8 +66,6 @@ public class NewMessagesFragment extends BaseFragment {
     @Inject
     @Named(FirebaseUtil.NAMED_USER_INFO)
     Lazy<Firebase> userFirebase;
-
-    private String myId;
 
     private boolean isPrivateRoom;
 
@@ -118,16 +117,11 @@ public class NewMessagesFragment extends BaseFragment {
         super.onDestroy();
     }
 
-    public void setRoomData(String myId) {
-        this.myId = myId;
-    }
-
-    public void createPrivateRoom(String myId, UserInfo friendInfo) {
-        setRoomData(myId);
+    public void createPrivateRoom(UserInfo friendInfo) {
         isPrivateRoom = true;
 
         UserInfo myInfo = new UserInfo();
-        myInfo.setKey(myId);
+        myInfo.setKey(uid);
 
         membersInfo = new UserInfo[] {
                 friendInfo, myInfo
@@ -142,7 +136,7 @@ public class NewMessagesFragment extends BaseFragment {
     }
 
     public void onPrivateRoomCreated(Room room) {
-        room.setLatestMessageUser(myId);
+        room.setLatestMessageUser(uid);
 
         // if message not null and message time > 0
         // means we already chat with this friend (room is already created)
@@ -153,8 +147,7 @@ public class NewMessagesFragment extends BaseFragment {
         }
     }
 
-    public void createGroupRoom(String myId, UserInfo[] membersInfo) {
-        setRoomData(myId);
+    public void createGroupRoom(UserInfo[] membersInfo) {
         this.isPrivateRoom = false;
         this.membersInfo = membersInfo;
 
@@ -166,11 +159,12 @@ public class NewMessagesFragment extends BaseFragment {
     }
 
     private void fetchMyInfoGroupRoom() {
-        userFirebase.get().child(myId).keepSynced(true);
-        userFirebase.get().child(myId)
-                .addListenerForSingleValueEvent(new ValueEventListener() {
+        userFirebase.get().child(uid).keepSynced(true);
+        userFirebase.get().child(uid)
+                .addValueEventListener(new ValueEventListener() {
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
+                        dataSnapshot.getRef().removeEventListener(this);
                         myInfoGroupRoomFetched(dataSnapshot);
                     }
 
@@ -192,6 +186,7 @@ public class NewMessagesFragment extends BaseFragment {
     private void setImageURLToDataUri() {
         for (UserInfo friendInfo : membersInfo) {
             friendInfo.setProfileImageURL(Base64Util.toDataUri(friendInfo.getProfileImageURL()));
+            Log.d("123456789", "setImageURLToDataUri: " + friendInfo.getProfileImageURL().substring(0, 30));
         }
     }
 
@@ -219,7 +214,6 @@ public class NewMessagesFragment extends BaseFragment {
 
                 @Override
                 protected void onFailureImpl(DataSource<CloseableReference<CloseableImage>> dataSource) {
-
                 }
             }, CallerThreadExecutor.getInstance());
         }
@@ -250,23 +244,23 @@ public class NewMessagesFragment extends BaseFragment {
     private void mapRoomData(Room room) {
         int size = 8 + (isPrivateRoom ? 2 : membersInfo.length * 3);
         ArrayMap<String, Object> roomMap = new ArrayMap<>(size);
-        ArrayMapUtil.mapRoom(roomMap, room, room.getRoomId());
+        FirebaseMapUtil.mapRoom(roomMap, room, room.getRoomId());
 
         // group room will send message that tell us when this room is created
         if (!isPrivateRoom) {
             String messageKey = messageFirebase.get().child(room.getRoomId()).push().getKey();
             Message messageRoom = new Message(room.getRoomId(), room.getLatestMessage(),
                     FirebaseUtil.SYSTEM, room.getCreated());
-            ArrayMapUtil.mapMessage(roomMap, messageKey, room.getRoomId(), messageRoom);
-            ArrayMapUtil.mapUsersGroupRoom(roomMap, membersInfo, room.getRoomId(), room.getCreated());
+            FirebaseMapUtil.mapMessage(roomMap, messageKey, room.getRoomId(), messageRoom);
+            FirebaseMapUtil.mapUsersGroupRoom(roomMap, membersInfo, room.getRoomId(), room.getCreated());
 
             for (UserInfo userInfo : membersInfo) {
-                ArrayMapUtil.mapUserPreservedMemberRoom(roomMap, userInfo.getKey(), room.getRoomId(), room.getCreated());
+                FirebaseMapUtil.mapUserPreservedMemberRoom(roomMap, userInfo.getKey(), room.getRoomId(), room.getCreated());
             }
         }
 
-        ArrayMapUtil.mapUserRoom(
-                roomMap, myId, room.getRoomId(), room.getCreated());
+        FirebaseMapUtil.mapUserRoom(
+                roomMap, uid, room.getRoomId(), room.getCreated());
 
         insertRoom(roomMap, room);
     }

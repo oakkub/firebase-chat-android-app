@@ -9,8 +9,6 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.util.ArrayList;
-
 /**
  * Created by OaKKuB on 11/1/2015.
  */
@@ -25,19 +23,27 @@ public class GCMUtil {
     public static final String KEY_MESSAGE = "message";
     public static final String PREFS_SEND_TOKEN_TO_SERVER = "sendTokenToServer";
 
+    public static final String NOTIFY_TYPE = "notifyType";
+    public static final String CHAT_NEW_MESSAGE_NOTIFY_TYPE = "notify:chatNewMessage";
+    public static final String FRIEND_REQUEST_NOTIFY_TYPE = "notify:friendRequest";
+    public static final String FRIEND_ACCEPTED_NOTIFY_TYPE = "notify:friendAccepted";
+
     public static final String START_TOPICS = "/topics/";
     public static final String KEY_TO = "to";
     public static final String KEY_DATA = "data";
     public static final String KEY_PRIORITY = "priority";
     public static final String KEY_REGISTRATION_IDS = "registration_ids";
+    public static final String KEY_COLLAPSE_KEY = "collapse_key";
+
+    public static final String MESSAGE_COLLAPSE_KEY = "message";
 
     public static final String DATA_TITLE = "title";
     public static final String DATA_MESSAGE = "message";
     public static final String DATA_SENT_BY = "sentBy";
-    public static final String DATA_PRIVATE_ROOM = "isPrivateRoom";
+    public static final String DATA_DISPLAY_NAME = "displayName";
     public static final String DATA_ROOM_ID = "room";
+    public static final String DATA_IMAGE_URI = "imageUri";
     public static final String PROFILE_URL = "profileURL";
-
 
     public static final int REQUEST_CODE_UPDATE_GOOGLE_PLAY = 1000;
 
@@ -47,13 +53,13 @@ public class GCMUtil {
         try {
             gcmBodyJson.put(KEY_TO, token);
         } catch (JSONException e) {
-            Log.e(TAG, "initGCMBody: " + e.getMessage() );
+            Log.e(TAG, "initGCMBody: " + e.getMessage());
         }
 
         return gcmBodyJson;
     }
 
-    public static JSONObject initGroupGCMBody(ArrayList<String> instanceIds) {
+    /*public static JSONObject initGroupGCMBody(ArrayList<String> instanceIds) {
         JSONObject gcmBodyJson = new JSONObject();
 
         try {
@@ -63,11 +69,11 @@ public class GCMUtil {
             }
             gcmBodyJson.put(KEY_REGISTRATION_IDS, instanceIdsArray);
         } catch (JSONException e) {
-            Log.e(TAG, "initGroupGCMBody: " + e.getMessage() );
+            Log.e(TAG, "initGroupGCMBody: " + e.getMessage());
         }
 
         return gcmBodyJson;
-    }
+    }*/
 
     public static JSONObject initGroupGCMBody(SparseStringArray instanceIds) {
         JSONObject gcmBodyJson = new JSONObject();
@@ -79,31 +85,32 @@ public class GCMUtil {
             }
             gcmBodyJson.put(KEY_REGISTRATION_IDS, instanceIdsArray);
         } catch (JSONException e) {
-            Log.e(TAG, "initGroupGCMBody: " + e.getMessage() );
+            Log.e(TAG, "initGroupGCMBody: " + e.getMessage());
         }
 
         return gcmBodyJson;
     }
 
-    public static void putGCMData(JSONObject jsonBody, ArrayMap<String, String> dataMap) {
-        JSONObject dataJSON = new JSONObject();
-
+    public static void putData(JSONObject jsonBody, ArrayMap<String, String> dataMap) {
         try {
+
+            JSONObject dataJSON = new JSONObject();
             for (int i = 0, size = dataMap.size(); i < size; i++) {
                 dataJSON.put(dataMap.keyAt(i), dataMap.valueAt(i));
             }
+
             jsonBody.put(KEY_DATA, dataJSON);
         } catch (JSONException e) {
-            Log.e(TAG, "putGCMData: " + e.getMessage() );
+            Log.e(TAG, "putData: " + e.getMessage());
         }
 
     }
 
-    public static void putJsonValue(JSONObject json, String key, String value) {
+    public static void putValue(JSONObject json, String key, String value) {
         try {
             json.put(key, value);
         } catch (JSONException e) {
-            Log.e(TAG, "putJsonValue: " + e.getMessage() );
+            Log.e(TAG, "putValue: " + e.getMessage());
         }
     }
 }

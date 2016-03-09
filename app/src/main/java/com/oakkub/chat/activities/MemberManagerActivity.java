@@ -24,7 +24,6 @@ import com.oakkub.chat.models.UserInfo;
 import com.oakkub.chat.views.adapters.FriendSelectableAdapter;
 import com.oakkub.chat.views.adapters.UserImageAdapter;
 import com.oakkub.chat.views.adapters.presenter.OnAdapterItemClick;
-import com.oakkub.chat.views.dialogs.ProgressDialogFragment;
 import com.oakkub.chat.views.widgets.EmptyTextProgressBar;
 import com.oakkub.chat.views.widgets.MyToast;
 
@@ -82,9 +81,6 @@ public class MemberManagerActivity extends BaseActivity implements OnAdapterItem
     int totalSelectedItems;
 
     @State
-    String myId;
-
-    @State
     String roomId;
 
     @State
@@ -102,7 +98,6 @@ public class MemberManagerActivity extends BaseActivity implements OnAdapterItem
     @State
     String[] totalFriendsKeySelected;
 
-    private ProgressDialogFragment progressDialog;
     private RemoveAdminFragment removeAdminFragment;
     private RemoveMemberFragment removeMemberFragment;
     private InviteMemberFragment inviteMemberFragment;
@@ -110,8 +105,8 @@ public class MemberManagerActivity extends BaseActivity implements OnAdapterItem
     private FriendSelectableAdapter friendSelectableAdapter;
     private UserImageAdapter userImageAdapter;
 
-    public static Intent getStartIntent(Context context, String myId, String roomId, String action) {
-        Intent intent = BaseActivity.getMyIdStartIntent(context, myId, MemberManagerActivity.class);
+    public static Intent getStartIntent(Context context, String roomId, String action) {
+        Intent intent = new Intent(context, MemberManagerActivity.class);
         intent.setAction(action);
         intent.putExtra(EXTRA_ROOM_ID, roomId);
 
@@ -119,7 +114,7 @@ public class MemberManagerActivity extends BaseActivity implements OnAdapterItem
     }
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_selectable_list);
         ButterKnife.bind(this);
@@ -179,7 +174,6 @@ public class MemberManagerActivity extends BaseActivity implements OnAdapterItem
         if (savedInstanceState != null) return;
 
         Intent intent = getIntent();
-        myId = intent.getStringExtra(EXTRA_MY_ID);
         roomId = intent.getStringExtra(EXTRA_ROOM_ID);
         action = intent.getAction();
 
@@ -231,39 +225,27 @@ public class MemberManagerActivity extends BaseActivity implements OnAdapterItem
     private void addFragments() {
         switch (action) {
             case ACTION_MEMBER_INVITE:
-                inviteMemberFragment = (InviteMemberFragment) findFragmentByTag(INVITE_MEMBER_FRAG_TAG);
-                if (inviteMemberFragment == null) {
-                    inviteMemberFragment = (InviteMemberFragment) addFragmentByTag(InviteMemberFragment.newInstance(
-                            myId, roomId), INVITE_MEMBER_FRAG_TAG);
-                }
+                inviteMemberFragment = (InviteMemberFragment)
+                        findOrAddFragmentByTag(getSupportFragmentManager(),
+                            InviteMemberFragment.newInstance(roomId), INVITE_MEMBER_FRAG_TAG);
                 break;
             case ACTION_MEMBER_REMOVE:
-                removeMemberFragment = (RemoveMemberFragment) findFragmentByTag(REMOVE_MEMBER_FRAG_TAG);
-                if (removeMemberFragment == null) {
-                    removeMemberFragment = (RemoveMemberFragment) addFragmentByTag(RemoveMemberFragment.newInstance(
-                            myId, roomId), REMOVE_MEMBER_FRAG_TAG);
-                }
+                removeMemberFragment = (RemoveMemberFragment)
+                        findOrAddFragmentByTag(getSupportFragmentManager(),
+                            RemoveMemberFragment.newInstance(roomId), REMOVE_MEMBER_FRAG_TAG);
                 break;
             case ACTION_ADMIN_PROMOTE:
-                addAdminFragment = (AddAdminFragment) findFragmentByTag(PROMOTE_ADMIN_FRAG_TAG);
-                if (addAdminFragment == null) {
-                    addAdminFragment = (AddAdminFragment) addFragmentByTag(
-                            AddAdminFragment.newInstance(myId, roomId), PROMOTE_ADMIN_FRAG_TAG);
-                }
+                addAdminFragment = (AddAdminFragment)
+                        findOrAddFragmentByTag(getSupportFragmentManager(),
+                            AddAdminFragment.newInstance(roomId), PROMOTE_ADMIN_FRAG_TAG);
                 break;
             case ACTION_ADMIN_DEMOTE:
-                removeAdminFragment = (RemoveAdminFragment) findFragmentByTag(REMOVE_ADMIN_FRAG_TAG);
-                if (removeAdminFragment == null) {
-                    removeAdminFragment = (RemoveAdminFragment) addFragmentByTag(
-                            RemoveAdminFragment.newInstance(myId, roomId), REMOVE_ADMIN_FRAG_TAG);
-                }
+                removeAdminFragment = (RemoveAdminFragment)
+                        findOrAddFragmentByTag(getSupportFragmentManager(),
+                            RemoveAdminFragment.newInstance(roomId), REMOVE_ADMIN_FRAG_TAG);
                 break;
         }
 
-        progressDialog = (ProgressDialogFragment) findFragmentByTag(PROGRESS_DIALOG_TAG);
-        if (progressDialog == null) {
-            progressDialog = ProgressDialogFragment.newInstance();
-        }
     }
 
     private void shouldShowSelectedImageList() {
@@ -368,7 +350,7 @@ public class MemberManagerActivity extends BaseActivity implements OnAdapterItem
                 removeAdminFragment.remove(totalFriendToBeInvited);
                 break;
         }
-        progressDialog.show(getSupportFragmentManager(), PROGRESS_DIALOG_TAG);
+        showProgressDialog();
     }
 
     private void addUserInfo(UserInfo userInfo) {
@@ -380,7 +362,7 @@ public class MemberManagerActivity extends BaseActivity implements OnAdapterItem
 
     private void showEmptyMessage() {
         if (friendSelectableAdapter.getItemCount() == 0) {
-            progressBarLayout.setErrorText(getErrorMessage());
+            progressBarLayout.setEmptyText(getErrorMessage());
             progressBarLayout.showEmptyText();
         } else {
             progressBarLayout.setVisibility(View.GONE);
@@ -433,7 +415,7 @@ public class MemberManagerActivity extends BaseActivity implements OnAdapterItem
 
     @Override
     public void onInvitingSuccess() {
-        progressDialog.dismiss();
+        hideProgressDialog();
 
         setResult(RESULT_OK, getMemberResultIntent());
         fadeOutFinish();
@@ -441,7 +423,7 @@ public class MemberManagerActivity extends BaseActivity implements OnAdapterItem
 
     @Override
     public void onInvitingFailed() {
-        progressDialog.dismiss();
+        hideProgressDialog();
     }
 
     @Override
@@ -467,7 +449,7 @@ public class MemberManagerActivity extends BaseActivity implements OnAdapterItem
 
     @Override
     public void onRemovableSuccess() {
-        progressDialog.dismiss();
+        hideProgressDialog();
 
         setResult(RESULT_OK, getMemberResultIntent());
         fadeOutFinish();
@@ -475,7 +457,7 @@ public class MemberManagerActivity extends BaseActivity implements OnAdapterItem
 
     @Override
     public void onRemovableFailed() {
-        progressDialog.dismiss();
+        hideProgressDialog();
     }
 
     @Override
@@ -496,7 +478,7 @@ public class MemberManagerActivity extends BaseActivity implements OnAdapterItem
 
     @Override
     public void onPromoteSuccess() {
-        progressDialog.dismiss();
+        hideProgressDialog();
 
         setResult(RESULT_OK, getMemberResultIntent());
         fadeOutFinish();
@@ -504,7 +486,7 @@ public class MemberManagerActivity extends BaseActivity implements OnAdapterItem
 
     @Override
     public void onPromoteFailed() {
-        progressDialog.dismiss();
+        hideProgressDialog();
     }
 
     @Override
@@ -520,7 +502,7 @@ public class MemberManagerActivity extends BaseActivity implements OnAdapterItem
 
     @Override
     public void onRemovableAdminSuccess() {
-        progressDialog.dismiss();
+        hideProgressDialog();
 
         setResult(RESULT_OK, getMemberResultIntent());
         fadeOutFinish();
@@ -533,7 +515,7 @@ public class MemberManagerActivity extends BaseActivity implements OnAdapterItem
 
     @Override
     public void onRemovableAdminFailed() {
-        progressDialog.dismiss();
+        hideProgressDialog();
     }
 
     @Override
@@ -556,7 +538,7 @@ public class MemberManagerActivity extends BaseActivity implements OnAdapterItem
         ArrayList<UserInfo> userInfoList = new ArrayList<>(totalFriendsKeySelected.length);
 
         for (String keySelected : totalFriendsKeySelected) {
-            int keyPosition = friendSelectableAdapter.findById(keySelected);
+            int keyPosition = friendSelectableAdapter.findByKey(keySelected);
             if (keyPosition != -1) {
                 userInfoList.add(friendSelectableAdapter.getItem(keyPosition));
             }

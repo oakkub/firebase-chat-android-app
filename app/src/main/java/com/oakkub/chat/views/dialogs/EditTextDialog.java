@@ -18,6 +18,8 @@ import com.oakkub.chat.R;
  */
 public class EditTextDialog extends DialogFragment implements DialogInterface.OnClickListener {
 
+    private static final String TAG = EditTextDialog.class.getSimpleName();
+
     private static final String ARGS_TITLE = "args:title";
     private static final String ARGS_BUTTON_OK = "args:buttonOk";
     private static final String ARGS_BUTTON_CANCEL = "args:buttonCancel";
@@ -25,7 +27,7 @@ public class EditTextDialog extends DialogFragment implements DialogInterface.On
     private static final String ARGS_HINT = "args:hint";
 
     private EditText editText;
-    private EditTextDialogListener listener;
+    private EditTextDialogListener editTextDialogListener;
 
     public static EditTextDialog newInstance(String title,
                                              String text,
@@ -50,10 +52,23 @@ public class EditTextDialog extends DialogFragment implements DialogInterface.On
         super.onAttach(activity);
 
         try {
-            listener = (EditTextDialogListener) getActivity();
+            if (getParentFragment() != null) {
+                editTextDialogListener = (EditTextDialogListener) getParentFragment();
+            } else if (getTargetFragment() != null) {
+                editTextDialogListener = (EditTextDialogListener) getTargetFragment();
+            } else {
+                editTextDialogListener = (EditTextDialogListener) getActivity();
+            }
         } catch (ClassCastException e) {
             throw new ClassCastException("You need to implement EditTextDialogListener.");
         }
+    }
+
+    @Override
+    public void onDetach() {
+        super.onDetach();
+
+        editTextDialogListener = null;
     }
 
     @NonNull
@@ -75,7 +90,6 @@ public class EditTextDialog extends DialogFragment implements DialogInterface.On
                 .setPositiveButton(buttonOk, this)
                 .setNegativeButton(buttonCancel, this);
 
-
         return builder.create();
     }
 
@@ -93,11 +107,11 @@ public class EditTextDialog extends DialogFragment implements DialogInterface.On
     @SuppressWarnings("ResourceType")
     private void initEditText(Bundle savedInstanceState, String text, String hint) {
         editText = new EditText(getActivity());
-        editText.setId(2);
-        editText.setHint(hint);
         if (savedInstanceState == null) {
             editText.setText(text);
         }
+        editText.setId(2);
+        editText.setHint(hint);
 
         ViewGroup.LayoutParams ediTextLayoutParams = new ViewGroup.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -110,7 +124,7 @@ public class EditTextDialog extends DialogFragment implements DialogInterface.On
 
         switch (which) {
             case DialogInterface.BUTTON_POSITIVE:
-                listener.onEditTextDialogClick(editText.getText().toString().trim());
+                editTextDialogListener.onEditTextDialogClick(editText.getText().toString().trim());
                 break;
         }
     }

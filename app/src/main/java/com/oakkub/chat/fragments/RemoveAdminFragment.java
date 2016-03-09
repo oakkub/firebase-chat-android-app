@@ -16,7 +16,7 @@ import com.oakkub.chat.R;
 import com.oakkub.chat.managers.AppController;
 import com.oakkub.chat.models.Message;
 import com.oakkub.chat.models.UserInfo;
-import com.oakkub.chat.utils.ArrayMapUtil;
+import com.oakkub.chat.utils.FirebaseMapUtil;
 import com.oakkub.chat.utils.FirebaseUtil;
 import com.oakkub.chat.utils.MessageUtil;
 import com.oakkub.chat.utils.TextUtil;
@@ -55,7 +55,6 @@ public class RemoveAdminFragment extends BaseFragment {
     @Named(FirebaseUtil.NAMED_MESSAGES_LIST)
     Lazy<Firebase> messageFirebase;
 
-    private String myId;
     private String roomId;
 
     private int totalRemovableAdmins;
@@ -70,9 +69,8 @@ public class RemoveAdminFragment extends BaseFragment {
 
     private OnRemoveAdminListener removingMemberListener;
 
-    public static RemoveAdminFragment newInstance(String myId, String roomId) {
+    public static RemoveAdminFragment newInstance(String roomId) {
         Bundle args = new Bundle();
-        args.putString(ARGS_MY_ID, myId);
         args.putString(ARGS_ROOM_ID, roomId);
 
         RemoveAdminFragment fragment = new RemoveAdminFragment();
@@ -111,8 +109,6 @@ public class RemoveAdminFragment extends BaseFragment {
 
     private void getDataIntent() {
         Bundle args = getArguments();
-
-        myId = args.getString(ARGS_MY_ID);
         roomId = args.getString(ARGS_ROOM_ID);
     }
 
@@ -165,7 +161,7 @@ public class RemoveAdminFragment extends BaseFragment {
                 for (DataSnapshot children : dataSnapshot.getChildren()) {
                     String removableFriendKey = children.getKey();
 
-                    if (removableAdminKeyList.get(removableFriendKey.hashCode()) == null && !removableFriendKey.equals(myId)) {
+                    if (removableAdminKeyList.get(removableFriendKey.hashCode()) == null && !removableFriendKey.equals(uid)) {
                         removableAdminKeyList.put(removableFriendKey.hashCode(), removableFriendKey);
                         fetchAddableFriendInfo(removableFriendKey);
                         fetchCount++;
@@ -259,21 +255,21 @@ public class RemoveAdminFragment extends BaseFragment {
 
         String messageKey = messageFirebase.get().child(roomId).push().getKey();
         Message removedMessage = new Message(roomId, "", FirebaseUtil.SYSTEM, when);
-        removedMessage.setMessage(myId + "/" + TextUtil.implodeArray("/", totalFriendKeyToBeInvited));
+        removedMessage.setMessage(uid + "/" + TextUtil.implodeArray("/", totalFriendKeyToBeInvited));
         removedMessage.setLanguageRes(MessageUtil.DEMOTED_ADMIN);
 
-        ArrayMapUtil.mapMessage(map, messageKey, roomId, removedMessage);
+        FirebaseMapUtil.mapMessage(map, messageKey, roomId, removedMessage);
 
         Message roomDemotedMessage = new Message(roomId, "", FirebaseUtil.SYSTEM, when);
         roomDemotedMessage.setMessage(prefs.getString(UserInfoUtil.DISPLAY_NAME, "").split(" ")[0] +
                 MessageUtil.getStringResTwoParam(R.string.n_demoted_n_from_admin_to_member,
-                        removedMessage, removableAdminInfoList, myId));
+                        removedMessage, removableAdminInfoList, uid));
 
-        ArrayMapUtil.mapRoomMessage(map, roomDemotedMessage, roomId);
-        ArrayMapUtil.mapUserRoom(map, myId, roomId, when);
+        FirebaseMapUtil.mapRoomMessage(map, roomDemotedMessage, roomId);
+        FirebaseMapUtil.mapUserRoom(map, uid, roomId, when);
         for (String friendKey : totalFriendKeyToBeInvited) {
-            ArrayMapUtil.mapUserRoomAdminMember(map, friendKey, roomId, null);
-            ArrayMapUtil.mapUserRoom(map, friendKey, roomId, when);
+            FirebaseMapUtil.mapUserRoomAdminMember(map, friendKey, roomId, null);
+            FirebaseMapUtil.mapUserRoom(map, friendKey, roomId, when);
         }
     }
 

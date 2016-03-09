@@ -54,4 +54,16 @@ public class MyTextView extends TextView {
         setVisibility(savedState.bundle.getInt("visibility"));
     }
 
+    public void gone() {
+        setVisibility(GONE);
+    }
+
+    public void invisible() {
+        setVisibility(INVISIBLE);
+    }
+
+    public void visible() {
+        setVisibility(VISIBLE);
+    }
+
 }

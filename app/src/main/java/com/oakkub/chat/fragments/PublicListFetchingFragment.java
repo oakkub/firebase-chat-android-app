@@ -50,10 +50,15 @@ public class PublicListFetchingFragment extends BaseFragment {
     public void fetchPublicList(String myId) {
         userPublicFirebase.get().child(myId).keepSynced(true);
         userPublicFirebase.get().child(myId)
-                .addListenerForSingleValueEvent(new ValueEventListener() {
+                .addValueEventListener(new ValueEventListener() {
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
-                        if (!dataSnapshot.exists()) return;
+                        dataSnapshot.getRef().removeEventListener(this);
+                        if (!dataSnapshot.exists()) {
+                            sendPublicRoom();
+                            return;
+                        }
+
                         totalRoom = (int) dataSnapshot.getChildrenCount();
                         publicListFetching(dataSnapshot);
                     }
@@ -100,7 +105,11 @@ public class PublicListFetchingFragment extends BaseFragment {
         ++totalRoomFetched;
 
         if (totalRoomFetched == totalRoom) {
-            EventBus.getDefault().post(new EventBusPublicRoom(roomInfoList));
+            sendPublicRoom();
         }
+    }
+
+    private void sendPublicRoom() {
+        EventBus.getDefault().post(new EventBusPublicRoom(roomInfoList));
     }
 }

@@ -2,8 +2,6 @@ package com.oakkub.chat.activities;
 
 import android.content.Intent;
 import android.content.res.Resources;
-import android.content.res.TypedArray;
-import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.support.design.widget.CoordinatorLayout;
@@ -55,9 +53,6 @@ public class FindPublicChatActivity extends BaseActivity implements NavigationVi
     private static final String STATE_SELECTED_ROOM = "state:selectedRoom";
     private static final String PROGRESS_DIALOG_TAG = "tag:progressDialog";
 
-    @State
-    String myId;
-
     @Bind(R.id.find_public_drawer_layout)
     DrawerLayout drawerLayout;
 
@@ -107,19 +102,11 @@ public class FindPublicChatActivity extends BaseActivity implements NavigationVi
     private PublicChatSearchedResultAdapter publicChatAdapter;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.find_public_chat_layout);
         ButterKnife.bind(this);
-        getData(savedInstanceState);
         initInstances(savedInstanceState);
-    }
-
-    private void getData(Bundle savedInstanceState) {
-        if (savedInstanceState != null) return;
-
-        Intent intent = getIntent();
-        myId = intent.getStringExtra(EXTRA_MY_ID);
     }
 
     private void initInstances(Bundle savedInstanceState) {
@@ -189,7 +176,7 @@ public class FindPublicChatActivity extends BaseActivity implements NavigationVi
         publicChatSearchFragment = (PublicChatSearchFragment) findFragmentByTag(FIND_PUBLIC_CHAT_TAG);
         if (publicChatSearchFragment == null) {
             publicChatSearchFragment = (PublicChatSearchFragment)
-                    addFragmentByTag(PublicChatSearchFragment.newInstance(myId),
+                    addFragmentByTag(PublicChatSearchFragment.newInstance(uid),
                     FIND_PUBLIC_CHAT_TAG);
         }
 
@@ -225,16 +212,6 @@ public class FindPublicChatActivity extends BaseActivity implements NavigationVi
 
         return textView;
     }*/
-
-    private Drawable getSelectableItemDrawable() {
-        int[] attrs = new int[] {R.attr.selectableItemBackground};
-
-        TypedArray typedArray = obtainStyledAttributes(attrs);
-        Drawable selectableDrawable = typedArray.getDrawable(0);
-        typedArray.recycle();
-
-        return selectableDrawable;
-    }
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
@@ -379,7 +356,7 @@ public class FindPublicChatActivity extends BaseActivity implements NavigationVi
     private void intentToRoomInfo(boolean isMember) {
         progressDialog.dismiss();
 
-        Intent roomInfoIntent = ChatRoomActivity.getIntentPublicRoom(this, selectedRoom, myId, isMember);
+        Intent roomInfoIntent = ChatRoomActivity.getIntentPublicRoom(this, selectedRoom, isMember);
         startActivity(roomInfoIntent);
     }
 
@@ -423,7 +400,7 @@ public class FindPublicChatActivity extends BaseActivity implements NavigationVi
     public void onAdapterClick(View itemView, int position) {
         selectedRoom = publicChatAdapter.getItem(position);
         isNodeExistsFirebaseFragment.fetchNode(TextUtil.getPath(FirebaseUtil.KEY_ROOMS,
-                FirebaseUtil.KEY_ROOMS_MEMBERS, selectedRoom.getRoomId(), myId));
+                FirebaseUtil.KEY_ROOMS_MEMBERS, selectedRoom.getRoomId(), uid));
 
         progressDialog.show(getSupportFragmentManager(), PROGRESS_DIALOG_TAG);
     }

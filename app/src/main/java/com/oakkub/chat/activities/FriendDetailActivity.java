@@ -24,7 +24,8 @@ import butterknife.ButterKnife;
 import butterknife.OnClick;
 import icepick.State;
 
-public class FriendDetailActivity extends BaseActivity implements CreatePrivateRoomFragment.OnPrivateRoomRequestListener {
+public class FriendDetailActivity extends BaseActivity implements 
+        CreatePrivateRoomFragment.OnPrivateRoomRequestListener {
 
     public static final String EXTRA_INFO = "FriendDetailActivity:friendInfo";
     public static final String TRANSITION_PROFILE_IMAGE = "transition:profileImage";
@@ -47,15 +48,12 @@ public class FriendDetailActivity extends BaseActivity implements CreatePrivateR
     boolean isSameAsMe;
 
     private CreatePrivateRoomFragment createPrivateRoomFragment;
-
     private UserInfo friendInfo;
-    private String myId;
 
-    public static void launch(AppCompatActivity activity, View imageView, UserInfo friendInfo, String myId) {
+    public static void launch(AppCompatActivity activity, View imageView, UserInfo friendInfo) {
 //        final String imageViewTransitionName = ViewCompat.getTransitionName(imageView);
 
         Intent intent = new Intent(activity, FriendDetailActivity.class);
-        intent.putExtra(EXTRA_MY_ID, myId);
         intent.putExtra(EXTRA_INFO, Parcels.wrap(friendInfo));
 //        intent.putExtra(TRANSITION_PROFILE_IMAGE, imageViewTransitionName);
 
@@ -70,7 +68,7 @@ public class FriendDetailActivity extends BaseActivity implements CreatePrivateR
     }
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         AppController.getComponent(this).inject(this);
@@ -79,9 +77,8 @@ public class FriendDetailActivity extends BaseActivity implements CreatePrivateR
         ButterKnife.bind(this);
 
         Intent intent = getIntent();
-        myId = intent.getStringExtra(EXTRA_MY_ID);
         friendInfo = Parcels.unwrap(getIntent().getParcelableExtra(EXTRA_INFO));
-        isSameAsMe = friendInfo.getKey().equals(myId);
+        isSameAsMe = friendInfo.getKey().equals(uid);
 
         setTransitionName();
         profileImage.setImageURI(Uri.parse(friendInfo.getProfileImageURL()));
@@ -97,8 +94,7 @@ public class FriendDetailActivity extends BaseActivity implements CreatePrivateR
         createPrivateRoomFragment = (CreatePrivateRoomFragment) findFragmentByTag(TAG_CREATE_PRIVATE_ROOM);
         if (createPrivateRoomFragment == null) {
             createPrivateRoomFragment = (CreatePrivateRoomFragment)
-                    addFragmentByTag(CreatePrivateRoomFragment.newInstance(
-                            friendInfo, myId), TAG_CREATE_PRIVATE_ROOM);
+                    addFragmentByTag(new CreatePrivateRoomFragment(), TAG_CREATE_PRIVATE_ROOM);
         }
     }
 
@@ -110,7 +106,7 @@ public class FriendDetailActivity extends BaseActivity implements CreatePrivateR
     public void onChatClick() {
         if (isSameAsMe) return;
 
-        String roomKey = RoomUtil.getPrivateRoomKey(this, myId, friendInfo.getKey());
+        String roomKey = RoomUtil.getPrivateRoomKey(this, uid, friendInfo.getKey());
         createPrivateRoomFragment.createPrivateRoom(roomKey);
     }
 
@@ -119,7 +115,7 @@ public class FriendDetailActivity extends BaseActivity implements CreatePrivateR
         room.setName(friendInfo.getDisplayName());
         room.setImagePath(friendInfo.getProfileImageURL());
 
-        Intent privateRoomIntent = ChatRoomActivity.getIntentPrivateRoom(this, room, myId);
+        Intent privateRoomIntent = ChatRoomActivity.getIntentPrivateRoom(this, room, uid);
         startActivity(privateRoomIntent);
         supportFinishAfterTransition();
     }
