@@ -46,6 +46,7 @@ public class FetchKeyThenUserInfo extends MyLoader<List<UserInfo>> {
         super(context);
         AppController.getComponent(getContext()).inject(this);
         uid = prefs.getString(PrefsUtil.PREF_UID, null);
+
         this.keyPath = keyPath;
     }
 
