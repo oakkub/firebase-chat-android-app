@@ -73,7 +73,7 @@ public class BitmapUtil {
         int inSampleSize = 1;
         int dividedBy = isThumbnail ? 2 : 1;
 
-        if (rawWidth >= LIMIT_WIDTH / dividedBy || rawHeight >= LIMIT_HEIGHT / dividedBy) {
+        if (rawWidth >= (LIMIT_WIDTH / dividedBy) || rawHeight >= (LIMIT_HEIGHT / dividedBy)) {
 
             // Calculate the largest inSampleSize value that is a power of 2 and keeps both
             // height and width larger than the requested height and width.

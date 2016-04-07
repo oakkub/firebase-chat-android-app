@@ -11,13 +11,14 @@ import com.oakkub.chat.models.Room;
 import com.oakkub.chat.models.eventbus.EventBusGroupRoom;
 import com.oakkub.chat.utils.FirebaseUtil;
 
+import org.greenrobot.eventbus.EventBus;
+
 import java.util.ArrayList;
 
 import javax.inject.Inject;
 import javax.inject.Named;
 
 import dagger.Lazy;
-import de.greenrobot.event.EventBus;
 
 /**
  * Created by OaKKuB on 1/5/2016.
@@ -72,14 +73,21 @@ public class GroupListFetchingFragment extends BaseFragment {
     }
 
     private void groupRoomFetching(DataSnapshot dataSnapshot) {
+        boolean hasNewData = false;
+
         for (DataSnapshot children : dataSnapshot.getChildren()) {
 
             String groupRoomKey = children.getKey();
 
             if (!groupRoomsId.contains(groupRoomKey)) {
+                hasNewData = true;
                 groupRoomsId.add(groupRoomKey);
                 fetchGroupInfo(groupRoomKey);
             }
+        }
+
+        if (!hasNewData) {
+            sendGroupRoom();
         }
     }
 

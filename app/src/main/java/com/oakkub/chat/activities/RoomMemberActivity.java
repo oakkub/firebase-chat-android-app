@@ -300,8 +300,8 @@ public class RoomMemberActivity extends BaseActivity implements RoomMemberFragme
 
     @Override
     public void onAdapterClick(View itemView, int position) {
-        UserInfo memberInfo = memberAdapter.getItem(position);
-        FriendDetailActivity.launch(this, null, memberInfo);
+        /*UserInfo memberInfo = memberAdapter.getItem(position);
+        FriendDetailActivity.launch(this, null, memberInfo, -1);*/
     }
 
     @Override

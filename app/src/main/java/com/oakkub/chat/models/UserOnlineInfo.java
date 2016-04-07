@@ -10,16 +10,19 @@ public class UserOnlineInfo {
 
     public UserOnlineInfo() {}
 
-    public UserOnlineInfo(boolean online, long lastOnline) {
-        this.online = online;
-        this.lastOnline = lastOnline;
-    }
-
     public boolean isOnline() {
         return online;
     }
 
     public long getLastOnline() {
         return lastOnline;
+    }
+
+    public void setLastOnline(long lastOnline) {
+        this.lastOnline = lastOnline;
+    }
+
+    public void setOnline(boolean online) {
+        this.online = online;
     }
 }

@@ -40,7 +40,7 @@ public class FirebaseUtil {
     public static final String KEY_USERS_USER_FRIENDS_PENDING_REQUEST = "userFriendsPendingRequest";
     public static final String KEY_USERS_USER_GROUP_ROOMS = "userGroupRooms";
     public static final String KEY_USERS_USER_PUBLIC_ROOMS = "userPublicRooms";
-    public static final String KEY_ONLINE_USER = "onlineUsers";
+    public static final String KEY_USERS_USER_ONLINE = "userOnlines";
     public static final String KEY_TYPING_USER = "typingUsers";
     public static final String KEY_CONNECTION = ".info/connected";
     public static final String KEY_FRIENDS_OF_USER = "friendUsers";

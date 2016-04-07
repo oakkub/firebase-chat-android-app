@@ -2,7 +2,7 @@ package com.oakkub.chat.views.adapters;
 
 import android.os.Bundle;
 
-import com.oakkub.chat.managers.MySparseBooleanArray;
+import com.oakkub.chat.managers.SparseBooleanArrayParcelable;
 
 import icepick.Icepick;
 import icepick.State;
@@ -16,7 +16,7 @@ public abstract class RecyclerViewMultipleSelectionAdapter<I> extends RecyclerVi
     private static final String PACKAGE_NAME = RecyclerViewMultipleSelectionAdapter.class.getPackage().getName();
 
     @State
-    MySparseBooleanArray selectedItems = new MySparseBooleanArray();
+    SparseBooleanArrayParcelable selectedItems = new SparseBooleanArrayParcelable();
 
     @Override
     public void onSaveInstanceState(String key, Bundle outState) {

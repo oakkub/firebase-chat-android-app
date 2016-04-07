@@ -17,11 +17,15 @@ import android.widget.TextView;
 import com.oakkub.chat.R;
 import com.oakkub.chat.fragments.LeavePublicChatFragment;
 import com.oakkub.chat.fragments.RoomAdminAuthenticationFragment;
+import com.oakkub.chat.managers.icepick_bundler.RoomBundler;
 import com.oakkub.chat.models.Room;
+import com.oakkub.chat.models.eventbus.EventBusDeleteGroupRoom;
+import com.oakkub.chat.models.eventbus.EventBusDeletePublicChat;
 import com.oakkub.chat.views.dialogs.AlertDialogFragment;
 import com.oakkub.chat.views.widgets.MyDraweeView;
 import com.oakkub.chat.views.widgets.MyToast;
 
+import org.greenrobot.eventbus.EventBus;
 import org.parceler.Parcels;
 
 import butterknife.Bind;
@@ -85,7 +89,9 @@ public class RoomInfoActivity extends BaseActivity implements RoomAdminAuthentic
     @State
     boolean isSetResult;
 
-    private Room room;
+    @State(RoomBundler.class)
+    Room room;
+
     private LeavePublicChatFragment leavePublicChatFragment;
 
     public static Intent getStartIntent(Context context, Room room, String action, boolean isMember) {
@@ -135,8 +141,8 @@ public class RoomInfoActivity extends BaseActivity implements RoomAdminAuthentic
         if (savedInstanceState == null) {
             action = intent.getAction();
             isMember = intent.getBooleanExtra(EXTRA_IS_MEMBER, false);
+            room = Parcels.unwrap(intent.getParcelableExtra(EXTRA_ROOM));
         }
-        room = Parcels.unwrap(intent.getParcelableExtra(EXTRA_ROOM));
     }
 
     private void setToolbar() {
@@ -162,13 +168,13 @@ public class RoomInfoActivity extends BaseActivity implements RoomAdminAuthentic
 
     private void addFragments() {
         if (action.equals(ACTION_PUBLIC)) {
-                findOrAddFragmentByTag(getSupportFragmentManager(),
-                        RoomAdminAuthenticationFragment.newInstance(uid, room.getRoomId()),
-                        ADMIN_AUTHEN_FRAG_TAG);
+            findOrAddFragmentByTag(getSupportFragmentManager(),
+                    RoomAdminAuthenticationFragment.newInstance(uid, room.getRoomId()),
+                    ADMIN_AUTHEN_FRAG_TAG);
         }
 
         leavePublicChatFragment = (LeavePublicChatFragment) findOrAddFragmentByTag(getSupportFragmentManager(),
-                LeavePublicChatFragment.newInstance(uid, room.getRoomId()),
+                LeavePublicChatFragment.newInstance(room.getRoomId()),
                 LEAVE_PUBLIC_FRAG_TAG);
     }
 
@@ -222,6 +228,8 @@ public class RoomInfoActivity extends BaseActivity implements RoomAdminAuthentic
             room.setImagePath(editRoom.getImagePath());
             profileImage.setMatchedSizeImageURI(Uri.parse(editRoom.getImagePath()));
         }
+
+        room = editRoom;
     }
 
     @Override
@@ -245,7 +253,6 @@ public class RoomInfoActivity extends BaseActivity implements RoomAdminAuthentic
 
                 return true;
         }
-
         return super.onOptionsItemSelected(item);
     }
 
@@ -265,7 +272,7 @@ public class RoomInfoActivity extends BaseActivity implements RoomAdminAuthentic
         if (action.equals(ACTION_PUBLIC) && !isAuthenticated) return;
         if (action.equals(ACTION_PRIVATE)) return;
 
-        Intent editRoomIntent = RoomEditActivity.getStartIntent(this, uid, room);
+        Intent editRoomIntent = RoomEditActivity.getStartIntent(this, room);
         startActivityForResult(editRoomIntent, EDIT_ROOM_REQUEST_CODE);
     }
 
@@ -304,14 +311,21 @@ public class RoomInfoActivity extends BaseActivity implements RoomAdminAuthentic
     }
 
     @Override
-    public void onPublicLeaveSuccess() {
+    public void onLeaveRoomSuccess() {
         hideProgressDialog();
         MyToast.make(getString(R.string.successfullly_leave_n, room.getName())).show();
+
+        if (room.getTag() != null) {
+            EventBus.getDefault().post(new EventBusDeletePublicChat(room));
+        } else {
+            EventBus.getDefault().post(new EventBusDeleteGroupRoom(room));
+        }
+
         startMainIntent();
     }
 
     @Override
-    public void onPublicLeaveFailed() {
+    public void onLeaveRoomFailed() {
         hideProgressDialog();
         MyToast.make(getString(R.string.error_leaving_chat)).show();
     }

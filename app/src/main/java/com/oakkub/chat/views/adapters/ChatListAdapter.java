@@ -19,6 +19,8 @@ import com.oakkub.chat.utils.FirebaseUtil;
 import com.oakkub.chat.utils.FrescoUtil;
 import com.oakkub.chat.utils.MessageUtil;
 import com.oakkub.chat.utils.TimeUtil;
+import com.oakkub.chat.views.adapters.presenter.OnAdapterItemClick;
+import com.oakkub.chat.views.adapters.viewholders.EmptyHolder;
 import com.oakkub.chat.views.adapters.viewholders.FriendImageMessageHolder;
 import com.oakkub.chat.views.adapters.viewholders.FriendMessageHolder;
 import com.oakkub.chat.views.adapters.viewholders.MyImageMessageHolder;
@@ -33,15 +35,18 @@ public class ChatListAdapter extends RecyclerViewAdapter<Message> {
     public static final int MY_IMAGE_TYPE = 3;
     public static final int SYSTEM_MESSAGE_TYPE = 4;
     public static final int SYSTEM_TIME_DIVIDER_TYPE = 5;
+    public static final int UN_SPECIFIED_ERROR_TYPE = 6;
 
     private String uid;
     private boolean isPrivateRoom;
     private SparseArray<UserInfo> friendInfoList;
+    private OnAdapterItemClick onAdapterItemClick;
 
-    public ChatListAdapter(String uid, SparseArray<UserInfo> friendInfoList, boolean isPrivateRoom) {
+    public ChatListAdapter(String uid, SparseArray<UserInfo> friendInfoList, boolean isPrivateRoom, OnAdapterItemClick onAdapterItemClick) {
         this.uid = uid;
         this.friendInfoList = friendInfoList;
         this.isPrivateRoom = isPrivateRoom;
+        this.onAdapterItemClick = onAdapterItemClick;
     }
 
     public void addMember(UserInfo userInfo) {
@@ -57,13 +62,19 @@ public class ChatListAdapter extends RecyclerViewAdapter<Message> {
         Message message = items.get(position);
 
         if (message != null) {
-            if (message.getSentBy().equals(uid)) {
-                if (message.getImagePath() != null) return MY_IMAGE_TYPE;
+            String sentBy = message.getSentBy();
+            String imagePath = message.getImagePath();
+            String messageText = message.getMessage();
+
+            if (sentBy == null) {
+                return UN_SPECIFIED_ERROR_TYPE;
+            } else if (sentBy.equals(FirebaseUtil.SYSTEM)) {
+                return messageText == null ? SYSTEM_TIME_DIVIDER_TYPE : SYSTEM_MESSAGE_TYPE;
+            } else if (sentBy.equals(uid)) {
+                if (imagePath != null) return MY_IMAGE_TYPE;
                 return MY_MESSAGE_TYPE;
-            } else if (message.getSentBy().equals(FirebaseUtil.SYSTEM)) {
-                return message.getMessage() == null ? SYSTEM_TIME_DIVIDER_TYPE : SYSTEM_MESSAGE_TYPE;
-            } else if (!message.getSentBy().equals(uid)) {
-                if (message.getImagePath() != null) return FRIEND_IMAGE_TYPE;
+            } else if (!sentBy.equals(uid)) {
+                if (imagePath != null) return FRIEND_IMAGE_TYPE;
                 else return FRIEND_MESSAGE_TYPE;
             }
         } else {
@@ -80,22 +91,22 @@ public class ChatListAdapter extends RecyclerViewAdapter<Message> {
             case FRIEND_MESSAGE_TYPE:
 
                 View view = inflateLayout(parent, R.layout.friend_message_list);
-                return new FriendMessageHolder(view);
+                return new FriendMessageHolder(view, onAdapterItemClick);
 
             case MY_MESSAGE_TYPE:
 
                 view = inflateLayout(parent, R.layout.my_message_list);
-                return new MyMessageHolder(view);
+                return new MyMessageHolder(view, onAdapterItemClick);
 
             case FRIEND_IMAGE_TYPE:
 
                 view = inflateLayout(parent, R.layout.friend_message_image_list);
-                return new FriendImageMessageHolder(view);
+                return new FriendImageMessageHolder(view, onAdapterItemClick);
 
             case MY_IMAGE_TYPE:
 
                 view = inflateLayout(parent, R.layout.my_message_image_list);
-                return new MyImageMessageHolder(view);
+                return new MyImageMessageHolder(view, onAdapterItemClick);
 
             case SYSTEM_MESSAGE_TYPE:
             case SYSTEM_TIME_DIVIDER_TYPE:
@@ -106,6 +117,10 @@ public class ChatListAdapter extends RecyclerViewAdapter<Message> {
             case LOAD_MORE_TYPE:
 
                 return getProgressBarHolder(parent);
+
+            case UN_SPECIFIED_ERROR_TYPE:
+                view = inflateLayout(parent, R.layout.empty_list);
+                return new EmptyHolder(view);
 
             default:
                 return null;
@@ -129,7 +144,7 @@ public class ChatListAdapter extends RecyclerViewAdapter<Message> {
             onBindMyImageMessageHolder((MyImageMessageHolder) holder, message, position);
         } else if (holder instanceof FriendImageMessageHolder) {
             onBindFriendImageMessageHolder((FriendImageMessageHolder) holder, message);
-        } else {
+        } else if (holder instanceof SystemMessageDivider){
             onBindSystemMessageHolder((SystemMessageDivider) holder, message);
         }
     }

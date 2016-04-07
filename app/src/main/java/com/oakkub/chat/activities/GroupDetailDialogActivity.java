@@ -8,6 +8,7 @@ import android.widget.TextView;
 
 import com.facebook.drawee.view.SimpleDraweeView;
 import com.oakkub.chat.R;
+import com.oakkub.chat.managers.icepick_bundler.RoomBundler;
 import com.oakkub.chat.models.Room;
 
 import org.parceler.Parcels;
@@ -41,7 +42,8 @@ public class GroupDetailDialogActivity extends BaseActivity {
     @State
     boolean isMember;
 
-    private Room room;
+    @State(RoomBundler.class)
+    Room room;
 
     public static Intent getStartIntent(Context context, Room room, boolean isMember, String action) {
         Intent intent = new Intent(context, GroupDetailDialogActivity.class);
@@ -69,8 +71,8 @@ public class GroupDetailDialogActivity extends BaseActivity {
         if (savedInstanceState == null) {
             action = intent.getAction();
             isMember = intent.getBooleanExtra(EXTRA_IS_MEMBER, false);
+            room = Parcels.unwrap(intent.getParcelableExtra(EXTRA_ROOM));
         }
-        room = Parcels.unwrap(intent.getParcelableExtra(EXTRA_ROOM));
     }
 
     @OnClick(R.id.group_detail_chat_button)

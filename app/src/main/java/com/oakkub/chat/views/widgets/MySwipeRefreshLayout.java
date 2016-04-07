@@ -28,7 +28,7 @@ public class MySwipeRefreshLayout extends SwipeRefreshLayout {
     }
 
     private void init() {
-        setColorSchemeResources(R.color.blue);
+        setColorSchemeResources(R.color.colorAccent);
     }
 
     @Override
@@ -54,6 +54,8 @@ public class MySwipeRefreshLayout extends SwipeRefreshLayout {
     }
 
     public void show() {
+        if (isRefreshing()) return;
+
         getViewTreeObserver().addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
             @Override
             public boolean onPreDraw() {

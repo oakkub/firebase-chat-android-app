@@ -51,9 +51,6 @@ public class FacebookLoginActivity extends BaseActivity {
 
     private void setViews() {
 
-        setStatusBarColor(getCompatColor(R.color.darkerBlue));
-        rootView.setBackgroundColor(getCompatColor(R.color.darkBlue));
-
         if (action.equals(ACTION_LOGIN)) {
             loggingTextView.setText(getString(R.string.logging_in_with_facebook));
         } else {

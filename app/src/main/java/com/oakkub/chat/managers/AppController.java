@@ -6,6 +6,7 @@ import android.support.multidex.MultiDex;
 
 import com.crashlytics.android.Crashlytics;
 import com.facebook.FacebookSdk;
+import com.facebook.common.soloader.SoLoaderShim;
 import com.facebook.drawee.backends.pipeline.Fresco;
 import com.firebase.client.Firebase;
 import com.oakkub.chat.modules.AppControllerModule;
@@ -16,6 +17,13 @@ import io.fabric.sdk.android.Fabric;
  * Created by OaKKuB on 10/11/2015.
  */
 public class AppController extends Application {
+
+    static {
+        try {
+            // work around for using resize method image on SimpleDraweeView
+            SoLoaderShim.loadLibrary("webp");
+        } catch(UnsatisfiedLinkError nle) {}
+    }
 
     private AppComponent appComponent;
 
@@ -33,11 +41,9 @@ public class AppController extends Application {
         FacebookSdk.sdkInitialize(this);
         Fresco.initialize(this);
         initFirebase();
-        Firebase.setAndroidContext(this);
         MultiDex.install(this);
 
         registerActivityLifecycleCallbacks(new MyLifeCycleHandler());
-
         initDependencyInjector();
     }
 

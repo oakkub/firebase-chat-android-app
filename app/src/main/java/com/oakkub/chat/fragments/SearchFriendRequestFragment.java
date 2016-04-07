@@ -30,12 +30,14 @@ import com.oakkub.chat.views.widgets.MySwipeRefreshLayout;
 import com.oakkub.chat.views.widgets.MyTextView;
 import com.oakkub.chat.views.widgets.recyclerview.RecyclerViewInfiniteScrollListener;
 
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+
 import java.util.ArrayList;
 import java.util.List;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
-import de.greenrobot.event.EventBus;
 import icepick.State;
 
 /**
@@ -46,10 +48,7 @@ public class SearchFriendRequestFragment extends BaseFragment implements
         SearchView.OnQueryTextListener, AlertDialogFragment.OnAlertDialogListener,
         LoaderManager.LoaderCallbacks<List<UserInfo>> {
 
-    private static final int SEARCH_RESULT_PER_PAGE = 20;
-
     private static final int CODE_MAKE_REQUEST_LOADER = 0;
-    private static final int CODE_SEARCH_REQUEST_LOADER = 1;
 
     private static final String ARGS_QUERY = "args:query";
     private static final String FRIEND_REQUEST_DIALOG_TAG = "tag:friendRequestDialog";
@@ -78,9 +77,6 @@ public class SearchFriendRequestFragment extends BaseFragment implements
 
     @State
     boolean isSendingFriendRequest;
-
-    @State
-    boolean isSearchingFriendRequest;
 
     private SimpleInfoButtonListAdapter friendRequestAdapter;
     private RecyclerViewInfiniteScrollListener infiniteScrollListener;
@@ -124,13 +120,11 @@ public class SearchFriendRequestFragment extends BaseFragment implements
 
         if (savedInstanceState == null) {
             swipeRefreshLayout.show();
-//            sendSearchQuery(query);
-            getLoaderManager().initLoader(CODE_SEARCH_REQUEST_LOADER, null, this);
+            EventBus.getDefault().post(new EventBusSearchingFriendRequest(query));
         }
 
         if (isSendingFriendRequest) {
             getLoaderManager().initLoader(CODE_MAKE_REQUEST_LOADER, null, this);
-            isSendingFriendRequest = false;
         }
     }
 
@@ -157,6 +151,7 @@ public class SearchFriendRequestFragment extends BaseFragment implements
         inflater.inflate(R.menu.menu_search, menu);
 
         SearchView searchView = (SearchView) menu.findItem(R.id.action_search).getActionView();
+        searchView.setQuery(query, false);
         searchView.setOnQueryTextListener(this);
     }
 
@@ -196,6 +191,8 @@ public class SearchFriendRequestFragment extends BaseFragment implements
             actionBar.setDisplayHomeAsUpEnabled(true);
         }
         initRecyclerView();
+
+        swipeRefreshLayout.setOnRefreshListener(this);
     }
 
     private void initRecyclerView() {
@@ -211,15 +208,10 @@ public class SearchFriendRequestFragment extends BaseFragment implements
             public void onLoadMore(int page) {
                 if (isNoMoreData()) return;
 
-                final UserInfo lastUserInfo = friendRequestAdapter.getLastItem();
+                UserInfo lastUserInfo = friendRequestAdapter.getLastItem();
                 if (lastUserInfo != null) {
-                    getActivity().getWindow().getDecorView().getHandler().post(new Runnable() {
-                        @Override
-                        public void run() {
-                            friendRequestAdapter.addFooterProgressBar();
-                            sendSearchQuery(lastUserInfo.getDisplayName());
-                        }
-                    });
+                    friendRequestAdapter.addFooterProgressBar();
+                    sendSearchQuery(lastUserInfo.getDisplayName());
                 }
             }
         };
@@ -249,9 +241,10 @@ public class SearchFriendRequestFragment extends BaseFragment implements
             alertTextView.gone();
         }
 
-        swipeRefreshLayout.setRefreshing(false);
+        swipeRefreshLayout.hide();
     }
 
+    @Subscribe
     public void onEvent(EventBusSearchResultFriendRequest eventBusSearchResultFriendRequest) {
         clearResultList();
 
@@ -282,7 +275,6 @@ public class SearchFriendRequestFragment extends BaseFragment implements
     public void onAdapterClick(View itemView, int position) {
         currentSelectedPosition = position;
 
-        currentSelectedPosition = position;
         UserInfo friendInfo = friendRequestAdapter.getItem(position);
 
         AlertDialogFragment dialogFragment = AlertDialogFragment
@@ -319,8 +311,18 @@ public class SearchFriendRequestFragment extends BaseFragment implements
 
     @Override
     public void onLoadFinished(Loader<List<UserInfo>> loader, List<UserInfo> data) {
+
+        switch (loader.getId()) {
+            case CODE_MAKE_REQUEST_LOADER:
+                onSendFriendRequestFinished((SendFriendRequestLoader) loader, data);
+                break;
+        }
+    }
+
+    private void onSendFriendRequestFinished(SendFriendRequestLoader loader, List<UserInfo> data) {
+        isSendingFriendRequest = false;
         hideProgressDialog();
-        onSendFriendRequestLoaderFinished(data, ((SendFriendRequestLoader) loader).getResultCode());
+        onSendFriendRequestLoaderFinished(data, loader.getResultCode());
     }
 
     @Override

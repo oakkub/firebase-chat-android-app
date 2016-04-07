@@ -27,12 +27,14 @@ import com.oakkub.chat.views.widgets.MySwipeRefreshLayout;
 import com.oakkub.chat.views.widgets.MyTextView;
 import com.oakkub.chat.views.widgets.recyclerview.RecyclerViewScrollDirectionListener;
 
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+
 import java.util.ArrayList;
 import java.util.Collections;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
-import de.greenrobot.event.EventBus;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -160,24 +162,35 @@ public class GroupListFragment extends BaseFragment implements OnAdapterItemClic
         groupRecyclerView.setAdapter(groupListAdapter);
     }
 
+    private void showEmptyItem() {
+        alertTextView.setText(R.string.you_dont_have_groups);
+        alertTextView.visible();
+    }
+
+    @Subscribe
     public void onEvent(EventBusUpdatedGroupRoom eventBusUpdatedGroupRoom) {
         if (groupListAdapter == null) return;
         groupListAdapter.replace(eventBusUpdatedGroupRoom.room);
     }
 
+    @Subscribe
     public void onEvent(EventBusDeleteGroupRoom eventBusDeleteGroupRoom) {
         if (groupListAdapter == null) return;
         groupListAdapter.remove(eventBusDeleteGroupRoom.room);
+
+        if (groupListAdapter.isEmpty()) {
+            showEmptyItem();
+        }
     }
 
+    @Subscribe
     public void onEvent(EventBusGroupRoom eventBusGroupRoom) {
         ArrayList<Room> roomList = eventBusGroupRoom.roomList;
         swipeRefreshLayout.hide();
 
         if (roomList.isEmpty()) {
 
-            alertTextView.setText(R.string.you_dont_have_groups);
-            alertTextView.visible();
+            showEmptyItem();
 
         } else {
             alertTextView.gone();
@@ -208,4 +221,5 @@ public class GroupListFragment extends BaseFragment implements OnAdapterItemClic
     public boolean onAdapterLongClick(View itemView, int position) {
         return false;
     }
+
 }

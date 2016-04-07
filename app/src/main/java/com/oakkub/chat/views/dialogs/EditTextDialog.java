@@ -83,14 +83,12 @@ public class EditTextDialog extends DialogFragment implements DialogInterface.On
 
         int padding = getResources().getDimensionPixelOffset(R.dimen.spacing_super_medium);
 
-        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity())
+        return new AlertDialog.Builder(getActivity())
                 .setTitle(title)
                 .setView(getInputLayout(savedInstanceState, text, hint),
                         padding, padding, padding, padding)
                 .setPositiveButton(buttonOk, this)
-                .setNegativeButton(buttonCancel, this);
-
-        return builder.create();
+                .setNegativeButton(buttonCancel, this).create();
     }
 
     @SuppressWarnings("ResourceType")

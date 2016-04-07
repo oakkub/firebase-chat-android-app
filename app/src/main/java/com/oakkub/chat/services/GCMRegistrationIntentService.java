@@ -18,9 +18,9 @@ import com.oakkub.chat.models.eventbus.EventBusGoogleInstanceID;
 import com.oakkub.chat.utils.FirebaseUtil;
 import com.oakkub.chat.utils.GCMUtil;
 
-import java.io.IOException;
+import org.greenrobot.eventbus.EventBus;
 
-import de.greenrobot.event.EventBus;
+import java.io.IOException;
 
 /**
  * Created by OaKKuB on 11/1/2015.

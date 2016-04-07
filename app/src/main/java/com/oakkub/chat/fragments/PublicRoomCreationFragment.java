@@ -23,6 +23,7 @@ import android.widget.TextView;
 
 import com.oakkub.chat.R;
 import com.oakkub.chat.activities.BaseActivity;
+import com.oakkub.chat.managers.icepick_bundler.RoomBundler;
 import com.oakkub.chat.models.Room;
 import com.oakkub.chat.utils.FileUtil;
 import com.oakkub.chat.utils.FirebaseUtil;
@@ -82,9 +83,6 @@ public class PublicRoomCreationFragment extends BaseFragment implements
     MySpinner tagSpinner;
 
     @State
-    String myId;
-
-    @State
     String absolutePath;
 
     @State
@@ -114,19 +112,21 @@ public class PublicRoomCreationFragment extends BaseFragment implements
     @State
     boolean useDefaultImage;
 
-    private Room inputRoom;
-    private Room argsRoom;
+    @State(RoomBundler.class)
+    Room inputRoom;
+
+    @State(RoomBundler.class)
+    Room argsRoom;
 
     private TextBitmapCreationFragment textBitmapCreationFragment;
     private OnRoomCreationListener onRoomCreationListener;
 
-    public static PublicRoomCreationFragment newInstance(String myId, String toolbarTitle) {
-        return newInstance(myId, toolbarTitle, null);
+    public static PublicRoomCreationFragment newInstance(String toolbarTitle) {
+        return newInstance(toolbarTitle, null);
     }
 
-    public static PublicRoomCreationFragment newInstance(String myId, String toolbarTitle, Room room) {
+    public static PublicRoomCreationFragment newInstance(String toolbarTitle, Room room) {
         Bundle args = new Bundle();
-        args.putString(ARGS_MY_ID, myId);
         args.putString(ARGS_TOOLBAR_TITLE, toolbarTitle);
 
         if (room != null) {
@@ -153,12 +153,6 @@ public class PublicRoomCreationFragment extends BaseFragment implements
         getDataResources(savedInstanceState);
         setHasOptionsMenu(true);
 
-        if (savedInstanceState != null) {
-            if (savedInstanceState.containsKey(INPUT_ROOM_STATE)) {
-                inputRoom = Parcels.unwrap(savedInstanceState.getParcelable(INPUT_ROOM_STATE));
-            }
-        }
-
         textBitmapCreationFragment = (TextBitmapCreationFragment)
                 getChildFragmentManager().findFragmentByTag(TEXT_BITMAP_CREATION_TAG);
         if (textBitmapCreationFragment == null) {
@@ -167,7 +161,6 @@ public class PublicRoomCreationFragment extends BaseFragment implements
                     .add(textBitmapCreationFragment, TEXT_BITMAP_CREATION_TAG)
                     .commit();
         }
-        textBitmapCreationFragment.setOnTextBitmapCreationListener(this);
     }
 
     @Nullable
@@ -198,6 +191,7 @@ public class PublicRoomCreationFragment extends BaseFragment implements
         image.setMatchedSizeImageURI(Uri.parse(argsRoom.getImagePath()));
         nameEditText.setText(argsRoom.getName());
         descriptionEditText.setText(argsRoom.getDescription());
+        
         tagSpinner.setSelection(getSpinnerValuePosition(argsRoom.getTag()), true);
     }
 
@@ -212,18 +206,9 @@ public class PublicRoomCreationFragment extends BaseFragment implements
     }
 
     @Override
-    public void onSaveInstanceState(Bundle outState) {
-        super.onSaveInstanceState(outState);
-
-        if (inputRoom != null) {
-            outState.putParcelable(INPUT_ROOM_STATE, Parcels.wrap(inputRoom));
-        }
-    }
-
-    @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-
+        textBitmapCreationFragment.setOnTextBitmapCreationListener(this);
         sendResultBack();
     }
 
@@ -247,6 +232,7 @@ public class PublicRoomCreationFragment extends BaseFragment implements
     public void onDetach() {
         super.onDetach();
 
+        textBitmapCreationFragment.setOnTextBitmapCreationListener(null);
         onRoomCreationListener = null;
     }
 
@@ -269,7 +255,6 @@ public class PublicRoomCreationFragment extends BaseFragment implements
         if (savedInstanceState != null) return;
         Bundle args = getArguments();
 
-        myId = args.getString(ARGS_MY_ID);
         toolbarTitle = args.getString(ARGS_TOOLBAR_TITLE);
         argsRoom = Parcels.unwrap(args.getParcelable(ARGS_ROOM));
         isPublicChat = argsRoom == null || argsRoom.getType().equals(RoomUtil.PUBLIC_TYPE);

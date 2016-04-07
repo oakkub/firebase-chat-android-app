@@ -3,6 +3,7 @@ package com.oakkub.chat.fragments;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.LoaderManager;
 import android.support.v4.content.ContextCompat;
 
 import com.oakkub.chat.activities.BaseActivity;
@@ -54,7 +55,10 @@ public class BaseFragment extends Fragment {
         if (progressDialog == null) {
             progressDialog = ProgressDialogFragment.newInstance();
         }
-        progressDialog.show(getChildFragmentManager(), PROGRESS_DIALOG_TAG);
+
+        if (progressDialog != null && !progressDialog.isAdded()) {
+            progressDialog.show(getChildFragmentManager(), PROGRESS_DIALOG_TAG);
+        }
     }
 
     public void hideProgressDialog() {
@@ -66,5 +70,12 @@ public class BaseFragment extends Fragment {
 
     public ProgressDialogFragment findProgressDialog() {
         return (ProgressDialogFragment) getChildFragmentManager().findFragmentByTag(PROGRESS_DIALOG_TAG);
+    }
+
+    public void initLoader(int id, Bundle args,
+                           LoaderManager.LoaderCallbacks<? extends Object> callback,
+                           boolean isNewLoad) {
+        if (isNewLoad) getLoaderManager().initLoader(id, args, callback);
+        else getLoaderManager().restartLoader(id, args, callback);
     }
 }

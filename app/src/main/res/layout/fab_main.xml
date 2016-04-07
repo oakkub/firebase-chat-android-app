@@ -44,8 +44,8 @@
                     style="@style/SheetItemStyle"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:drawableLeft="@drawable/layer_ic_search_red_24dp"
-                    android:drawableStart="@drawable/layer_ic_search_red_24dp"
+                    android:drawableLeft="@drawable/layer_ic_search_pink_24dp"
+                    android:drawableStart="@drawable/layer_ic_search_pink_24dp"
                     android:text="@string/find_public_chat" />
 
                 <TextView
@@ -53,8 +53,8 @@
                     style="@style/SheetItemStyle"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:drawableLeft="@drawable/layer_ic_public_red_24dp"
-                    android:drawableStart="@drawable/layer_ic_public_red_24dp"
+                    android:drawableLeft="@drawable/layer_ic_public_pink_24dp"
+                    android:drawableStart="@drawable/layer_ic_public_pink_24dp"
                     android:text="@string/new_public_chat" />
 
                 <TextView
@@ -71,7 +71,7 @@
                     style="@style/SheetItemStyle"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:background="@color/colorAccent"
+                    android:background="@drawable/accent_ripple"
                     android:drawableLeft="@drawable/layer_ic_mode_edit_white_24dp"
                     android:drawableStart="@drawable/layer_ic_mode_edit_white_24dp"
                     android:gravity="center_vertical"

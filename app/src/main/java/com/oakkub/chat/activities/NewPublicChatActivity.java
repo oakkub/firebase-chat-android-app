@@ -31,12 +31,12 @@ public class NewPublicChatActivity extends BaseActivity implements
         ButterKnife.bind(this);
 
         findOrAddFragmentByTag(R.id.empty_container,
-                PublicRoomCreationFragment.newInstance(uid, getString(R.string.new_public_chat)),
+                PublicRoomCreationFragment.newInstance(getString(R.string.new_public_chat)),
                 ROOM_CREATION_TAG);
 
         newPublicChatFragment = (NewPublicChatFragment) findOrAddFragmentByTag(
                 getSupportFragmentManager(),
-                NewPublicChatFragment.newInstance(uid),
+                new NewPublicChatFragment(),
                 NEW_PUBLIC_CHAT_FRAGMENT_TAG);
     }
 

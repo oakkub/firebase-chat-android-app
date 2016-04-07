@@ -16,9 +16,6 @@
 #   public *;
 #}
 
-# MaterialSheetFab
--keep class io.codetail.animation.arcanimator.** { *; }
-
 # ButterKnife
 -keep class butterknife.** { *; }
 -dontwarn butterknife.internal.**
@@ -30,27 +27,35 @@
     @butterknife.* <methods>;
 }
 
+# -------------------------------------------
 # Icepick
 -dontwarn icepick.**
+-keep class icepick.** { *; }
 -keep class **$$Icepick { *; }
 -keepclasseswithmembernames class * {
     @icepick.* <fields>;
 }
 
+# -------------------------------------------
 # Green EventBus
+-keepattributes *Annotation*
 -keepclassmembers class ** {
-    public void onEvent*(***);
+    @org.greenrobot.eventbus.Subscribe <methods>;
 }
+-keep enum org.greenrobot.eventbus.ThreadMode { *; }
 
+# -------------------------------------------
 # Parcel library
 -keep class * implements android.os.Parcelable {
   public static final android.os.Parcelable$Creator *;
 }
 -keep class org.parceler.Parceler$$Parcels
 
+# -------------------------------------------
 # Material Sheet Fab
 -keep class io.codetail.animation.arcanimator.** { *; }
 
+# -------------------------------------------
 # Firebase
 -keepattributes Signature
 -keep class com.firebase.** { *; }
@@ -63,20 +68,32 @@
 -dontwarn org.shaded.apache.**
 -dontwarn org.ietf.jgss.**
 -dontwarn org.apache.**
--keep public class com.example.** {
-  public *** get*();
-  public void set*(***);
-}
+-keep class com.oakkub.chat.models.** { *; }
+
+# -------------------------------------------
 # Jackson inside Firebase
 -keepnames class com.fasterxml.jackson.annotation.** { *; }
 -dontwarn org.w3c.dom.bootstrap.DOMImplementationRegistry
 -keepattributes Annotation,EnclosingMethod,Signature
 
+# -------------------------------------------
 # Android Support Library
--keep public class android.support.v7.widget.** { *; }
--keep public class android.support.v7.internal.widget.** { *; }
--keep public class android.support.v7.internal.view.menu.** { *; }
--keep public class * extends android.support.v4.view.ActionProvider {
-    public <init>(android.content.Context);
+#-keep public class android.support.v7.widget.** { *; }
+#-keep public class android.support.v7.internal.widget.** { *; }
+#-keep public class android.support.v7.internal.view.menu.** { *; }
+#-keep public class * extends android.support.v4.view.ActionProvider {
+#    public <init>(android.content.Context);
+#}
+-keep class android.support.v7.widget.SearchView {
+    *;
+}
+
+# -------------------------------------------
+# Parcelable Object
+-keep class * implements android.os.Parcelable {
+    public static final android.os.Parcelable$Creator *;
+}
+-keepnames class * implements android.os.Parcelable {
+    public static final ** CREATOR;
 }
 

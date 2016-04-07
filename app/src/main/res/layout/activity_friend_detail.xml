@@ -1,52 +1,61 @@
 <android.support.v7.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:fresco="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:layout_gravity="center"
-    tools:context="com.oakkub.chat.activities.FriendDetailActivity">
+    android:minWidth="@dimen/spacing_giant2">
 
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:padding="@dimen/spacing_medium"
+        android:layout_gravity="center"
         android:divider="@drawable/spacer_medium"
         android:gravity="center"
-        android:showDividers="middle"
-        android:orientation="vertical" >
+        android:orientation="vertical"
+        android:padding="@dimen/spacing_medium"
+        android:showDividers="middle">
 
-        <LinearLayout
-            android:id="@+id/friend_detail_container"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:divider="@drawable/spacer_medium"
-            android:gravity="center_horizontal"
-            android:orientation="vertical"
-            android:showDividers="beginning|middle|end">
+        <com.facebook.drawee.view.SimpleDraweeView
+            android:id="@+id/friend_detail_profile_image_view"
+            android:layout_width="@dimen/spacing_large"
+            android:layout_height="@dimen/spacing_large"
+            fresco:roundAsCircle="true" />
 
-            <com.facebook.drawee.view.SimpleDraweeView
-                android:id="@+id/friend_detail_profile_image_view"
-                android:layout_width="@dimen/spacing_large"
-                android:layout_height="@dimen/spacing_large"
-                fresco:roundAsCircle="true" />
-
-            <TextView
-                android:id="@+id/friend_detail_display_name_text_view"
-                style="@style/TextViewHeaderStyle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:fontFamily="sans-serif-light"
-                android:textColor="@android:color/black" />
-
-        </LinearLayout>
-
-        <Button
-            android:id="@+id/friend_detail_chat_button"
+        <TextView
+            android:id="@+id/friend_detail_display_name_text_view"
+            style="@style/TextViewHeaderStyle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:fontFamily="sans-serif-light"
-            android:text="@string/chat"
-            android:textAllCaps="true" />
+            android:textColor="@android:color/black" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:divider="@drawable/spacer_medium"
+            android:gravity="center"
+            android:orientation="horizontal"
+            android:showDividers="middle">
+
+            <Button
+                android:id="@+id/friend_detail_remove_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:drawableLeft="@drawable/layer_ic_close_white_24dp"
+                android:drawableStart="@drawable/layer_ic_close_white_24dp"
+                android:padding="@dimen/spacing_small"
+                android:text="@string/remove" />
+
+            <Button
+                android:id="@+id/friend_detail_chat_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:drawableLeft="@drawable/layer_ic_chat_white_24dp"
+                android:drawableStart="@drawable/layer_ic_chat_white_24dp"
+                android:padding="@dimen/spacing_small"
+                android:text="@string/chat" />
+
+        </LinearLayout>
 
     </LinearLayout>
 

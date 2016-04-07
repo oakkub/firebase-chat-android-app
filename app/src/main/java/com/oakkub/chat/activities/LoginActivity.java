@@ -21,6 +21,7 @@ import com.oakkub.chat.utils.GCMUtil;
 import com.oakkub.chat.utils.TextUtil;
 import com.oakkub.chat.utils.Util;
 import com.oakkub.chat.views.adapters.LoginViewPagerAdapter;
+import com.oakkub.chat.views.transformers.ParallaxLoginPageTransformer;
 import com.oakkub.chat.views.widgets.MyToast;
 import com.oakkub.chat.views.widgets.viewpager.ViewPagerCommunicator;
 
@@ -30,6 +31,7 @@ import java.security.NoSuchAlgorithmException;
 import butterknife.Bind;
 import butterknife.ButterKnife;
 import icepick.State;
+import me.relex.circleindicator.CircleIndicator;
 
 public class LoginActivity extends BaseActivity implements ViewPagerCommunicator {
 
@@ -39,11 +41,11 @@ public class LoginActivity extends BaseActivity implements ViewPagerCommunicator
     @Bind(R.id.application_name_textview)
     TextView appNameTextView;
 
-    @Bind(R.id.application_name_desc_textview)
-    TextView descAppNameTextView;
-
     @Bind(R.id.login_viewpager)
     ViewPager viewPager;
+
+    @Bind(R.id.viewpager_indicator)
+    CircleIndicator viewPagerIndicator;
 
     @State
     boolean isErrorToastShowed;
@@ -76,12 +78,11 @@ public class LoginActivity extends BaseActivity implements ViewPagerCommunicator
         appNameTextView.setTypeface(Font.getInstance().get(TextUtil.POETSENONE_FONT));
         appNameTextView.setVisibility(appNameVisibility);
 
-        descAppNameTextView.setTypeface(Font.getInstance().get(TextUtil.POETSENONE_FONT));
-        descAppNameTextView.setVisibility(appNameVisibility);
-
         LoginViewPagerAdapter loginViewPagerAdapter =
                 new LoginViewPagerAdapter(getSupportFragmentManager());
+        viewPager.setPageTransformer(true, new ParallaxLoginPageTransformer());
         viewPager.setAdapter(loginViewPagerAdapter);
+        viewPagerIndicator.setViewPager(viewPager);
     }
 
     private void goToMainActivity() {

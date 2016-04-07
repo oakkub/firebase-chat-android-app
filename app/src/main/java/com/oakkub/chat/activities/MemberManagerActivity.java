@@ -289,7 +289,7 @@ public class MemberManagerActivity extends BaseActivity implements OnAdapterItem
                     setToolbarTitle(getString(R.string.add_admin));
                     break;
                 case ACTION_ADMIN_DEMOTE:
-                    setToolbarTitle(getString(R.string.remove_admin));
+                    setToolbarTitle(getString(R.string.demote_admin));
                     break;
                 case ACTION_MEMBER_INVITE:
                     setToolbarTitle(getString(R.string.invite_friends));
@@ -374,13 +374,17 @@ public class MemberManagerActivity extends BaseActivity implements OnAdapterItem
 
         switch (action) {
             case ACTION_MEMBER_INVITE:
-                errorMessage = getString(R.string.n_invited_n_to_room);
+                errorMessage = getString(R.string.error_no_friend_to_be_invited);
+                break;
             case ACTION_MEMBER_REMOVE:
-                errorMessage = getString(R.string.n_removed_n_from_room);
+                errorMessage = getString(R.string.error_no_member_to_be_removed);
+                break;
             case ACTION_ADMIN_PROMOTE:
                 errorMessage = getString(R.string.error_no_addable_admin);
+                break;
             case ACTION_ADMIN_DEMOTE:
                 errorMessage = getString(R.string.error_no_admin_to_be_demoted);
+                break;
         }
 
         return errorMessage;

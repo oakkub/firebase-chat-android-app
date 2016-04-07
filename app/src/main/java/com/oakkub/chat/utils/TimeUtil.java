@@ -3,6 +3,8 @@ package com.oakkub.chat.utils;
 import android.content.Context;
 
 import com.oakkub.chat.R;
+import com.oakkub.chat.managers.Contextor;
+import com.oakkub.chat.models.TimeOffset;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -20,7 +22,29 @@ public class TimeUtil {
         "EEEE",
         "HH:mm",
         "dd MMMM",
+        "mm",
+        "HH"
     };
+
+    public static String getOnlineTime(long currentTime, long specificTime) {
+        Context context = Contextor.getInstance().getContext();
+        long resultTime = currentTime - specificTime;
+
+        String time;
+        TimeOffset timeOffset = new TimeOffset(resultTime);
+
+        if (timeOffset.days > 0) {
+            time = context.getString(R.string.online_n_day, timeOffset.days);
+        } else if (timeOffset.hours > 0) {
+            time = context.getString(R.string.online_n_hour, timeOffset.hours);
+        } else if (timeOffset.minutes > 0) {
+            time = context.getString(R.string.online_n_minute, timeOffset.minutes);
+        } else {
+            time = context.getString(R.string.online_n_minute, 1);
+        }
+
+        return time;
+    }
 
     public static String readableTime(Context context, long timeInMillis) {
         GregorianCalendar target = getCalendar(timeInMillis);

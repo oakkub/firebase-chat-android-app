@@ -1,16 +1,17 @@
 package com.oakkub.chat.activities;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.design.widget.AppBarLayout;
 import android.support.v7.app.ActionBar;
 import android.support.v7.widget.Toolbar;
 
-import com.akexorcist.localizationactivity.LanguageSetting;
 import com.firebase.client.AuthData;
 import com.oakkub.chat.R;
 import com.oakkub.chat.fragments.AuthStateFragment;
+import com.oakkub.chat.managers.AppController;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
@@ -27,7 +28,7 @@ public class SplashScreenActivity extends BaseActivity implements AuthStateFragm
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
-        LanguageSetting.setLanguage(this, getResources().getConfiguration().locale.getLanguage());
+        AppController.getComponent(this).inject(this);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_splash_screen);
         ButterKnife.bind(this);
@@ -46,6 +47,18 @@ public class SplashScreenActivity extends BaseActivity implements AuthStateFragm
 
         findOrAddFragmentByTag(getSupportFragmentManager(),
                 new AuthStateFragment(), FIREBASE_AUTH_TAG);
+
+        setDefaultSettings();
+    }
+
+    private void setDefaultSettings() {
+        SharedPreferences prefs = AppController.getComponent(this).sharedPreferences();
+        SharedPreferences.Editor editor = prefs.edit();
+
+        if (!prefs.contains(getString(R.string.pref_notification_enable))) {
+            editor.putBoolean(getString(R.string.pref_notification_enable), true);
+            editor.apply();
+        }
     }
 
     @Override

@@ -7,6 +7,7 @@ import android.os.ParcelFileDescriptor;
 import android.util.Log;
 
 import com.crashlytics.android.Crashlytics;
+import com.oakkub.chat.R;
 import com.oakkub.chat.managers.Contextor;
 
 import java.io.File;
@@ -21,7 +22,6 @@ import java.util.Locale;
 public class FileUtil {
 
     private static final String TAG = FileUtil.class.getSimpleName();
-    private static final String CAMERA_STORAGE_DIRECTORY = "Chatto";
 
     public static ParcelFileDescriptor getParcelFileDescriptor(Uri uri, String mode) {
         Context context = Contextor.getInstance().getContext();
@@ -34,12 +34,19 @@ public class FileUtil {
         return null;
     }
 
-    @SuppressWarnings("ResultOfMethodCallIgnored")
     public static File getCameraStorageDirectory() {
+        return getCameraStorageDirectory("images");
+    }
+
+    @SuppressWarnings("ResultOfMethodCallIgnored")
+    public static File getCameraStorageDirectory(String finalDir) {
+        Context context = Contextor.getInstance().getContext();
+
         File storageDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
-        File finalDir = new File(storageDir, CAMERA_STORAGE_DIRECTORY);
-        if (!finalDir.exists()) {
-            finalDir.mkdirs();
+        File appDir = new File(storageDir, context.getString(R.string.app_name));
+        File imageDir = new File(appDir, finalDir);
+        if (!imageDir.exists()) {
+            imageDir.mkdirs();
         }
 
         String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(new Date());
@@ -48,7 +55,7 @@ public class FileUtil {
 
         File imageFile;
         try {
-            imageFile = File.createTempFile(imageName, ".jpg", finalDir);
+            imageFile = File.createTempFile(imageName, ".jpg", imageDir);
         } catch (IOException e) {
             Log.e(TAG, "getCameraStorageDirectory: " + e.getMessage() );
             return null;

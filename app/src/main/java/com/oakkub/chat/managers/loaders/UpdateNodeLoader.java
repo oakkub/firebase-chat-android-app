@@ -5,6 +5,7 @@ import android.support.v4.util.ArrayMap;
 
 import com.firebase.client.Firebase;
 import com.firebase.client.FirebaseError;
+import com.oakkub.chat.managers.AppController;
 import com.oakkub.chat.utils.FirebaseUtil;
 
 import javax.inject.Inject;
@@ -23,6 +24,7 @@ public class UpdateNodeLoader extends MyLoader<Boolean> {
 
     public UpdateNodeLoader(Context context, ArrayMap<String, Object> removeMap) {
         super(context);
+        AppController.getComponent(getContext()).inject(this);
         this.removeMap = removeMap;
     }
 

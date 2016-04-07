@@ -9,6 +9,6 @@
         android:layout_width="@dimen/spacing_medium"
         android:layout_height="@dimen/spacing_medium"
         android:layout_gravity="bottom"
-        fresco:placeholderImage="@drawable/ic_visibility_red_24dp" />
+        fresco:placeholderImage="@drawable/ic_visibility_dark_green_24dp" />
 
 </merge>

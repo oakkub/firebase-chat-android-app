@@ -28,11 +28,13 @@ import com.oakkub.chat.views.widgets.MySwipeRefreshLayout;
 import com.oakkub.chat.views.widgets.MyTextView;
 import com.oakkub.chat.views.widgets.recyclerview.RecyclerViewInfiniteScrollListener;
 
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+
 import java.util.List;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
-import de.greenrobot.event.EventBus;
 import icepick.State;
 
 public class SendFriendRequestFragment extends BaseFragment implements OnAdapterItemClick,
@@ -89,7 +91,6 @@ public class SendFriendRequestFragment extends BaseFragment implements OnAdapter
 
         if (isSendingFriendRequest) {
             getLoaderManager().initLoader(0, null, this);
-            isSendingFriendRequest = false;
         }
     }
 
@@ -202,6 +203,7 @@ public class SendFriendRequestFragment extends BaseFragment implements OnAdapter
 
     @Override
     public void onLoadFinished(Loader<List<UserInfo>> loader, List<UserInfo> data) {
+        isSendingFriendRequest = false;
         hideProgressDialog();
         onSendFriendRequestLoaderFinished(data, ((SendFriendRequestLoader) loader).getResultCode());
     }
@@ -220,6 +222,7 @@ public class SendFriendRequestFragment extends BaseFragment implements OnAdapter
     public void onLoaderReset(Loader<List<UserInfo>> loader) {
     }
 
+    @Subscribe
     public void onEvent(EventBusFriendRequestList eventBusFriendRequestList) {
         simpleInfoButtonListAdapter.removeFooter();
 
@@ -236,6 +239,7 @@ public class SendFriendRequestFragment extends BaseFragment implements OnAdapter
         checkItemList();
     }
 
+    @Subscribe
     public void onEvent(EventBusRemoveFriendRequest eventBusRemoveFriendRequest) {
         if (simpleInfoButtonListAdapter == null) return;
         simpleInfoButtonListAdapter.remove(eventBusRemoveFriendRequest.userInfo);

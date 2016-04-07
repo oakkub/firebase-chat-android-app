@@ -1,6 +1,7 @@
 package com.oakkub.chat.modules;
 
 import android.app.Application;
+import android.content.ClipboardManager;
 import android.content.Context;
 import android.net.ConnectivityManager;
 import android.os.Vibrator;
@@ -40,6 +41,12 @@ public class SystemServiceModule {
     @Provides
     Vibrator provideVibrator(Application application) {
         return (Vibrator) application.getSystemService(Context.VIBRATOR_SERVICE);
+    }
+
+    @PerApp
+    @Provides
+    ClipboardManager provideClipboardManager(Application application) {
+        return (ClipboardManager) application.getSystemService(Context.CLIPBOARD_SERVICE);
     }
 
 }

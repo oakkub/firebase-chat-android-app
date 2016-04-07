@@ -30,13 +30,15 @@ import com.oakkub.chat.views.widgets.MySwipeRefreshLayout;
 import com.oakkub.chat.views.widgets.MyTextView;
 import com.oakkub.chat.views.widgets.MyToast;
 
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+
 import javax.inject.Inject;
 import javax.inject.Named;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
 import dagger.Lazy;
-import de.greenrobot.event.EventBus;
 import icepick.State;
 
 /**
@@ -48,6 +50,7 @@ public class PendingFriendRequestFragment extends BaseFragment implements
 
     private static final String PENDING_REQUEST_STATE = "state:pendingRequest";
     private static final String REMOVE_REQUEST_ALERT_DIALOG = "tag:removeRequestAlertDialog";
+    private static final int REMOVE_FRIEND_LOADER = 100;
 
     @Inject
     @Named(FirebaseUtil.NAMED_USER_FRIENDS_PENDING_REQUEST)
@@ -76,6 +79,9 @@ public class PendingFriendRequestFragment extends BaseFragment implements
 
     @State
     int currentSelectedPosition;
+
+    @State
+    int loaderAction = -1;
 
     private SimpleInfoButtonListAdapter simpleInfoButtonListAdapter;
 
@@ -116,6 +122,12 @@ public class PendingFriendRequestFragment extends BaseFragment implements
 
         if (savedInstanceState == null) {
             swipeRefreshLayout.show();
+        } else {
+            simpleInfoButtonListAdapter.onRestoreInstanceState(PENDING_REQUEST_STATE, savedInstanceState);
+        }
+
+        if (loaderAction >= 0) {
+            getLoaderManager().initLoader(REMOVE_FRIEND_LOADER, null, this);
         }
     }
 
@@ -124,14 +136,6 @@ public class PendingFriendRequestFragment extends BaseFragment implements
         super.onSaveInstanceState(outState);
 
         simpleInfoButtonListAdapter.onSaveInstanceState(PENDING_REQUEST_STATE, outState);
-    }
-
-    @Override
-    public void onViewStateRestored(@Nullable Bundle savedInstanceState) {
-        super.onViewStateRestored(savedInstanceState);
-        if (savedInstanceState == null) return;
-
-        simpleInfoButtonListAdapter.onRestoreInstanceState(PENDING_REQUEST_STATE, savedInstanceState);
     }
 
     @Override
@@ -219,17 +223,21 @@ public class PendingFriendRequestFragment extends BaseFragment implements
     @Override
     public void onAlertDialogClick(String tag, int which) {
         if (tag.equals(REMOVE_REQUEST_ALERT_DIALOG) && which == DialogInterface.BUTTON_POSITIVE) {
+            loaderAction = REMOVE_FRIEND_LOADER;
+
             showProgressDialog();
-            getLoaderManager().restartLoader(0, null, this);
+            getLoaderManager().restartLoader(REMOVE_FRIEND_LOADER, null, this);
         }
     }
 
+    @Subscribe
     public void onEvent(EventBusAddPendingFriendRequest eventBusAddPendingFriendRequest) {
         if (simpleInfoButtonListAdapter == null) return;
         simpleInfoButtonListAdapter.addFirst(eventBusAddPendingFriendRequest.userInfo);
         showAlertText();
     }
 
+    @Subscribe
     public void onEvent(EventBusPendingFriendRequest eventBusPendingFriendRequest) {
         if (simpleInfoButtonListAdapter == null) return;
         if (simpleInfoButtonListAdapter.contains(eventBusPendingFriendRequest.userInfo)) return;
@@ -242,23 +250,41 @@ public class PendingFriendRequestFragment extends BaseFragment implements
     public Loader<Boolean> onCreateLoader(int id, Bundle args) {
         UserInfo friendInfo = simpleInfoButtonListAdapter.getItem(currentSelectedPosition);
 
-        return new RemoveFriendRequestLoader(getActivity(), uid, friendInfo, false);
+        switch (id) {
+            case REMOVE_FRIEND_LOADER:
+                return new RemoveFriendRequestLoader(getActivity(), uid, friendInfo, false);
+            default:
+                return null;
+        }
     }
 
     @Override
     public void onLoadFinished(Loader<Boolean> loader, Boolean data) {
-        if (!data) {
-            MyToast.make(getString(R.string.cannot_remove_requst_try_again)).show();
-        } else {
-            simpleInfoButtonListAdapter.remove(simpleInfoButtonListAdapter.getItem(currentSelectedPosition));
-        }
         hideProgressDialog();
+
+        switch (loader.getId()) {
+            case REMOVE_FRIEND_LOADER:
+                onRemoveRequest(data);
+                break;
+        }
+
+        currentSelectedPosition = -1;
+        loaderAction = -1;
         showAlertText();
     }
 
     @Override
     public void onLoaderReset(Loader<Boolean> loader) {
 
+    }
+
+    private void onRemoveRequest(boolean data) {
+        if (!data) {
+            MyToast.make(getString(R.string.cannot_remove_requst_try_again)).show();
+        } else {
+            simpleInfoButtonListAdapter.remove(
+                    simpleInfoButtonListAdapter.getItem(currentSelectedPosition));
+        }
     }
 
 }

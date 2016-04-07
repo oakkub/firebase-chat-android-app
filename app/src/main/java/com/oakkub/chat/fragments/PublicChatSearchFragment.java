@@ -32,22 +32,12 @@ public class PublicChatSearchFragment extends BaseFragment {
     @Named(FirebaseUtil.NAMED_ROOMS_INFO)
     Firebase roomInfoFirebase;
 
-    private String myId;
     private boolean isResultNotExist;
 
     private ArrayList<String> publicRoomKeyList;
     private Room publicRoom;
+
     private OnPublicRoomSearchResultListener onPublicRoomSearchResultListener;
-
-    public static PublicChatSearchFragment newInstance(String myId) {
-        Bundle args = new Bundle();
-        args.putString(ARGS_MY_ID, myId);
-
-        PublicChatSearchFragment publicChatSearchFragment = new PublicChatSearchFragment();
-        publicChatSearchFragment.setArguments(args);
-
-        return publicChatSearchFragment;
-    }
 
     @Override
     public void onAttach(Context context) {
@@ -61,16 +51,9 @@ public class PublicChatSearchFragment extends BaseFragment {
         super.onCreate(savedInstanceState);
         AppController.getComponent(getActivity()).inject(this);
         setRetainInstance(true);
-        getDataIntent();
 
         publicRoomKeyList = new ArrayList<>();
         fetchAll();
-    }
-
-    private void getDataIntent() {
-        Bundle args = getArguments();
-
-        myId = args.getString(ARGS_MY_ID);
     }
 
     @Override
@@ -96,28 +79,29 @@ public class PublicChatSearchFragment extends BaseFragment {
     }
 
     public void fetchAll() {
-        roomsPublicFirebase.orderByValue().limitToLast(20).keepSynced(true);
         roomsPublicFirebase.orderByValue().limitToLast(20)
-                .addListenerForSingleValueEvent(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(DataSnapshot dataSnapshot) {
-                        if (!isResultExists(dataSnapshot)) return;
-
-                        for (DataSnapshot children : dataSnapshot.getChildren()) {
-                            String key = children.getKey();
-                            if (!publicRoomKeyList.contains(key)) {
-                                publicRoomKeyList.add(key);
-                                fetchValueNode(key);
-                            }
-                        }
-                    }
-
-                    @Override
-                    public void onCancelled(FirebaseError firebaseError) {
-
-                    }
-                });
+                .addValueEventListener(fetchAllListener);
     }
+
+    private ValueEventListener fetchAllListener = new ValueEventListener() {
+        @Override
+        public void onDataChange(DataSnapshot dataSnapshot) {
+            if (!isResultExists(dataSnapshot)) return;
+
+            for (DataSnapshot children : dataSnapshot.getChildren()) {
+                String key = children.getKey();
+                if (!publicRoomKeyList.contains(key)) {
+                    publicRoomKeyList.add(key);
+                    fetchValueNode(key);
+                }
+            }
+        }
+
+        @Override
+        public void onCancelled(FirebaseError firebaseError) {
+
+        }
+    };
 
     private void fetchValueNode(String key) {
         roomInfoFirebase.child(key)
@@ -138,23 +122,25 @@ public class PublicChatSearchFragment extends BaseFragment {
 
     public void search(String keyToBeSearched, String query) {
         roomInfoFirebase.orderByChild(keyToBeSearched)
-                .startAt(query).endAt(query + "\uf8ff").equalTo(query)
-                .addListenerForSingleValueEvent(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(DataSnapshot dataSnapshot) {
-                        if (!isResultExists(dataSnapshot)) return;
-
-                        for (DataSnapshot children : dataSnapshot.getChildren()) {
-                            getRoomDataSnapshot(children);
-                        }
-                    }
-
-                    @Override
-                    public void onCancelled(FirebaseError firebaseError) {
-
-                    }
-                });
+                .startAt(query).endAt(query + "\uf8ff")
+                .addValueEventListener(fetchRoomListener);
     }
+
+    private ValueEventListener fetchRoomListener = new ValueEventListener() {
+        @Override
+        public void onDataChange(DataSnapshot dataSnapshot) {
+            if (!isResultExists(dataSnapshot)) return;
+
+            for (DataSnapshot children : dataSnapshot.getChildren()) {
+                getRoomDataSnapshot(children);
+            }
+        }
+
+        @Override
+        public void onCancelled(FirebaseError firebaseError) {
+
+        }
+    };
 
     private void getRoomDataSnapshot(DataSnapshot dataSnapshot) {
         String key = dataSnapshot.getKey();

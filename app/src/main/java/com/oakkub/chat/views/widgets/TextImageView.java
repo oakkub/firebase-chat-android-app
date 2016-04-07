@@ -77,10 +77,6 @@ public class TextImageView extends FrameLayout {
                 image.setImageResource(imageResourceId);
             }
 
-            /*if (imageResourceId != 0) {
-                image.setImageResource(imageResourceId);
-            }*/
-
             if (textName != null) {
                 text.setText(textName);
             } else {

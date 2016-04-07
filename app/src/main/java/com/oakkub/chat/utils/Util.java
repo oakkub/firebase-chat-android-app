@@ -5,6 +5,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.graphics.Point;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Display;
@@ -76,6 +78,15 @@ public class Util {
             inputMethodManager.hideSoftInputFromWindow(currentFocus.getWindowToken(), 0);
         }
 
+    }
+
+    public static boolean isInternetAvailable() {
+        Context context = Contextor.getInstance().getContext();
+        ConnectivityManager connectivityManager =
+                AppController.getComponent(context).connectivityManager();
+
+        NetworkInfo activeNetwork = connectivityManager.getActiveNetworkInfo();
+        return activeNetwork != null && activeNetwork.isConnected();
     }
 
 }

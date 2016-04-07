@@ -43,9 +43,9 @@ public class GridAutoFitLayoutManager extends GridLayoutManager {
     @Override
     public void onLayoutChildren(RecyclerView.Recycler recycler, RecyclerView.State state) {
         if (columnWidthChanged) {
-
             int totalSpace = getTotalSpace();
-            int spanCount = Math.max(1, totalSpace / columnWidth);
+            int factor = totalSpace / columnWidth;
+            int spanCount = Math.max(1, factor) + 1;
             setSpanCount(spanCount);
 
             columnWidthChanged = false;

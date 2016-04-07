@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
+    <string name="art">Art</string>
+
     <string-array name="public_chat_tag_keys">
-        <item>General</item>
-        <item>Art</item>
+        <item>@string/general</item>
+        <item>@string/art</item>
         <item>Book</item>
         <item>Camera</item>
         <item>Car</item>

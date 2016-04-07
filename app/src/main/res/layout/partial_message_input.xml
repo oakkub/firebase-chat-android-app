@@ -23,21 +23,21 @@
                 android:id="@+id/textImageCamera"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                TextImageView:image="@drawable/ic_camera_alt_red_48dp"
+                TextImageView:image="@drawable/ic_camera_alt_pink_24dp"
                 TextImageView:textName="@string/camera" />
 
             <com.oakkub.chat.views.widgets.TextImageView
                 android:id="@+id/textImageGallery"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                TextImageView:image="@drawable/ic_image_red_48dp"
+                TextImageView:image="@drawable/ic_image_pink_24dp"
                 TextImageView:textName="@string/Gallery" />
 
             <com.oakkub.chat.views.widgets.TextImageView
                 android:id="@+id/textImageBack"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                TextImageView:image="@drawable/ic_keyboard_arrow_down_red_48dp"
+                TextImageView:image="@drawable/ic_keyboard_arrow_down_pink_24dp"
                 TextImageView:textName="@string/close" />
 
         </com.oakkub.chat.views.widgets.MyLinearLayout>
@@ -58,11 +58,11 @@
             android:id="@+id/message_attachment_button"
             android:layout_width="@dimen/spacing_bigger"
             android:layout_height="@dimen/spacing_bigger"
-            android:background="@drawable/white_background"
+            android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="@string/attachment"
             android:padding="@dimen/spacing_smaller"
             android:scaleType="centerCrop"
-            app:srcCompat="@drawable/ic_attach_file_gray_24dp"
+            app:srcCompat="@drawable/ic_attach_file_pink_24dp"
             tools:ignore="MissingPrefix" />
 
         <EditText
@@ -79,11 +79,11 @@
             android:id="@+id/message_input_button"
             android:layout_width="@dimen/spacing_bigger"
             android:layout_height="@dimen/spacing_bigger"
-            android:background="@drawable/white_background"
+            android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="@string/messenger_send_button_text"
             android:padding="@dimen/spacing_smaller"
             android:scaleType="centerCrop"
-            app:srcCompat="@drawable/ic_send_red_48dp"
+            app:srcCompat="@drawable/ic_send_pink_24dp"
             tools:ignore="MissingPrefix" />
 
     </LinearLayout>

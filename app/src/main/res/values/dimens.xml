@@ -11,6 +11,9 @@
     <dimen name="font_bigger">21sp</dimen>
     <dimen name="font_super_giant">76sp</dimen>
 
+    <dimen name="toolbar_main">18sp</dimen>
+    <dimen name="toolbar_sub">14sp</dimen>
+
     <dimen name="spacing_tiny">1dp</dimen>
     <dimen name="spacing_smaller">4dp</dimen>
     <dimen name="spacing_small">8dp</dimen>
@@ -41,6 +44,8 @@
     <dimen name="sheet_spacing">10dp</dimen>
     <dimen name="sheet_item_image_spacing">24dp</dimen>
     <dimen name="sheet_item_textsize">16sp</dimen>
+
     <dimen name="layer_fake_toolbar_bottom_inset">560dp</dimen>
+    <dimen name="drawer_menu_right_width">224dp</dimen>
 
 </resources>

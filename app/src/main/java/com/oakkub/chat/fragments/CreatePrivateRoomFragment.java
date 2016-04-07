@@ -18,11 +18,12 @@ import com.oakkub.chat.utils.FirebaseMapUtil;
 import com.oakkub.chat.utils.FirebaseUtil;
 import com.oakkub.chat.utils.RoomUtil;
 
+import org.greenrobot.eventbus.EventBus;
+
 import javax.inject.Inject;
 import javax.inject.Named;
 
 import dagger.Lazy;
-import de.greenrobot.event.EventBus;
 
 /**
  * Created by OaKKuB on 1/10/2016.

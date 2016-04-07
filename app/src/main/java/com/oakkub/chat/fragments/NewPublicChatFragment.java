@@ -56,18 +56,7 @@ public class NewPublicChatFragment extends BaseFragment {
 
     private NewPublicChatListener newPublicChatListener;
     private Room createdRoom;
-    private String myId;
     private boolean roomFailedCreated;
-
-    public static NewPublicChatFragment newInstance(String myId) {
-        Bundle args = new Bundle();
-        args.putString(ARGS_MY_ID, myId);
-
-        NewPublicChatFragment newPublicChatFragment = new NewPublicChatFragment();
-        newPublicChatFragment.setArguments(args);
-
-        return newPublicChatFragment;
-    }
 
     @Override
     public void onAttach(Context context) {
@@ -80,7 +69,6 @@ public class NewPublicChatFragment extends BaseFragment {
         super.onCreate(savedInstanceState);
         AppController.getComponent(getActivity()).inject(this);
         setRetainInstance(true);
-        getDataFromArgs(savedInstanceState);
     }
 
     @Override
@@ -102,13 +90,6 @@ public class NewPublicChatFragment extends BaseFragment {
     public void onDetach() {
         super.onDetach();
         newPublicChatListener = null;
-    }
-
-    private void getDataFromArgs(Bundle savedInstanceState) {
-        if (savedInstanceState != null) return;
-
-        Bundle args = getArguments();
-        myId = args.getString(ARGS_MY_ID);
     }
 
     private void failedCreatePublicChat() {
@@ -138,12 +119,14 @@ public class NewPublicChatFragment extends BaseFragment {
 
     private String getBase64UriImage(Room room, Uri imageUri, String absolutePath) {
         if (room.getImagePath() == null) {
+
             Bitmap imageBitmap = getBitmapPublicImage(imageUri, absolutePath);
             if (imageBitmap == null) {
                 failedCreatePublicChat();
                 return "";
             }
-            String uriBase64 =  Base64Util.toDataUri(Base64Util.toBase64(imageBitmap, 50));
+
+            String uriBase64 = Base64Util.toDataUri(Base64Util.toBase64(imageBitmap, 50));
             imageBitmap.recycle();
 
             return uriBase64;
@@ -185,6 +168,7 @@ public class NewPublicChatFragment extends BaseFragment {
 
     private void onRoomImageCreated(final Room room, String uriBase64) {
         String roomKey = roomFirebase.get().push().getKey();
+
         room.setRoomId(roomKey);
         room.setImagePath(uriBase64);
         room.setLatestMessage(getString(R.string.room_created));
@@ -196,13 +180,13 @@ public class NewPublicChatFragment extends BaseFragment {
                 room.getLatestMessage(), room.getLatestMessageUser(), room.getCreated());
 
         ArrayMap<String, Object> map = new ArrayMap<>(7);
-        FirebaseMapUtil.mapUserRoom(map, myId, room.getRoomId(), room.getCreated());
+        FirebaseMapUtil.mapUserRoom(map, uid, room.getRoomId(), room.getCreated());
         FirebaseMapUtil.mapMessage(map, messageKey, room.getRoomId(), message);
-        FirebaseMapUtil.mapRoom(map, room, room.getRoomId());
         FirebaseMapUtil.mapPublicRoomList(map, room);
-        FirebaseMapUtil.mapUserPublicRoom(map, myId, room.getRoomId(), room.getCreated());
-        FirebaseMapUtil.mapUserPreservedMemberRoom(map, myId, room.getRoomId(), room.getCreated());
-        FirebaseMapUtil.mapUserRoomAdminMember(map, myId, room.getRoomId(), room.getCreated());
+        FirebaseMapUtil.mapUserPublicRoom(map, uid, room.getRoomId(), room.getCreated());
+        FirebaseMapUtil.mapUserPreservedMemberRoom(map, uid, room.getRoomId(), room.getCreated());
+        FirebaseMapUtil.mapUserRoomAdminMember(map, uid, room.getRoomId(), room.getCreated());
+        FirebaseMapUtil.mapRoom(map, room, room.getRoomId());
 
         firebase.get().updateChildren(map, new Firebase.CompletionListener() {
             @Override

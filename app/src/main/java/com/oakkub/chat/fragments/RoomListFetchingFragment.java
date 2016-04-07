@@ -22,12 +22,13 @@ import com.oakkub.chat.utils.FirebaseUtil;
 import com.oakkub.chat.utils.RoomUtil;
 import com.oakkub.chat.views.widgets.MyToast;
 
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+
 import java.util.ArrayList;
 
 import javax.inject.Inject;
 import javax.inject.Named;
-
-import de.greenrobot.event.EventBus;
 
 /**
  * Created by OaKKuB on 12/6/2015.
@@ -103,6 +104,7 @@ import de.greenrobot.event.EventBus;
                 .addChildEventListener(this);
     }
 
+    @Subscribe
     public void onEvent(EventBusRoomListLoadingMore eventBusRoomListLoadingMore) {
         fetchOlderUserRoomsFromServer(eventBusRoomListLoadingMore.oldestTime);
     }
@@ -155,8 +157,8 @@ import de.greenrobot.event.EventBus;
 
     private void fetchRoomIdUser(DataSnapshot dataSnapshot) {
         String roomId = dataSnapshot.getKey();
-
         latestRoomActiveTimeList.put(roomId.hashCode(), dataSnapshot.getValue(Long.class));
+
         fetchUserRoomById(roomId);
     }
 
@@ -178,6 +180,11 @@ import de.greenrobot.event.EventBus;
 
     private void initRoom(DataSnapshot dataSnapshot, String roomId) {
         Room room = dataSnapshot.getValue(Room.class);
+
+        if (room == null) {
+            MyToast.make("Something really really wrong here.").show();
+            return;
+        }
         room.setRoomId(roomId);
 
         // check type of room

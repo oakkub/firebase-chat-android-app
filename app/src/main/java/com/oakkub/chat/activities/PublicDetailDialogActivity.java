@@ -8,6 +8,7 @@ import android.widget.TextView;
 
 import com.facebook.drawee.view.SimpleDraweeView;
 import com.oakkub.chat.R;
+import com.oakkub.chat.managers.icepick_bundler.RoomBundler;
 import com.oakkub.chat.models.Room;
 
 import org.parceler.Parcels;
@@ -15,6 +16,7 @@ import org.parceler.Parcels;
 import butterknife.Bind;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
+import icepick.State;
 
 /**
  * Created by OaKKuB on 1/8/2016.
@@ -29,7 +31,8 @@ public class PublicDetailDialogActivity extends BaseActivity {
     @Bind(R.id.group_detail_display_name_text_view)
     TextView roomNameTextView;
 
-    private Room room;
+    @State(RoomBundler.class)
+    Room room;
 
     public static Intent getStartIntent(Context context, Room room) {
         Intent intent = new Intent(context, GroupDetailDialogActivity.class);
@@ -43,13 +46,15 @@ public class PublicDetailDialogActivity extends BaseActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_group_detail);
         ButterKnife.bind(this);
-        getDataIntent();
+        getDataIntent(savedInstanceState);
 
         roomNameTextView.setText(room.getName());
         roomImage.setImageURI(Uri.parse(room.getImagePath()));
     }
 
-    private void getDataIntent() {
+    private void getDataIntent(Bundle savedInstanceState) {
+        if (savedInstanceState != null) return;
+
         Intent intent = getIntent();
         room = Parcels.unwrap(intent.getParcelableExtra(EXTRA_ROOM));
     }

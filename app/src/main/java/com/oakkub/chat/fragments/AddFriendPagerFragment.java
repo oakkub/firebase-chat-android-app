@@ -18,13 +18,11 @@ import android.view.ViewGroup;
 
 import com.oakkub.chat.R;
 import com.oakkub.chat.activities.SearchFriendRequestActivity;
-import com.oakkub.chat.models.eventbus.EventBusSearchingFriendRequest;
 import com.oakkub.chat.utils.Util;
 import com.oakkub.chat.views.adapters.viewholders.FriendViewPagerAdapter;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
-import de.greenrobot.event.EventBus;
 import icepick.State;
 
 /**
@@ -148,8 +146,6 @@ public class AddFriendPagerFragment extends BaseFragment implements
     public boolean onQueryTextSubmit(String query) {
         if (viewPager.getCurrentItem() != 0) return false;
         query = query.trim();
-
-        EventBus.getDefault().post(new EventBusSearchingFriendRequest(query));
 
         Intent searchRecommendedFriendIntent = SearchFriendRequestActivity
                 .getStartIntent(getActivity(), query);

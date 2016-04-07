@@ -33,9 +33,11 @@ import com.oakkub.chat.views.widgets.MyTextView;
 import com.oakkub.chat.views.widgets.recyclerview.RecyclerViewInfiniteScrollListener;
 import com.oakkub.chat.views.widgets.recyclerview.RecyclerViewScrollDirectionListener;
 
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+
 import butterknife.Bind;
 import butterknife.ButterKnife;
-import de.greenrobot.event.EventBus;
 
 public class RoomListFragment extends BaseFragment implements OnAdapterItemClick,
     SwipeRefreshLayout.OnRefreshListener {
@@ -165,22 +167,15 @@ public class RoomListFragment extends BaseFragment implements OnAdapterItemClick
             @Override
             public void onLoadMore(int page) {
                 if (roomListAdapter.getItemCount() < RoomListFetchingFragment.MESSAGE_LIMIT) return;
-                final Room room = roomListAdapter.getLastItem();
+                Room room = roomListAdapter.getLastItem();
 
                 if (room != null) {
-                    getActivity().getWindow().getDecorView().getHandler().post(new Runnable() {
-                        @Override
-                        public void run() {
-
-                            roomListAdapter.addFooterProgressBar();
-                            EventBus.getDefault().post(new EventBusRoomListLoadingMore(room.getLatestMessageTime()));
-                        }
-                    });
+                    roomListAdapter.addFooterProgressBar();
+                    EventBus.getDefault().post(new EventBusRoomListLoadingMore(room.getLatestMessageTime()));
                 }
             }
         };
         roomList.addOnScrollListener(infiniteScrollListener);
-
         roomList.setAdapter(roomListAdapter);
     }
 
@@ -211,6 +206,7 @@ public class RoomListFragment extends BaseFragment implements OnAdapterItemClick
         return false;
     }
 
+    @Subscribe
     public void onEvent(EventBusEmptyRoomList eventBusEmptyRoomList) {
         if (roomListAdapter.isEmpty() && !eventBusEmptyRoomList.isExists) {
             alretTextView.setText(R.string.you_dont_have_messages);
@@ -221,12 +217,14 @@ public class RoomListFragment extends BaseFragment implements OnAdapterItemClick
         swipeRefreshLayout.hide();
     }
 
+    @Subscribe
     public void onEvent(EventBusRoomListEdited eventBusRoomListEdited) {
         if (roomListAdapter == null) return;
 
         roomListAdapter.replace(eventBusRoomListEdited.room);
     }
 
+    @Subscribe
     public void onEvent(EventBusNewRoom eventBusNewRoom) {
         if (roomListAdapter == null) return;
 
@@ -265,6 +263,7 @@ public class RoomListFragment extends BaseFragment implements OnAdapterItemClick
         }
     }
 
+    @Subscribe
     public void onEvent(EventBusOlderRoom eventBusOlderRoom) {
         roomListAdapter.removeFooter();
 
@@ -281,6 +280,7 @@ public class RoomListFragment extends BaseFragment implements OnAdapterItemClick
         infiniteScrollListener.setLoadMore(true);
     }
 
+    @Subscribe
     @SuppressWarnings("unused")
     public void onEvent(EventBusUpdatedRoom eventBusUpdatedRoom) {
         if (roomListAdapter == null) return;
@@ -311,6 +311,7 @@ public class RoomListFragment extends BaseFragment implements OnAdapterItemClick
         }*/
     }
 
+    @Subscribe
     public void onEvent(EventBusRemovedRoom removedRoom) {
         if (roomListAdapter == null) return;
         roomListAdapter.remove(removedRoom.room);

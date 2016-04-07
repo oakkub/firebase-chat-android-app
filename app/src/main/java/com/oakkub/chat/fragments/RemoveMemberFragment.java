@@ -255,13 +255,14 @@ public class RemoveMemberFragment extends BaseFragment {
         String messageKey = messageFirebase.get().child(roomId).push().getKey();
         Message removedMessage = new Message(roomId, "", FirebaseUtil.SYSTEM, when);
 
-
         for (String friendKey : totalFriendKeyToBeInvited) {
             FirebaseMapUtil.mapUserRoomMember(map, friendKey, roomId, null);
             FirebaseMapUtil.mapUserRoomAdminMember(map, friendKey, roomId, null);
             FirebaseMapUtil.mapUserGroupRoom(map, friendKey, roomId, null);
+            FirebaseMapUtil.mapUserPublicRoom(map, friendKey, roomId, null);
             FirebaseMapUtil.mapUserRoom(map, friendKey, roomId, null);
         }
+
         removedMessage.setMessage(uid + "/" + TextUtil.implodeArray("/", totalFriendKeyToBeInvited));
         removedMessage.setLanguageRes(MessageUtil.REMOVED_MEMBER);
 

@@ -50,7 +50,7 @@ public class EmailLoginFragment extends BaseFragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        View rootView = inflater.inflate(R.layout.email_login_fragment, container, false);
+        View rootView = inflater.inflate(R.layout.fragment_email_login, container, false);
         ButterKnife.bind(this, rootView);
         return rootView;
     }

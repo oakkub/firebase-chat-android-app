@@ -1,6 +1,5 @@
 package com.oakkub.chat.services;
 
-import android.app.IntentService;
 import android.content.Intent;
 import android.support.v4.app.NotificationManagerCompat;
 import android.support.v4.util.ArrayMap;
@@ -12,6 +11,7 @@ import com.firebase.client.FirebaseError;
 import com.firebase.client.ValueEventListener;
 import com.oakkub.chat.R;
 import com.oakkub.chat.managers.AppController;
+import com.oakkub.chat.managers.MyIntentService;
 import com.oakkub.chat.utils.FirebaseMapUtil;
 import com.oakkub.chat.utils.FirebaseUtil;
 import com.oakkub.chat.utils.GCMUtil;
@@ -26,7 +26,7 @@ import dagger.Lazy;
 /**
  * Created by OaKKuB on 2/24/2016.
  */
-public class FriendRequestActionService extends IntentService {
+public class FriendRequestActionService extends MyIntentService {
 
     private static final String TAG = FriendRequestActionService.class.getSimpleName();
 
@@ -91,8 +91,14 @@ public class FriendRequestActionService extends IntentService {
     }
 
     private void showError() {
-        String text = code == CODE_ACCEPT_FRIEND ? getString(R.string.accept) : getString(R.string.reject);
-        MyToast.make(getString(R.string.you_need_to_login_in_order_to_n, text)).show();
+        final String text = code == CODE_ACCEPT_FRIEND ? getString(R.string.accept) : getString(R.string.reject);
+
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                MyToast.make(getString(R.string.you_need_to_login_in_order_to_n, text)).show();
+            }
+        });
     }
 
     private void handleRequest() {
@@ -125,7 +131,13 @@ public class FriendRequestActionService extends IntentService {
             }
 
             if (code == CODE_ACCEPT_FRIEND) {
-                MyToast.make(getString(R.string.you_accept_n_as_friend, displayName)).show();
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        MyToast.make(getString(R.string.you_accept_n_as_friend, displayName)).show();
+                    }
+                });
+
                 fetchInstanceIdToSendNotification();
             }
         }

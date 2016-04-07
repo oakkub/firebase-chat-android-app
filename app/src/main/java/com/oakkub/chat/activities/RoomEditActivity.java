@@ -10,6 +10,7 @@ import com.oakkub.chat.R;
 import com.oakkub.chat.fragments.Base64ConverterFragment;
 import com.oakkub.chat.fragments.PublicRoomCreationFragment;
 import com.oakkub.chat.managers.AppController;
+import com.oakkub.chat.managers.icepick_bundler.RoomBundler;
 import com.oakkub.chat.models.Room;
 import com.oakkub.chat.models.eventbus.EventBusRoomListEdited;
 import com.oakkub.chat.models.eventbus.EventBusUpdatedGroupRoom;
@@ -17,6 +18,7 @@ import com.oakkub.chat.models.eventbus.EventBusUpdatedPublicRoom;
 import com.oakkub.chat.utils.FirebaseUtil;
 import com.oakkub.chat.utils.RoomUtil;
 
+import org.greenrobot.eventbus.EventBus;
 import org.parceler.Parcels;
 
 import java.io.File;
@@ -27,7 +29,6 @@ import javax.inject.Named;
 
 import butterknife.ButterKnife;
 import dagger.Lazy;
-import de.greenrobot.event.EventBus;
 import icepick.State;
 
 /**
@@ -47,20 +48,19 @@ public class RoomEditActivity extends BaseActivity implements
     Lazy<Firebase> roomInfoFirebase;
 
     @State
-    String myId;
-
-    @State
     boolean isRoomEdit;
 
     @State
     boolean isPublicChat;
 
-    private Room room;
+    @State(RoomBundler.class)
+    Room room;
+
     private PublicRoomCreationFragment publicRoomCreationFragment;
     private Base64ConverterFragment base64ConverterFragment;
 
-    public static Intent getStartIntent(Context context, String myId, Room room) {
-        Intent intent = getMyIdStartIntent(context, myId, RoomEditActivity.class);
+    public static Intent getStartIntent(Context context, Room room) {
+        Intent intent = new Intent(context, RoomEditActivity.class);
         intent.putExtra(EXTRA_ROOM, Parcels.wrap(room));
         return intent;
     }
@@ -76,7 +76,7 @@ public class RoomEditActivity extends BaseActivity implements
     private void initInstances(Bundle savedInstanceState) {
         Intent intent = getIntent();
         if (savedInstanceState == null) {
-            myId = intent.getStringExtra(EXTRA_MY_ID);
+            uid = intent.getStringExtra(EXTRA_MY_ID);
         }
         room = Parcels.unwrap(intent.getParcelableExtra(EXTRA_ROOM));
         isPublicChat = room.getType().equals(RoomUtil.PUBLIC_TYPE);
@@ -85,37 +85,38 @@ public class RoomEditActivity extends BaseActivity implements
                 .setBackgroundColor(getCompatColor(android.R.color.white));
 
         publicRoomCreationFragment = (PublicRoomCreationFragment) findOrAddFragmentByTag(
-                R.id.empty_container, PublicRoomCreationFragment.newInstance(
-                        myId, getString(R.string.edit), room), ROOM_CREATE_TAG);
+                R.id.empty_container, PublicRoomCreationFragment.newInstance(getString(R.string.edit), room), ROOM_CREATE_TAG);
 
         base64ConverterFragment = (Base64ConverterFragment) findOrAddFragmentByTag(
                 getSupportFragmentManager(),
                 Base64ConverterFragment.newInstance(), BASE64_CONVERTER_TAG);
     }
 
-    private void sendResult() {
+    private void sendResult(Room editedRoom) {
+        room = editedRoom;
+
         EventBus.getDefault().post(new EventBusRoomListEdited(room));
         setResult(RESULT_OK, RoomInfoActivity.getResultIntent(room, isRoomEdit));
         fadeOutFinish();
     }
 
     @Override
-    public void onInputSend(Room room, Uri uriImage, String absolutePath) {
-        room.setRoomId(this.room.getRoomId());
-        room.setLatestMessage(this.room.getLatestMessage());
-        room.setLatestMessageUser(this.room.getLatestMessageUser());
-        room.setLatestMessageTime(this.room.getLatestMessageTime());
-        room.setImagePath(uriImage == null ? this.room.getImagePath() : uriImage.toString());
-        room.setCreated(this.room.getCreated());
+    public void onInputSend(Room editedRoom, Uri uriImage, String absolutePath) {
+        editedRoom.setRoomId(this.room.getRoomId());
+        editedRoom.setLatestMessage(this.room.getLatestMessage());
+        editedRoom.setLatestMessageUser(this.room.getLatestMessageUser());
+        editedRoom.setLatestMessageTime(this.room.getLatestMessageTime());
+        editedRoom.setImagePath(uriImage == null ? this.room.getImagePath() : uriImage.toString());
+        editedRoom.setCreated(this.room.getCreated());
 
-        isRoomEdit = !this.room.fullEquals(room);
+        isRoomEdit = !this.room.fullEquals(editedRoom);
         if (!isRoomEdit) {
             fadeOutFinish();
             return;
         }
 
         showProgressDialog();
-        saveRoomData(room);
+        saveRoomData(editedRoom);
         boolean isEditedImage = false;
 
         if (absolutePath == null && uriImage != null) {
@@ -129,13 +130,13 @@ public class RoomEditActivity extends BaseActivity implements
 
         if (!isEditedImage) {
             hideProgressDialog();
-            sendResult();
+            sendResult(editedRoom);
         }
 
         if (isPublicChat) {
-            EventBus.getDefault().post(new EventBusUpdatedPublicRoom(room));
+            EventBus.getDefault().post(new EventBusUpdatedPublicRoom(editedRoom));
         } else {
-            EventBus.getDefault().post(new EventBusUpdatedGroupRoom(room));
+            EventBus.getDefault().post(new EventBusUpdatedGroupRoom(editedRoom));
         }
     }
 
@@ -177,6 +178,6 @@ public class RoomEditActivity extends BaseActivity implements
         updateRoomInfo(RoomUtil.KEY_IMAGE_PATH, base64);
         hideProgressDialog();
 
-        sendResult();
+        sendResult(room);
     }
 }

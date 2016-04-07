@@ -28,7 +28,7 @@
                 android:clickable="true"
                 fresco:actualImageScaleType="fitXY"
                 fresco:fadeDuration="@android:integer/config_shortAnimTime"
-                fresco:placeholderImage="@drawable/ic_camera_alt_red_48dp"
+                fresco:placeholderImage="@drawable/ic_camera_alt_pink_24dp"
                 fresco:roundAsCircle="true" />
 
             <android.support.design.widget.TextInputLayout

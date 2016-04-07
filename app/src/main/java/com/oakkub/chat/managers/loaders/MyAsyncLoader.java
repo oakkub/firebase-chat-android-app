@@ -8,7 +8,7 @@ import android.support.v4.content.AsyncTaskLoader;
  */
 public abstract class MyAsyncLoader<D> extends AsyncTaskLoader<D> {
 
-    D data;
+    protected D data;
 
     public MyAsyncLoader(Context context) {
         super(context);

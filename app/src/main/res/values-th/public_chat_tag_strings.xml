@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
+    <string name="art">ศิลปะ</string>
+
     <string-array name="public_chat_tag_keys">
-        <item>ทั่วไป</item>
-        <item>ศิลปะ</item>
+        <item>@string/general</item>
+        <item>@string/art</item>
         <item>หนังสือ</item>
         <item>กล้อง</item>
         <item>รถยนต์</item>

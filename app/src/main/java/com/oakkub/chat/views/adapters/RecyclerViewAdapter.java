@@ -138,7 +138,7 @@ public abstract class RecyclerViewAdapter<I> extends RecyclerView.Adapter {
     }
 
     public I remove(I item) {
-        final int index = findPosition(item);
+        int index = findPosition(item);
 
         if (index >= 0) {
             return removeItem(index);

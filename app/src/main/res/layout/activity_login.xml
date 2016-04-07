@@ -23,18 +23,22 @@
             android:textAppearance="@style/TextAppearance.AppCompat.Display3"
             android:textColor="@android:color/white" />
 
-        <TextView
-            android:id="@+id/application_name_desc_textview"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/simple_chat_for_everyone"
-            android:textAppearance="@style/TextAppearance.AppCompat.Medium"
-            android:textColor="@android:color/white" />
-
-        <android.support.v4.view.ViewPager
-            android:id="@+id/login_viewpager"
+        <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+            android:layout_height="match_parent">
+
+            <android.support.v4.view.ViewPager
+                android:id="@+id/login_viewpager"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <me.relex.circleindicator.CircleIndicator
+                android:id="@+id/viewpager_indicator"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/spacing_bigger"
+                android:layout_gravity="bottom|center_horizontal" />
+
+        </FrameLayout>
 
     </LinearLayout>
 

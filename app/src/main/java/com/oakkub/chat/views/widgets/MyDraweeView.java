@@ -73,7 +73,7 @@ public class MyDraweeView extends SimpleDraweeView {
         }
     }
 
-    public void setMatchedSizeImageURI(final Uri uri) {
+    public void setMatchedSizeImageURI(Uri uri) {
         this.uriImage = uri;
 
         getViewTreeObserver().addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
@@ -81,7 +81,7 @@ public class MyDraweeView extends SimpleDraweeView {
             public boolean onPreDraw() {
                 DraweeController controller = FrescoUtil.getResizeController(
                         getWidth(), getHeight(),
-                        uri, getController());
+                        uriImage, getController());
                 setController(controller);
                 getViewTreeObserver().removeOnPreDrawListener(this);
                 return true;

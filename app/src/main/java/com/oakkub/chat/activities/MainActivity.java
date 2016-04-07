@@ -14,20 +14,17 @@ import android.support.v4.content.ContextCompat;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
 
-import com.facebook.drawee.view.SimpleDraweeView;
-import com.firebase.client.DataSnapshot;
 import com.firebase.client.Firebase;
-import com.firebase.client.FirebaseError;
-import com.firebase.client.ValueEventListener;
 import com.oakkub.chat.R;
+import com.oakkub.chat.broadcast.InternetConnectionChangeReceiver;
 import com.oakkub.chat.fragments.FacebookLoginActivityFragment;
 import com.oakkub.chat.fragments.FriendsFetchingFragment;
 import com.oakkub.chat.fragments.FriendsFragment;
@@ -39,12 +36,13 @@ import com.oakkub.chat.managers.AppController;
 import com.oakkub.chat.managers.OnScrolledEventListener;
 import com.oakkub.chat.managers.RefreshListener;
 import com.oakkub.chat.models.UserInfo;
-import com.oakkub.chat.models.UserOnlineInfo;
+import com.oakkub.chat.models.UserSnapshotOnlineInfo;
 import com.oakkub.chat.utils.FirebaseUtil;
 import com.oakkub.chat.utils.PrefsUtil;
 import com.oakkub.chat.utils.UserInfoUtil;
 import com.oakkub.chat.views.adapters.MainViewPagerAdapter;
 import com.oakkub.chat.views.dialogs.AlertDialogFragment;
+import com.oakkub.chat.views.widgets.MyDraweeView;
 import com.oakkub.chat.views.widgets.MyMaterialSheetFab;
 import com.oakkub.chat.views.widgets.SheetFab;
 import com.oakkub.chat.views.widgets.toolbar.ToolbarCommunicator;
@@ -108,13 +106,9 @@ public class MainActivity extends BaseActivity implements
     @Bind(R.id.fab)
     SheetFab fab;
 
-    private SimpleDraweeView headerImage;
+    private MyDraweeView headerImage;
     private TextView headerDisplayNameTextView;
     private TextView headerEmailTextView;
-
-    @Inject
-    @Named(FirebaseUtil.NAMED_CONNECTION)
-    Firebase connectionFirebase;
 
     @Inject
     @Named(FirebaseUtil.NAMED_ONLINE_USERS)
@@ -142,6 +136,7 @@ public class MainActivity extends BaseActivity implements
         super.onCreate(savedInstanceState);
         AppController.getComponent(this).inject(this);
         getDataFromIntent(savedInstanceState);
+        sendBroadcastInternetConnection(savedInstanceState);
 
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
@@ -153,6 +148,14 @@ public class MainActivity extends BaseActivity implements
         setFab();
 
         addFragments();
+    }
+
+    private void sendBroadcastInternetConnection(Bundle savedInstanceState) {
+        if (savedInstanceState == null) {
+            Intent internetConnectionIntent =
+                    new Intent(InternetConnectionChangeReceiver.ACTION_INTERNET_CONNECTION);
+            sendBroadcast(internetConnectionIntent);
+        }
     }
 
     @Override
@@ -328,6 +331,7 @@ public class MainActivity extends BaseActivity implements
 
     @Override
     public void onPageSelected(int position) {
+        appBarLayout.setExpanded(true);
         onSelectedFragment(position);
     }
 
@@ -397,42 +401,17 @@ public class MainActivity extends BaseActivity implements
         alertDialog.show(getSupportFragmentManager(), ALERT_LOGOUT_DIALOG_TAG);
     }
 
-    private void setupFirebaseComponent() {
-
-        connectionFirebase.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                boolean connected = dataSnapshot.getValue(Boolean.class);
-
-                if (connected) {
-
-                    Firebase currentOnlineUser = onlineUserFirebase.child(uid);
-
-                    UserOnlineInfo userOnlineInfo = new UserOnlineInfo(true, System.currentTimeMillis());
-
-                    currentOnlineUser.onDisconnect().setValue(userOnlineInfo);
-                    currentOnlineUser.child(FirebaseUtil.CHILD_ONLINE).setValue(true);
-                }
-            }
-
-            @Override
-            public void onCancelled(FirebaseError firebaseError) {
-                Log.e(TAG, "Code: " + firebaseError.getCode());
-                Log.e(TAG, firebaseError.getMessage());
-            }
-        });
-    }
-
     @Override
     public void onUserInfoReceived(UserInfo userInfo) {
         myInfo = userInfo;
 
         SharedPreferences prefs = AppController.getComponent(this).sharedPreferences();
         SharedPreferences.Editor editor = prefs.edit();
-        headerImage.setImageURI(Uri.parse(userInfo.getProfileImageURL()));
-        headerDisplayNameTextView.setText(userInfo.getDisplayName());
 
         String email = userInfo.getEmail();
+
+        headerImage.setMatchedSizeImageURI(Uri.parse(userInfo.getProfileImageURL()));
+        headerDisplayNameTextView.setText(userInfo.getDisplayName());
         headerEmailTextView.setVisibility(email.isEmpty() ? View.GONE : View.VISIBLE);
         headerEmailTextView.setText(email);
 
@@ -448,7 +427,10 @@ public class MainActivity extends BaseActivity implements
 
     @Override
     public void setTitle(String title) {
-        if (getSupportActionBar() != null) getSupportActionBar().setTitle(title);
+        ActionBar actionBar = getSupportActionBar();
+        if (actionBar != null) {
+            actionBar.setTitle(title);
+        }
     }
 
     @Override
@@ -467,8 +449,8 @@ public class MainActivity extends BaseActivity implements
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_main, menu);
-        return true;
+//        getMenuInflater().inflate(R.menu.menu_main, menu);
+        return false;
     }
 
     @Override
@@ -546,7 +528,7 @@ public class MainActivity extends BaseActivity implements
             case FRIEND_LIST_FRAGMENT_TAG:
                 if (mainViewPagerAdapter.getRegisteredFragment(1) != null) {
                     FriendsFragment  friendsFragment = (FriendsFragment) mainViewPagerAdapter.getRegisteredFragment(1);
-                    friendsFragment.loadFriends();
+                    friendsFragment.restartFriends();
                 }
                 break;
             case GROUP_LIST_FRAGMENT_TAG:
@@ -607,11 +589,10 @@ public class MainActivity extends BaseActivity implements
     }
 
     private void firebaseLogout() {
-        UserOnlineInfo userOnlineInfo = new UserOnlineInfo(false, System.currentTimeMillis());
+        UserSnapshotOnlineInfo userSnapshotOnlineInfo = new UserSnapshotOnlineInfo(false);
 
-        onlineUserFirebase.child(uid).onDisconnect().setValue(userOnlineInfo);
-        onlineUserFirebase.child(uid)
-                .setValue(userOnlineInfo);
+        onlineUserFirebase.child(uid).onDisconnect().setValue(userSnapshotOnlineInfo);
+        onlineUserFirebase.child(uid).setValue(userSnapshotOnlineInfo);
         onlineUserFirebase.unauth();
     }
 
@@ -620,6 +601,7 @@ public class MainActivity extends BaseActivity implements
 
         SharedPreferences.Editor editor = AppController.getComponent(this).sharedPreferencesEditor();
         editor.remove(PrefsUtil.PREF_UID);
+        editor.remove(PrefsUtil.PREF_EMAIL);
         editor.apply();
 
         Intent loginIntent = new Intent(this, LoginActivity.class);

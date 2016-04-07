@@ -38,11 +38,13 @@ import com.oakkub.chat.utils.Base64Util;
 import com.oakkub.chat.utils.FirebaseMapUtil;
 import com.oakkub.chat.utils.FirebaseUtil;
 
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+
 import javax.inject.Inject;
 import javax.inject.Named;
 
 import dagger.Lazy;
-import de.greenrobot.event.EventBus;
 
 /**
  * Created by OaKKuB on 12/24/2015.
@@ -130,6 +132,7 @@ public class NewMessagesFragment extends BaseFragment {
         onRoomRequest.onShowLoading();
     }
 
+    @Subscribe
     @SuppressWarnings("unused")
     public void onEvent(EventBusNewPrivateRoomMessage eventBusRoom) {
         onPrivateRoomCreated(eventBusRoom.room);

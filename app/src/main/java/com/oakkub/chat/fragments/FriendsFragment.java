@@ -1,5 +1,6 @@
 package com.oakkub.chat.fragments;
 
+import android.app.Activity;
 import android.content.Context;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -45,9 +46,8 @@ public class FriendsFragment extends BaseFragment
         implements OnAdapterItemClick, LoaderManager.LoaderCallbacks<List<UserInfo>>,
         SwipeRefreshLayout.OnRefreshListener {
 
-    private static final String ARGS_MY_ID = "args:uid";
-    private static final String FRIEND_LIST_STATE = "state:friendList";
     private static final String TAG = FriendsFragment.class.getSimpleName();
+    private static final int FRIEND_DETAIL_REQUEST_CODE = 1;
 
     @Inject
     @Named(FirebaseUtil.NAMED_USER_FRIENDS)
@@ -64,6 +64,9 @@ public class FriendsFragment extends BaseFragment
 
     @State
     boolean isFriendsReceived;
+
+    @State
+    int selectedItemPosition;
 
     private FriendListAdapter friendListAdapter;
     private OnScrolledEventListener onScrolledEventListener;
@@ -83,7 +86,6 @@ public class FriendsFragment extends BaseFragment
         AppController.getComponent(getActivity()).inject(this);
         setFriendListAdapter();
 
-//        EventBus.getDefault().register(this);
         userFriendsFirebase.child(uid).keepSynced(true);
     }
 
@@ -111,13 +113,7 @@ public class FriendsFragment extends BaseFragment
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
 
-        if (savedInstanceState == null) {
-            loadFriends();
-        }
-
-        if (isFriendsReceived) {
-            loadFriends();
-        }
+        loadFriends();
     }
 
     @Override
@@ -126,13 +122,6 @@ public class FriendsFragment extends BaseFragment
 
         onScrolledEventListener = null;
         refreshListener = null;
-    }
-
-    @Override
-    public void onDestroy() {
-//        EventBus.getDefault().unregister(this);
-
-        super.onDestroy();
     }
 
     @Override
@@ -150,7 +139,7 @@ public class FriendsFragment extends BaseFragment
 
     @Override
     public void onLoadFinished(Loader<List<UserInfo>> loader, List<UserInfo> data) {
-        onFriendsRecevied(data);
+        onFriendsReceived(data);
     }
 
     @Override
@@ -160,12 +149,14 @@ public class FriendsFragment extends BaseFragment
 
     @Override
     public void onAdapterClick(View itemView, int position) {
+        selectedItemPosition = position;
+
         UserInfo friendInfo = friendListAdapter.getItem(position);
 
         ImageView profileImage = ButterKnife.findById(itemView, R.id.simpleInfoProfileImageView);
 
         FriendDetailActivity.launch((AppCompatActivity) getActivity(),
-                profileImage, friendInfo);
+                profileImage, friendInfo, FRIEND_DETAIL_REQUEST_CODE);
     }
 
     @Override
@@ -173,8 +164,18 @@ public class FriendsFragment extends BaseFragment
         return false;
     }
 
+    private void onFriendDetailResult(int requestCode, int resultCode) {
+        if (requestCode != FRIEND_DETAIL_REQUEST_CODE || resultCode != Activity.RESULT_OK) return;
+
+        friendListAdapter.remove(selectedItemPosition);
+    }
+
     public void loadFriends() {
         getLoaderManager().initLoader(0, null, this);
+    }
+
+    public void restartFriends() {
+        getLoaderManager().restartLoader(0, null, this);
     }
 
     private void initInstances() {
@@ -182,6 +183,7 @@ public class FriendsFragment extends BaseFragment
 
         int columnWidth = (int) getResources().getDimension(R.dimen.cardview_width);
         GridAutoFitLayoutManager gridLayoutManager = new GridAutoFitLayoutManager(getActivity(), columnWidth);
+        gridLayoutManager.setAutoMeasureEnabled(false);
 
         friendsList.setLayoutManager(gridLayoutManager);
         friendsList.setHasFixedSize(true);
@@ -208,7 +210,7 @@ public class FriendsFragment extends BaseFragment
         friendListAdapter = new FriendListAdapter(this);
     }
 
-    private void onFriendsRecevied(List<UserInfo> userInfoList) {
+    private void onFriendsReceived(List<UserInfo> userInfoList) {
         swipeRefreshLayout.hide();
 
         if (userInfoList.isEmpty()) {

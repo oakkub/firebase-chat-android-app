@@ -3,7 +3,6 @@ package com.oakkub.chat.fragments;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
 import android.support.v4.util.ArrayMap;
 import android.util.Log;
 
@@ -23,17 +22,18 @@ import com.oakkub.chat.utils.FirebaseUtil;
 import com.oakkub.chat.utils.PrefsUtil;
 import com.oakkub.chat.utils.UserInfoUtil;
 
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+
 import java.util.Map;
 
 import javax.inject.Inject;
 import javax.inject.Named;
 
-import de.greenrobot.event.EventBus;
-
 /**
  * A placeholder fragment containing a simple view.
  */
-public class AuthenticationFragment extends Fragment {
+public class AuthenticationFragment extends BaseFragment {
 
     public static final String PROVIDER = "extra:provider";
     public static final String PASSWORD = "extra:password";
@@ -204,6 +204,7 @@ public class AuthenticationFragment extends Fragment {
         return userInfo;
     }
 
+    @Subscribe
     public void onEvent(EventBusGoogleInstanceID eventBusGoogleInstanceID) {
         if (eventBusGoogleInstanceID == null) {
             backToLoginActivity(getString(R.string.error_message_network));

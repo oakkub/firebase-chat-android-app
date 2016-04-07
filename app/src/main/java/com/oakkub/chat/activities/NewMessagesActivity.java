@@ -31,6 +31,8 @@ import com.oakkub.chat.views.adapters.presenter.OnAdapterItemClick;
 import com.oakkub.chat.views.widgets.EmptyTextProgressBar;
 import com.oakkub.chat.views.widgets.MyToast;
 
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
 import org.parceler.Parcels;
 
 import java.util.List;
@@ -38,7 +40,6 @@ import java.util.List;
 import butterknife.Bind;
 import butterknife.ButterKnife;
 import butterknife.OnTextChanged;
-import de.greenrobot.event.EventBus;
 import icepick.State;
 
 /**
@@ -403,6 +404,7 @@ public class NewMessagesActivity extends BaseActivity implements OnAdapterItemCl
         showProgressDialog();
     }
 
+    @Subscribe
     public void onEvent(EventBusNewMessagesFriendInfo eventBusNewMessagesFriendInfo) {
         progressBarLayout.hideProgressBar();
 

@@ -15,13 +15,14 @@ import com.oakkub.chat.models.eventbus.EventBusNewMessagesFriendInfo;
 import com.oakkub.chat.utils.FirebaseUtil;
 import com.oakkub.chat.utils.UserInfoUtil;
 
+import org.greenrobot.eventbus.EventBus;
+
 import java.util.ArrayList;
 
 import javax.inject.Inject;
 import javax.inject.Named;
 
 import dagger.Lazy;
-import de.greenrobot.event.EventBus;
 
 /**
  * Created by OaKKuB on 12/9/2015.

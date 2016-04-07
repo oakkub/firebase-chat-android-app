@@ -46,22 +46,9 @@ public class AuthenticationActivity extends BaseActivity {
 
     private void setViews() {
 
-        setStatusBarColor(getStatusBarColor());
-        rootView.setBackgroundColor(getCompatColor(getBackgroundColor()));
+        rootView.setBackgroundColor(getCompatColor(R.color.colorPrimary));
 
         loggingTextView.setText(getString(R.string.authenticating_user));
-    }
-
-    private int getStatusBarColor() {
-        if (FirebaseUtil.isGoogleLogin(provider)) return R.color.colorPrimaryDark;
-        else if (FirebaseUtil.isFacebookLogin(provider)) return R.color.darkerBlue;
-        else return R.color.colorPrimary;
-    }
-
-    private int getBackgroundColor() {
-        if (FirebaseUtil.isGoogleLogin(provider)) return R.color.tomato;
-        else if (FirebaseUtil.isFacebookLogin(provider)) return R.color.darkBlue;
-        else return R.color.colorPrimary;
     }
 
     private void findAuthenticationFragment() {

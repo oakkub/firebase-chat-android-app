@@ -11,7 +11,7 @@
     <item
         android:id="@+id/action_remove_admin"
         android:orderInCategory="2"
-        android:title="@string/remove_admin"
+        android:title="@string/demote_admin"
         app:showAsAction="never" />
 
 </menu>

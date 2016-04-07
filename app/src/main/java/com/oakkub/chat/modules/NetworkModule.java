@@ -75,8 +75,8 @@ public class NetworkModule {
 
     @Named(FirebaseUtil.NAMED_ONLINE_USERS)
     @Provides
-    Firebase provideFirebaseUserOnline(@Named(FirebaseUtil.NAMED_ROOT) Firebase firebase) {
-        return firebase.child(FirebaseUtil.KEY_ONLINE_USER);
+    Firebase provideFirebaseUserOnline(@Named(FirebaseUtil.NAMED_USERS) Firebase firebase) {
+        return firebase.child(FirebaseUtil.KEY_USERS_USER_ONLINE);
     }
 
     @Named(FirebaseUtil.NAMED_CONNECTION)

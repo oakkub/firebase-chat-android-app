@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.oakkub.chat.views.widgets.VisibilityTextView xmlns:android="http://schemas.android.com/apk/res/android"
+<com.oakkub.chat.views.widgets.MyTextView xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/wide_textview"
     style="@style/TextViewSingleLineStyle"
     android:layout_width="match_parent"

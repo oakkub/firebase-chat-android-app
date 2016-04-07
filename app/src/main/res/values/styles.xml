@@ -25,7 +25,7 @@
 
     <style name="FabStyle" parent="@style/Widget.Design.FloatingActionButton">
         <item name="backgroundTint">@color/colorAccent</item>
-        <item name="rippleColor">@color/colorPrimaryDark</item>
+        <item name="rippleColor">@color/colorAccentDark</item>
         <item name="pressedTranslationZ">@dimen/spacing_small</item>
     </style>
 
@@ -163,6 +163,11 @@
         <item name="android:background">?attr/selectableItemBackground</item>
     </style>
 
+    <style name="ButtonDialogStyle" parent="DefaultButtonStyle">
+        <item name="android:padding">@dimen/spacing_smaller</item>
+        <item name="android:drawablePadding">@dimen/spacing_smaller</item>
+    </style>
+
     <style name="FacebookButtonStyle" parent="DefaultButtonStyle">
         <item name="android:drawableLeft">@drawable/facebook_logo_white</item>
         <item name="android:drawableStart">@drawable/facebook_logo_white</item>
@@ -179,6 +184,11 @@
         <item name="android:background">@android:color/white</item>
         <item name="itemBackground">@android:color/white</item>
         <item name="itemIconTint">@color/colorAccent</item>
+    </style>
+
+    <style name="NavigationViewTextAppearance" parent="TextAppearance.AppCompat.Medium">
+        <item name="android:textSize">@dimen/font_bigger</item>
+        <item name="android:textColor">@android:color/black</item>
     </style>
 
     <style name="AppTheme.NoActionBar">

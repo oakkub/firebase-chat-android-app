@@ -1,6 +1,7 @@
 package com.oakkub.chat.activities;
 
 import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -14,6 +15,8 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.text.Editable;
+import android.text.format.DateUtils;
+import android.util.Log;
 import android.util.SparseArray;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -28,10 +31,14 @@ import android.widget.TextView;
 
 import com.oakkub.chat.R;
 import com.oakkub.chat.fragments.ChatRoomFragment;
+import com.oakkub.chat.managers.AppController;
 import com.oakkub.chat.managers.OnRecyclerViewInfiniteScrollListener;
+import com.oakkub.chat.managers.icepick_bundler.RoomBundler;
+import com.oakkub.chat.managers.icepick_bundler.UserInfoBundler;
 import com.oakkub.chat.models.Message;
 import com.oakkub.chat.models.Room;
 import com.oakkub.chat.models.UserInfo;
+import com.oakkub.chat.models.UserOnlineInfo;
 import com.oakkub.chat.utils.AnimateUtil;
 import com.oakkub.chat.utils.FirebaseUtil;
 import com.oakkub.chat.utils.IntentUtil;
@@ -39,7 +46,9 @@ import com.oakkub.chat.utils.TimeUtil;
 import com.oakkub.chat.utils.UriUtil;
 import com.oakkub.chat.utils.Util;
 import com.oakkub.chat.views.adapters.ChatListAdapter;
+import com.oakkub.chat.views.adapters.presenter.OnAdapterItemClick;
 import com.oakkub.chat.views.dialogs.AlertDialogFragment;
+import com.oakkub.chat.views.dialogs.ListDialogFragment;
 import com.oakkub.chat.views.dialogs.ProgressDialogFragment;
 import com.oakkub.chat.views.widgets.MyLinearLayout;
 import com.oakkub.chat.views.widgets.MyTextView;
@@ -68,14 +77,17 @@ import icepick.State;
 public class ChatRoomActivity extends BaseActivity
         implements ChatRoomFragment.MessageRequestListener,
         OnRecyclerViewInfiniteScrollListener, ToolbarCommunicator,
-        AlertDialogFragment.OnAlertDialogListener {
+        AlertDialogFragment.OnAlertDialogListener, OnAdapterItemClick,
+        ListDialogFragment.OnListDialogClickListener {
 
     private static final String TAG = ChatRoomActivity.class.getSimpleName();
     private static final int POSITION_OFFSET_TO_SCROLL = 2;
     private static final String CHAT_ROOM_FRAGMENT_TAG = "tag:chatRoom";
     private static final String PROGRESS_DIALOG_TAG = "tag:progressDialog";
     private static final String REMOVED_FROM_CHAT_DIALOG_TAG = "tag:removedFromChatDialog";
-    private static final String STATE_PRIVATE_FRIEND_INFO = "state:privateFriendInfo";
+    private static final String MESSAGE_LIST_DIALOG_TAG = "tag:messageListDialog";
+    private static final String REMOVED_BY_FRIEND_DIALOG_TAG = "tag:removedByFriendDialog";
+    private static final String IMAGE_MESSAGE_LIST_DIALOG_TAG = "tag:imageMessageListDialog";
 
     public static final String EXTRA_ROOM = "extra:room";
     public static final String CHAT_LIST_STATE = "state:chatList";
@@ -86,6 +98,12 @@ public class ChatRoomActivity extends BaseActivity
 
     @Bind(R.id.simple_toolbar)
     Toolbar toolbar;
+
+    @Bind(R.id.chat_title_toolbar_textview)
+    MyTextView titleTextView;
+
+    @Bind(R.id.chat_sub_title_toolbar_textview)
+    MyTextView subTitleTextView;
 
     @Bind(R.id.private_chat_message_recycler_view)
     RecyclerView messageList;
@@ -115,10 +133,10 @@ public class ChatRoomActivity extends BaseActivity
     ImageButton sendMessageButton;
 
     @Bind(R.id.private_chat_typing_notify_textview)
-    TextView typingNotifyTextView;
+    TextView headerTextView;
 
     @Bind(R.id.private_chat_new_message_notify_textview)
-    TextView newMessageNotifyTextView;
+    TextView footerTextView;
 
     @Bind(R.id.private_chat_join_room_to_chat_botton)
     Button joinRoomToChatButton;
@@ -136,13 +154,28 @@ public class ChatRoomActivity extends BaseActivity
     boolean isMember;
 
     @State
+    boolean isPrivateRoom;
+
+    @State
+    boolean isRemovedByFriend;
+
+    @State
     String privateFriendId;
 
     @State
-    boolean isPrivateRoom;
+    String[] messageDialogItems;
 
-    private Room room;
-    private UserInfo privateFriendInfo;
+    @State
+    String[] imageMessageDialogItems;
+
+    @State
+    int selectedItemPosition;
+
+    @State(RoomBundler.class)
+    Room room;
+
+    @State(UserInfoBundler.class)
+    UserInfo privateFriendInfo;
 
     private LinearLayoutManager linearLayoutManager;
     private RecyclerViewInfiniteScrollListener recyclerViewInfiniteScrollListener;
@@ -196,13 +229,30 @@ public class ChatRoomActivity extends BaseActivity
         setRecyclerView();
         setInfiniteScroll();
 
+        if (subTitleTextView.getText().toString().isEmpty()) {
+            subTitleTextView.gone();
+        }
+
         if (savedInstanceState == null) {
             getViewTreeObserverAttachmentLayout();
+
             emptyMessageTextView.setVisibility(View.GONE);
-            typingNotifyTextView.setVisibility(View.GONE);
-            newMessageNotifyTextView.setVisibility(View.GONE);
+            headerTextView.setVisibility(View.GONE);
+            footerTextView.setVisibility(View.GONE);
             joinRoomToChatButton.setVisibility(isMember ? View.GONE : View.VISIBLE);
             messageInputLayout.setVisibility(isMember ? View.VISIBLE : View.GONE);
+
+            messageDialogItems = getResources().getStringArray(R.array.message_list_dialog);
+            imageMessageDialogItems = getResources().getStringArray(R.array.image_message_list_dialog);
+        }
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+
+        if (chatRoomFragment != null) {
+            chatRoomFragment.setIntent(intent);
         }
     }
 
@@ -213,9 +263,9 @@ public class ChatRoomActivity extends BaseActivity
             isMember = intent.getBooleanExtra(ChatRoomFragment.EXTRA_IS_MEMBER, false);
             privateFriendId = intent.getStringExtra(ChatRoomFragment.EXTRA_FRIEND_ID);
             isPrivateRoom = privateFriendId != null;
+            room = Parcels.unwrap(intent.getParcelableExtra(ChatRoomFragment.EXTRA_ROOM));
         }
 
-        room = Parcels.unwrap(intent.getParcelableExtra(ChatRoomFragment.EXTRA_ROOM));
     }
 
     private void setToolbar() {
@@ -224,6 +274,7 @@ public class ChatRoomActivity extends BaseActivity
         ActionBar actionBar = getSupportActionBar();
         if (actionBar != null) {
             actionBar.setDisplayHomeAsUpEnabled(true);
+            actionBar.setDisplayShowTitleEnabled(false);
             actionBar.setTitle("");
         }
     }
@@ -246,17 +297,15 @@ public class ChatRoomActivity extends BaseActivity
         recyclerViewInfiniteScrollListener = new RecyclerViewInfiniteScrollListener(linearLayoutManager) {
             @Override
             public void onLoadMore(final int page) {
-                final Message message = chatListAdapter.getLastItem();
+                Message message = chatListAdapter.getLastItem();
+
                 // if null, it is progress bar or no internet indicator or no data.
-                if (message != null) {
-                    getWindow().getDecorView().getHandler().post(new Runnable() {
-                        @Override
-                        public void run() {
-                            chatListAdapter.addFooterProgressBar();
-                            chatRoomFragment.loadItemMore(message.getSentWhen());
-                        }
-                    });
-                }
+                if (message == null) return;
+                if (chatListAdapter.getItemCount() <
+                        ChatRoomFragment.DOWNLOAD_MESSAGE_ITEM_LIMIT) return;
+
+                chatListAdapter.addFooterProgressBar();
+                chatRoomFragment.loadItemMore(message.getSentWhen());
             }
         };
 
@@ -267,7 +316,7 @@ public class ChatRoomActivity extends BaseActivity
                 super.onScrolled(recyclerView, dx, dy);
                 if (dy > 0) {
                     if (linearLayoutManager.findFirstVisibleItemPosition() == 0) {
-                        AnimateUtil.alphaAnimation(newMessageNotifyTextView, false);
+                        AnimateUtil.alphaAnimation(footerTextView, false);
                     }
                 }
             }
@@ -313,6 +362,7 @@ public class ChatRoomActivity extends BaseActivity
             case R.id.action_room_info:
 
                 String roomAction = RoomInfoActivity.ACTION_PRIVATE;
+
                 switch (room.getType()) {
                     case FirebaseUtil.VALUE_ROOM_TYPE_GROUP:
                         roomAction = RoomInfoActivity.ACTION_GROUP;
@@ -360,10 +410,6 @@ public class ChatRoomActivity extends BaseActivity
             chatListAdapter.onSaveInstanceState(CHAT_LIST_STATE, outState);
         }
 
-        if (privateFriendInfo != null) {
-            outState.putParcelable(STATE_PRIVATE_FRIEND_INFO, Parcels.wrap(privateFriendInfo));
-        }
-
         recyclerViewInfiniteScrollListener.onSaveInstanceState(outState);
     }
 
@@ -375,8 +421,6 @@ public class ChatRoomActivity extends BaseActivity
         if (chatListAdapter != null) {
             chatListAdapter.onRestoreInstanceState(CHAT_LIST_STATE, savedInstanceState);
         }
-
-        privateFriendInfo = Parcels.unwrap(savedInstanceState.getParcelable(STATE_PRIVATE_FRIEND_INFO));
 
         recyclerViewInfiniteScrollListener.onRestoreInstanceState(savedInstanceState);
 
@@ -408,10 +452,14 @@ public class ChatRoomActivity extends BaseActivity
     }
 
     private void onRoomInfoIntentResult(int resultCode, int requestCode, Intent data) {
-        if (resultCode != RESULT_OK || requestCode != ROOM_INFO_REQUEST_CODE || data == null)
+        if (resultCode != RESULT_OK || requestCode != ROOM_INFO_REQUEST_CODE || data == null) {
             return;
+        }
+
         Room room = Parcels.unwrap(data.getParcelableExtra(EXTRA_ROOM));
-        setToolbarTitle(room.getName());
+        this.room = room;
+
+        titleTextView.setText(room.getName());
     }
 
     @SuppressWarnings("ResultOfMethodCallIgnored")
@@ -561,7 +609,6 @@ public class ChatRoomActivity extends BaseActivity
             if (chatListAdapter.contains(systemTimeMessage)) {
                 chatListAdapter.remove(systemTimeMessage);
             }
-
             chatListAdapter.addLast(systemTimeMessage);
         }
     }
@@ -577,7 +624,7 @@ public class ChatRoomActivity extends BaseActivity
 
     @OnClick(R.id.message_input_button)
     public void onSendButtonClick() {
-        if (progressBar.getVisibility() == View.VISIBLE || !isMember()) return;
+        if (progressBar.getVisibility() == View.VISIBLE || !isMember() || isRemovedByFriend) return;
 
         String text = messageText.getText().toString().trim();
         if (text.isEmpty()) return;
@@ -597,7 +644,7 @@ public class ChatRoomActivity extends BaseActivity
     public void onNotifyMessageClick() {
         if (!isCloseToFirstPosition()) {
             scrollToFirstPosition(true, 0);
-            AnimateUtil.alphaAnimation(newMessageNotifyTextView, false);
+            AnimateUtil.alphaAnimation(footerTextView, false);
         }
     }
 
@@ -637,8 +684,8 @@ public class ChatRoomActivity extends BaseActivity
 
     @Override
     public void setTitle(String title) {
-        if (getSupportActionBar() != null) {
-            getSupportActionBar().setTitle(title);
+        if (titleTextView != null) {
+            titleTextView.setText(title);
         }
     }
 
@@ -676,27 +723,10 @@ public class ChatRoomActivity extends BaseActivity
 
     private void showNewMessageIfNeeded() {
         if (!isCloseToFirstPosition()) {
-            newMessageNotifyTextView.setText(getString(R.string.new_messages));
-            AnimateUtil.alphaAnimation(newMessageNotifyTextView, true);
+            footerTextView.setText(getString(R.string.new_messages));
+            AnimateUtil.alphaAnimation(footerTextView, true);
         }
     }
-
-    /*private void setPreviousMessageOnNewMessage(Message message) {
-        Message oldMessage = chatListAdapter.getFirstItem();
-        if (oldMessage == null) return;
-
-        oldMessage.setShowImage(!oldMessage.getSentBy().equals(message.getSentBy()));
-        chatListAdapter.replace(oldMessage);
-    }
-
-    private void setPreviousMessageOnOldMessage(Message message) {
-        Message oldMessage = chatListAdapter.getLastItem();
-        if (oldMessage == null) return;
-
-        if (oldMessage.getSentBy().equals(message.getSentBy())) {
-            message.setShowImage(false);
-        }
-    }*/
 
     private void setReadMessage(Message message) {
         chatRoomFragment.markMessageAsRead(message);
@@ -704,8 +734,28 @@ public class ChatRoomActivity extends BaseActivity
 
     @Override
     public void onTypingMessagePrivateRoom(boolean isTyping, String friendName) {
-        typingNotifyTextView.setText(isTyping ? getString(R.string.friend_typing, friendName) : "");
-        AnimateUtil.alphaAnimation(typingNotifyTextView, isTyping);
+        headerTextView.setText(isTyping ? getString(R.string.friend_typing, friendName) : "");
+        AnimateUtil.alphaAnimation(headerTextView, isTyping);
+    }
+
+    @Override
+    public void onCheckUserOnline(UserOnlineInfo userOnlineInfo) {
+        if (subTitleTextView == null) return;
+
+        String text;
+
+        if (userOnlineInfo.isOnline()) {
+            text = getString(R.string.online);
+        } else {
+            text = String.valueOf(getString(R.string.online) + " " +
+                    DateUtils.getRelativeTimeSpanString(
+                            userOnlineInfo.getLastOnline() - 100000,
+                            System.currentTimeMillis(),
+                            DateUtils.MINUTE_IN_MILLIS));
+        }
+
+        subTitleTextView.setText(text);
+        subTitleTextView.visible();
     }
 
     @Override
@@ -724,6 +774,13 @@ public class ChatRoomActivity extends BaseActivity
     public void onNewMessage(Message newMessage) {
         progressBar.setVisibility(View.GONE);
         emptyMessageTextView.setVisibility(View.GONE);
+
+        Message firstMessage = chatListAdapter.getFirstItem();
+        if (firstMessage != null) {
+            if (firstMessage.getSentWhen() > newMessage.getSentWhen()) {
+                return;
+            }
+        }
 
         if (!chatListAdapter.contains(newMessage)) {
             addNewSystemTimeDivider(newMessage);
@@ -762,6 +819,7 @@ public class ChatRoomActivity extends BaseActivity
 
     @Override
     public void onRemoveMessage(Message message) {
+        Log.d(TAG, "onRemoveMessage: " + message.getKey());
         chatListAdapter.remove(message);
     }
 
@@ -784,7 +842,7 @@ public class ChatRoomActivity extends BaseActivity
             SparseArray<UserInfo> friendInfoList = new SparseArray<>(1);
             friendInfoList.put(friendInfo.hashCode(), friendInfo);
 
-            chatListAdapter = new ChatListAdapter(uid, friendInfoList, isPrivateRoom);
+            chatListAdapter = new ChatListAdapter(uid, friendInfoList, isPrivateRoom, this);
             messageList.setAdapter(chatListAdapter);
         }
     }
@@ -793,7 +851,7 @@ public class ChatRoomActivity extends BaseActivity
     public void onGroupRoomReady(SparseArray<UserInfo> userInfoList, boolean isPrivateRoom) {
         if (chatListAdapter == null) {
 
-            chatListAdapter = new ChatListAdapter(uid, userInfoList, isPrivateRoom);
+            chatListAdapter = new ChatListAdapter(uid, userInfoList, isPrivateRoom, this);
             messageList.setAdapter(chatListAdapter);
         }
     }
@@ -831,6 +889,17 @@ public class ChatRoomActivity extends BaseActivity
     }
 
     @Override
+    public void onRemovedByFriend(boolean isRemoved) {
+        isRemovedByFriend = isRemoved;
+
+        if (!isRemoved) return;
+        // TODO: still cannot decide what to do when our friend remove us from friend contact when in chat screen
+        headerTextView.setText(getString(R.string.you_and_n_are_not_friend_so_cannot_send_message,
+                room.getName().split(" ")[0]));
+        AnimateUtil.alphaAnimation(headerTextView, true);
+    }
+
+    @Override
     public void onRemovedByAdmin() {
         if (findFragmentByTag(REMOVED_FROM_CHAT_DIALOG_TAG) == null) {
             AlertDialogFragment removedFromChatDialog = AlertDialogFragment
@@ -841,17 +910,112 @@ public class ChatRoomActivity extends BaseActivity
                     .beginTransaction()
                     .add(removedFromChatDialog, REMOVED_FROM_CHAT_DIALOG_TAG)
                     .commitAllowingStateLoss();
-//            removedFromChatDialog.show(getSupportFragmentManager(), REMOVED_FROM_CHAT_DIALOG_TAG);
         }
     }
 
     @Override
     public void onAlertDialogClick(String tag, int which) {
         if (tag.equals(REMOVED_FROM_CHAT_DIALOG_TAG) && which == DialogInterface.BUTTON_POSITIVE) {
+
             Intent mainIntent = new Intent(this, MainActivity.class);
             mainIntent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
             startActivity(mainIntent);
         }
     }
 
+    @Override
+    public void onDeleteMessage(Message message, boolean isSuccess) {
+        hideProgressDialog();
+
+        if (isSuccess) {
+            // delete system time indicator if present.
+            Message aboveDeletedMessage = chatListAdapter.getItem(selectedItemPosition + 1);
+            Message belowDeletedMessage = chatListAdapter.getItem(selectedItemPosition - 1);
+
+            chatListAdapter.remove(message);
+
+            Message aboveSystemTimeMessage = getSystemTimeMessage(aboveDeletedMessage);
+
+            if (aboveSystemTimeMessage.equals(aboveDeletedMessage)) {
+                if (belowDeletedMessage != null) {
+                    if (TimeUtil.isLeftDayGreaterThanRight(
+                            belowDeletedMessage.getSentWhen(), aboveDeletedMessage.getSentWhen())) {
+                        chatListAdapter.remove(aboveDeletedMessage);
+                    }
+                } else {
+                    chatListAdapter.remove(aboveDeletedMessage);
+                }
+            }
+        } else {
+            MyToast.make(getString(R.string.error_delete_message)).show();
+        }
+
+        selectedItemPosition = -1;
+    }
+
+    @Override
+    public void onAdapterClick(View itemView, int position) {
+
+    }
+
+    @Override
+    public boolean onAdapterLongClick(View itemView, int position) {
+        Message message = chatListAdapter.getItem(position);
+
+        if (message == null) return false;
+        if (message.getSentBy() == null) return false;
+        if (message.getSentBy().equals(FirebaseUtil.SYSTEM)) return false;
+
+        selectedItemPosition = position;
+
+        boolean isImageMessage = message.getImagePath() != null;
+
+        ListDialogFragment messageListDialog = ListDialogFragment.newInstance(
+                getString(R.string.message), isImageMessage ? imageMessageDialogItems : messageDialogItems);
+        messageListDialog.show(getSupportFragmentManager(),
+                isImageMessage ? IMAGE_MESSAGE_LIST_DIALOG_TAG : MESSAGE_LIST_DIALOG_TAG);
+
+        return true;
+    }
+
+    @Override
+    public void onDialogItemClick(String tag, int position) {
+        Message message = chatListAdapter.getItem(selectedItemPosition);
+        if (message == null) return;
+
+        switch (tag) {
+            case MESSAGE_LIST_DIALOG_TAG:
+                onTextMessageDialog(message, position);
+                break;
+            case IMAGE_MESSAGE_LIST_DIALOG_TAG:
+                onImageMessageDialog(message, position);
+                break;
+        }
+    }
+
+    private void onTextMessageDialog(Message message, int position) {
+        switch (position) {
+            case 0:
+                copyTextToClipboard(message.getMessage());
+                break;
+            case 1:
+                chatRoomFragment.deleteMessage(message);
+                break;
+        }
+    }
+
+    private void onImageMessageDialog(Message message, int position) {
+        switch (position) {
+            case 0:
+                chatRoomFragment.deleteMessage(message);
+                break;
+        }
+    }
+
+    private void copyTextToClipboard(String text) {
+        ClipboardManager clipboardManager = AppController.getComponent(this).clipboardManager();
+        ClipData textClipData = ClipData.newPlainText(getString(R.string.message), text);
+
+        clipboardManager.setPrimaryClip(textClipData);
+    }
 }

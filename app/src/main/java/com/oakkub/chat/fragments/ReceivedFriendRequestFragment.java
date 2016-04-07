@@ -39,12 +39,14 @@ import com.oakkub.chat.views.widgets.MySwipeRefreshLayout;
 import com.oakkub.chat.views.widgets.MyTextView;
 import com.oakkub.chat.views.widgets.MyToast;
 
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+
 import javax.inject.Inject;
 import javax.inject.Named;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
-import de.greenrobot.event.EventBus;
 import icepick.State;
 
 /**
@@ -85,6 +87,9 @@ public class ReceivedFriendRequestFragment extends BaseFragment implements
     @State
     boolean loadAutomatically;
 
+    @State
+    int loaderAction = -1;
+
     private FriendListAdapter friendListAdapter;
 
     public static ReceivedFriendRequestFragment newInstance(boolean loadAutomatically) {
@@ -111,6 +116,11 @@ public class ReceivedFriendRequestFragment extends BaseFragment implements
         View rootView = inflater.inflate(R.layout.swipe_refresh_progressbar_recyclerview, container, false);
         ButterKnife.bind(this, rootView);
         initInstances();
+
+        if (savedInstanceState == null) {
+            alertTextView.gone();
+        }
+
         return rootView;
     }
 
@@ -123,6 +133,19 @@ public class ReceivedFriendRequestFragment extends BaseFragment implements
 
             if (loadAutomatically) {
                 load();
+            }
+        } else {
+            friendListAdapter.onRestoreInstanceState(PENDING_REQUEST_STATE, savedInstanceState);
+        }
+
+        if (loaderAction >= 0) {
+            switch (loaderAction) {
+                case ACCEPT_FRIEND_LOADER:
+                    acceptFriend(false);
+                    break;
+                case REJECT_FRIEND_LOADER:
+                    rejectFriend(false);
+                    break;
             }
         }
     }
@@ -139,14 +162,6 @@ public class ReceivedFriendRequestFragment extends BaseFragment implements
         super.onSaveInstanceState(outState);
 
         friendListAdapter.onSaveInstanceState(PENDING_REQUEST_STATE, outState);
-    }
-
-    @Override
-    public void onViewStateRestored(@Nullable Bundle savedInstanceState) {
-        super.onViewStateRestored(savedInstanceState);
-        if (savedInstanceState == null) return;
-
-        friendListAdapter.onRestoreInstanceState(PENDING_REQUEST_STATE, savedInstanceState);
     }
 
     @Override
@@ -177,10 +192,11 @@ public class ReceivedFriendRequestFragment extends BaseFragment implements
         friendRequestedList.setHasFixedSize(true);
         friendRequestedList.setAdapter(friendListAdapter);
         friendRequestedList.setBackgroundColor(getCompatColor(R.color.defaultBackground));
+
     }
 
     private void showResultText() {
-        if (isDetached()) return;
+        if (!isAdded()) return;
 
         swipeRefreshLayout.setRefreshing(false);
         if (friendListAdapter.isEmpty()) {
@@ -189,6 +205,7 @@ public class ReceivedFriendRequestFragment extends BaseFragment implements
         }
     }
 
+    @Subscribe
     public void onEvent(EventBusNotExistsReceivedFriendRequest eventBusNotExistsReceivedFriendRequest) {
         if (friendListAdapter == null) return;
         friendListAdapter.remove(eventBusNotExistsReceivedFriendRequest.userInfo);
@@ -205,6 +222,9 @@ public class ReceivedFriendRequestFragment extends BaseFragment implements
         swipeRefreshLayout.setRefreshing(false);
 
         if (!dataSnapshot.exists()) {
+            if (friendListAdapter != null) {
+                friendListAdapter.clear();
+            }
             showResultText();
             return;
         }
@@ -269,12 +289,22 @@ public class ReceivedFriendRequestFragment extends BaseFragment implements
         showProgressDialog();
         switch (which) {
             case DialogInterface.BUTTON_POSITIVE:
-                getLoaderManager().restartLoader(ACCEPT_FRIEND_LOADER, null, this);
+                acceptFriend(true);
                 break;
             case DialogInterface.BUTTON_NEGATIVE:
-                getLoaderManager().restartLoader(REJECT_FRIEND_LOADER, null, this);
+                rejectFriend(true);
                 break;
         }
+    }
+
+    private void rejectFriend(boolean isNewLoad) {
+        initLoader(REJECT_FRIEND_LOADER, null, this, isNewLoad);
+        loaderAction = REJECT_FRIEND_LOADER;
+    }
+
+    private void acceptFriend(boolean isNewLoad) {
+        initLoader(ACCEPT_FRIEND_LOADER, null, this, isNewLoad);
+        loaderAction = ACCEPT_FRIEND_LOADER;
     }
 
     @Override
@@ -303,6 +333,8 @@ public class ReceivedFriendRequestFragment extends BaseFragment implements
                 onRejectFriend(data);
                 break;
         }
+
+        loaderAction = -1;
 
         showResultText();
     }

@@ -18,16 +18,13 @@
         android:layout_height="0dp"
         android:layout_weight="1">
 
-        <com.facebook.drawee.view.SimpleDraweeView
+        <com.oakkub.chat.views.widgets.MyDraweeView
             android:id="@+id/navigation_header_image"
-            android:layout_width="@dimen/spacing_bigger2"
-            android:layout_height="@dimen/spacing_bigger2"
+            android:layout_width="@dimen/spacing_large"
+            android:layout_height="@dimen/spacing_large"
             android:layout_gravity="start|bottom"
-            android:paddingBottom="@dimen/spacing_small"
-            fresco:progressBarImage="@drawable/simple_progress"
-            fresco:roundAsCircle="true"
-            fresco:roundingBorderColor="@android:color/white"
-            fresco:roundingBorderWidth="@dimen/spacing_tiny" />
+            android:padding="@dimen/spacing_small"
+            fresco:roundAsCircle="true" />
 
     </FrameLayout>
 

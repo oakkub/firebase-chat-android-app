@@ -2,41 +2,33 @@
     xmlns:fresco="http://schemas.android.com/apk/res-auto"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:layout_gravity="center">
+    android:layout_gravity="center"
+    android:minWidth="@dimen/spacing_giant2">
 
     <LinearLayout
+        android:id="@+id/group_detail_container"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_gravity="center"
         android:divider="@drawable/spacer_medium"
         android:gravity="center_horizontal"
         android:orientation="vertical"
         android:padding="@dimen/spacing_medium"
         android:showDividers="middle">
 
-        <LinearLayout
-            android:id="@+id/group_detail_container"
+        <com.facebook.drawee.view.SimpleDraweeView
+            android:id="@+id/group_detail_profile_image_view"
+            android:layout_width="@dimen/spacing_large"
+            android:layout_height="@dimen/spacing_large"
+            fresco:roundAsCircle="true" />
+
+        <TextView
+            android:id="@+id/group_detail_display_name_text_view"
+            style="@style/TextViewHeaderStyle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:divider="@drawable/spacer_medium"
-            android:gravity="center_horizontal"
-            android:orientation="vertical"
-            android:showDividers="beginning|middle|end">
-
-            <com.facebook.drawee.view.SimpleDraweeView
-                android:id="@+id/group_detail_profile_image_view"
-                android:layout_width="@dimen/spacing_large"
-                android:layout_height="@dimen/spacing_large"
-                fresco:roundAsCircle="true" />
-
-            <TextView
-                android:id="@+id/group_detail_display_name_text_view"
-                style="@style/TextViewHeaderStyle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:fontFamily="sans-serif-light"
-                android:textColor="@android:color/black" />
-
-        </LinearLayout>
+            android:fontFamily="sans-serif-light"
+            android:textColor="@android:color/black" />
 
         <LinearLayout
             android:layout_width="wrap_content"
@@ -50,17 +42,19 @@
                 android:id="@+id/group_detail_info_button"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:fontFamily="sans-serif-light"
-                android:text="@string/info"
-                android:textAllCaps="true" />
+                android:drawableLeft="@drawable/layer_ic_info_outline_white_24dp"
+                android:drawableStart="@drawable/layer_ic_info_outline_white_24dp"
+                android:padding="@dimen/spacing_small"
+                android:text="@string/info" />
 
             <Button
                 android:id="@+id/group_detail_chat_button"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:fontFamily="sans-serif-light"
-                android:text="@string/chat"
-                android:textAllCaps="true" />
+                android:drawableLeft="@drawable/layer_ic_chat_white_24dp"
+                android:drawableStart="@drawable/layer_ic_chat_white_24dp"
+                android:padding="@dimen/spacing_small"
+                android:text="@string/chat" />
 
         </LinearLayout>
 

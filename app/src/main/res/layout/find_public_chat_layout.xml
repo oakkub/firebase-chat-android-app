@@ -20,30 +20,27 @@
             android:layout_height="match_parent"
             app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
-            <include
-                layout="@layout/recyclerview"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent" />
-
-            <com.oakkub.chat.views.widgets.EmptyTextProgressBar
-                android:id="@+id/find_public_empty_text_progress_bar"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                app:text="@string/no_public_chat"
-                app:progressBarDrawable="@drawable/simple_progress"/>
+            <include layout="@layout/recyclerview" />
 
         </com.oakkub.chat.views.widgets.MySwipeRefreshLayout>
 
+        <com.oakkub.chat.views.widgets.MyTextView
+            android:id="@+id/find_public_empty_text_progress_bar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:freezesText="true"
+            android:gravity="center"
+            android:textAppearance="@style/TextAppearance.AppCompat.Large"
+            app:layout_behavior="@string/appbar_scrolling_view_behavior" />
+
     </android.support.design.widget.CoordinatorLayout>
 
-    <android.support.design.widget.NavigationView
+    <android.support.v7.widget.RecyclerView
         android:id="@+id/find_public_navigation_view"
-        style="@style/NavigationViewStyle"
-        android:layout_width="wrap_content"
+        android:layout_width="@dimen/drawer_menu_right_width"
         android:layout_height="match_parent"
         android:layout_gravity="end"
-        android:background="@android:color/white"
-        android:fitsSystemWindows="true"
-        app:itemTextAppearance="@style/TextAppearance.AppCompat.Medium" />
+        android:fitsSystemWindows="true" />
 
 </android.support.v4.widget.DrawerLayout>

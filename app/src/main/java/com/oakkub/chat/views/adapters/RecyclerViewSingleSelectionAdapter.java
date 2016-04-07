@@ -2,7 +2,7 @@ package com.oakkub.chat.views.adapters;
 
 import android.os.Bundle;
 
-import com.oakkub.chat.managers.MySparseBooleanArray;
+import com.oakkub.chat.managers.SparseIntArrayParcelable;
 
 import icepick.Icepick;
 import icepick.State;
@@ -16,7 +16,7 @@ public abstract class RecyclerViewSingleSelectionAdapter<I> extends RecyclerView
     private static final String PACKAGE_NAME = RecyclerViewSingleSelectionAdapter.class.getPackage().getName();
 
     @State
-    MySparseBooleanArray selectedItems = new MySparseBooleanArray();
+    SparseIntArrayParcelable selectedItems = new SparseIntArrayParcelable();
 
     @Override
     public void onSaveInstanceState(String key, Bundle outState) {
@@ -30,24 +30,24 @@ public abstract class RecyclerViewSingleSelectionAdapter<I> extends RecyclerView
         Icepick.restoreInstanceState(this, savedInstanceState);
     }
 
-    public boolean isSelected(int position) {
-        return selectedItems.get(position);
-    }
-
-    public int getSelectedItemCount() {
-        return selectedItems.size();
+    public boolean isSelected(int hashCode) {
+        return selectedItems.get(hashCode, -1) != -1;
     }
 
     public void toggleSelection(int position, int hashCode) {
-        setSelection(hashCode);
-        notifyItemChanged(position);
+        setSelection(hashCode, position);
     }
 
-    public void setSelection(int hashCode) {
-        if (isSelected(hashCode)) {
-            selectedItems.delete(hashCode);
-        } else {
-            selectedItems.put(hashCode, true);
+    public void setSelection(int hashCode, int position) {
+        if (!isSelected(hashCode)) {
+            // clear previous selected item
+            if (isSelected(selectedItems.keyAt(0))) {
+                notifyItemChanged(selectedItems.valueAt(0));
+            }
+            selectedItems.clear();
+
+            selectedItems.put(hashCode, position);
+            notifyItemChanged(position);
         }
     }
 
@@ -56,15 +56,15 @@ public abstract class RecyclerViewSingleSelectionAdapter<I> extends RecyclerView
         notifyDataSetChanged();
     }
 
-    public int[] getSelectedItemsKey() {
+    public int getSelectedItemValue() {
         int size = selectedItems.size();
 
         int[] totalSelectedPosition = new int[size];
         for (int i = 0; i < size; i++) {
-            totalSelectedPosition[i] = selectedItems.keyAt(i);
+            totalSelectedPosition[i] = selectedItems.valueAt(i);
         }
 
-        return totalSelectedPosition;
+        return totalSelectedPosition[0];
     }
 
 }

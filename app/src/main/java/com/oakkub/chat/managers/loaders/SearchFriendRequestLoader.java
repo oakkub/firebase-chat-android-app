@@ -14,13 +14,13 @@ import com.oakkub.chat.utils.FirebaseUtil;
 import com.oakkub.chat.utils.PrefsUtil;
 import com.oakkub.chat.utils.UserInfoUtil;
 
+import org.greenrobot.eventbus.EventBus;
+
 import java.util.ArrayList;
 import java.util.List;
 
 import javax.inject.Inject;
 import javax.inject.Named;
-
-import de.greenrobot.event.EventBus;
 
 /**
  * Created by OaKKuB on 2/26/2016.

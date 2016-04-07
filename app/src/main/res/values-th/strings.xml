@@ -139,7 +139,7 @@
         <xliff:g id="person">%s</xliff:g> นำ <xliff:g id="all_friends">%s</xliff:g> ออกจากแชท
     </string>
     <string name="remove_member">นำสมาชิกออก</string>
-    <string name="remove_admin">นำแอดมินออก</string>
+    <string name="demote_admin">ลดขั้นแอดมิน</string>
     <string name="error_no_friend_to_be_invited">ไม่มีเพื่อนที่สามารถเชิญได้</string>
     <string name="leave_room">ออกจากห้อง</string>
     <string name="error.no_addable_admin">สมาชิกทุกคนในห้องเป็นแอดมิน</string>
@@ -212,6 +212,21 @@
     <string name="you_dont_have_any_friends">คุณยังไม่มีเพื่อน</string>
     <string name="you_dont_have_groups">คุณยังไม่มีกลุ่ม</string>
     <string name="you_dont_have_public_chat">คุณยังไม่มีกลุ่มสาธารณะ</string>
+    <string name="message">ข้อความ</string>
+    <string name="copy">คัดลอก</string>
+    <string name="delete">ลบ</string>
+    <string name="save_image">บันทึกรูปภาพ</string>
+    <string name="error.delete_message">ไม่สามารถลบข้อความได้ กรุณาลองใหม่อีกครั้ง</string>
+    <string name="error.remove_friend">ไม่สามารถลบเพื่อนได้ กรุณาลองใหม่อีกครั้ง</string>
+    <string name="remove_friend">ลบเพื่อน</string>
+    <string name="are_you_sure_to_remove_n_from_friend_contact">คุณแน่ใจที่จะลบ %s จากรายการเพื่อน?</string>
+    <string name="you_and_n_are_not_friend_so_cannot_send_message">คุณไม่ได้เป็นเพื่อนกับ %s</string>
+    <string name="no_search_result">ไม่พบผลลัพธ์การค้นหา</string>
+    <string name="no_result">ไม่พบผลลัพธ์</string>
+    <string name="online">ออนไลน์</string>
+    <string name="online_n_day">ออนไลน์เมื่อ %s วันก่อน</string>
+    <string name="online_n_hour">ออนไลน์เมื่อ %s ชั่วโมงก่อน</string>
+    <string name="online_n_minute">ออนไลน์เมื่อ %s นาทีก่อน</string>
 
     <string-array name="friend_tab_names">
         <item>เพื่อนแนะนำ</item>

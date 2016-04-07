@@ -3,6 +3,8 @@ package com.oakkub.chat.activities;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.res.Configuration;
+import android.content.res.Resources;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.IdRes;
@@ -14,10 +16,14 @@ import android.support.v4.app.NotificationManagerCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.ActionBar;
 
+import com.akexorcist.localizationactivity.LanguageSetting;
 import com.akexorcist.localizationactivity.LocalizationActivity;
+import com.oakkub.chat.R;
 import com.oakkub.chat.managers.AppController;
 import com.oakkub.chat.utils.PrefsUtil;
 import com.oakkub.chat.views.dialogs.ProgressDialogFragment;
+
+import java.util.Locale;
 
 import icepick.Icepick;
 import icepick.State;
@@ -42,6 +48,7 @@ public class BaseActivity extends LocalizationActivity {
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
+        checkLanguage();
         super.onCreate(savedInstanceState);
         Icepick.restoreInstanceState(this, savedInstanceState);
 
@@ -55,6 +62,26 @@ public class BaseActivity extends LocalizationActivity {
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
         Icepick.saveInstanceState(this, outState);
+    }
+
+    private void checkLanguage() {
+        SharedPreferences prefs = AppController.getComponent(this).sharedPreferences();
+        String language = prefs.getString(
+                getString(R.string.pref_language_list), Locale.ENGLISH.getLanguage());
+
+        Locale locale = new Locale(language);
+
+        updateLanguageConfiguration(getResources(), locale);
+        updateLanguageConfiguration(Resources.getSystem(), locale);
+
+        Locale.setDefault(locale);
+        LanguageSetting.setLanguage(this, locale);
+    }
+
+    private void updateLanguageConfiguration(Resources res, Locale locale) {
+        Configuration configuration = res.getConfiguration();
+        configuration.locale = locale;
+        res.updateConfiguration(configuration, res.getDisplayMetrics());
     }
 
     public void clearNotification() {

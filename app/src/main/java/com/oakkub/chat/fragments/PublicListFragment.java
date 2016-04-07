@@ -26,12 +26,14 @@ import com.oakkub.chat.views.adapters.presenter.OnAdapterItemClick;
 import com.oakkub.chat.views.widgets.MySwipeRefreshLayout;
 import com.oakkub.chat.views.widgets.MyTextView;
 
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+
 import java.util.ArrayList;
 import java.util.Collections;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
-import de.greenrobot.event.EventBus;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -134,24 +136,35 @@ public class PublicListFragment extends BaseFragment implements OnAdapterItemCli
         publicChatList.setAdapter(publicChatAdapter);
     }
 
+    private void showEmptyItem() {
+        alertTextView.setText(R.string.you_dont_have_public_chat);
+        alertTextView.visible();
+    }
+
+    @Subscribe
     public void onEvent(EventBusUpdatedPublicRoom eventBusUpdatedPublicRoom) {
         if (publicChatAdapter == null) return;
         publicChatAdapter.replace(eventBusUpdatedPublicRoom.room);
     }
 
+    @Subscribe
     public void onEvent(EventBusDeletePublicChat eventBusDeletePublicChat) {
         if (publicChatAdapter == null) return;
         publicChatAdapter.remove(eventBusDeletePublicChat.room);
+
+        if (publicChatAdapter.isEmpty()) {
+            showEmptyItem();
+        }
     }
 
+    @Subscribe
     public void onEvent(EventBusPublicRoom eventBusPublicRoom) {
         ArrayList<Room> publicRoom = eventBusPublicRoom.rooms;
         swipeRefreshLayout.hide();
 
         if (publicRoom.isEmpty()) {
 
-            alertTextView.setText(R.string.you_dont_have_public_chat);
-            alertTextView.visible();
+            showEmptyItem();
 
         } else {
             alertTextView.gone();
@@ -182,4 +195,5 @@ public class PublicListFragment extends BaseFragment implements OnAdapterItemCli
     public boolean onAdapterLongClick(View itemView, int position) {
         return false;
     }
+
 }

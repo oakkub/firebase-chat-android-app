@@ -5,7 +5,6 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.util.ArrayMap;
-import android.util.Log;
 import android.util.SparseArray;
 
 import com.firebase.client.DataSnapshot;
@@ -13,7 +12,9 @@ import com.firebase.client.Firebase;
 import com.firebase.client.FirebaseError;
 import com.firebase.client.ValueEventListener;
 import com.oakkub.chat.R;
+import com.oakkub.chat.activities.RoomInfoActivity;
 import com.oakkub.chat.managers.AppController;
+import com.oakkub.chat.managers.MyLifeCycleHandler;
 import com.oakkub.chat.models.Message;
 import com.oakkub.chat.utils.FirebaseMapUtil;
 import com.oakkub.chat.utils.FirebaseUtil;
@@ -66,12 +67,12 @@ public class LeavePublicChatFragment extends BaseFragment {
     @Named(FirebaseUtil.NAMED_ROOT)
     Lazy<Firebase> rootFirebase;
 
-    private String myId;
     private String roomId;
     private String promotedMemberId;
 
     private SparseArray<String> memberIds;
 
+    private boolean isLeaving;
     private boolean isLastMember;
     private boolean isLastAdmin;
     private boolean isAdmin;
@@ -80,9 +81,8 @@ public class LeavePublicChatFragment extends BaseFragment {
 
     private OnLeavePublicChatListener leavePublicChatListener;
 
-    public static LeavePublicChatFragment newInstance(String myId, String roomId) {
+    public static LeavePublicChatFragment newInstance(String roomId) {
         Bundle args = new Bundle();
-        args.putString(ARGS_MY_ID, myId);
         args.putString(ARGS_ROOM_ID, roomId);
 
         LeavePublicChatFragment fragment = new LeavePublicChatFragment();
@@ -111,12 +111,12 @@ public class LeavePublicChatFragment extends BaseFragment {
         super.onActivityCreated(savedInstanceState);
 
         if (isLeaveFailed) {
-            leavePublicChatListener.onPublicLeaveFailed();
+            leavePublicChatListener.onLeaveRoomFailed();
             isLeaveFailed = false;
         }
 
         if (isLeaveSuccess) {
-            leavePublicChatListener.onPublicLeaveSuccess();
+            leavePublicChatListener.onLeaveRoomSuccess();
             isLeaveSuccess = false;
         }
     }
@@ -130,8 +130,6 @@ public class LeavePublicChatFragment extends BaseFragment {
 
     private void getDataIntent() {
         Bundle args = getArguments();
-
-        myId = args.getString(ARGS_MY_ID);
         roomId = args.getString(ARGS_ROOM_ID);
     }
 
@@ -139,27 +137,27 @@ public class LeavePublicChatFragment extends BaseFragment {
         if (memberIds == null) {
             memberIds = new SparseArray<>();
         }
-
         checkLastMember();
     }
 
     private void checkLastMember() {
         memberFirebase.get().child(roomId)
-                .addListenerForSingleValueEvent(new ValueEventListener() {
+                .addValueEventListener(new ValueEventListener() {
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
                         int size = (int) dataSnapshot.getChildrenCount();
-                        isLastMember = size == 1;
+
+                        isLastMember = (size == 1);
 
                         if (!isLastMember) {
                             // find member to be promoted as admin if the last admin is leave.
                             for (DataSnapshot children : dataSnapshot.getChildren()) {
                                 String key = children.getKey();
 
-                                if (!key.equals(myId)) {
+                                if (!key.equals(uid)) {
                                     memberIds.put(key.hashCode(), key);
                                 }
-                                if (!key.equals(myId) && promotedMemberId == null) {
+                                if (!key.equals(uid) && promotedMemberId == null) {
                                     promotedMemberId = key;
                                 }
                             }
@@ -176,11 +174,12 @@ public class LeavePublicChatFragment extends BaseFragment {
     }
 
     private void checkAdmin() {
-        adminMemberFirebase.get().child(roomId).child(myId)
-                .addListenerForSingleValueEvent(new ValueEventListener() {
+        adminMemberFirebase.get().child(roomId).child(uid)
+                .addValueEventListener(new ValueEventListener() {
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
                         isAdmin = dataSnapshot.exists();
+
                         if (!isAdmin) {
                             beginLeaving();
                         } else {
@@ -196,7 +195,7 @@ public class LeavePublicChatFragment extends BaseFragment {
     }
 
     private void checkLastAdmin() {
-        adminMemberFirebase.get().child(roomId).addListenerForSingleValueEvent(new ValueEventListener() {
+        adminMemberFirebase.get().child(roomId).addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 isLastAdmin = dataSnapshot.getChildrenCount() == 1;
@@ -218,21 +217,30 @@ public class LeavePublicChatFragment extends BaseFragment {
                         prefs.getString(UserInfoUtil.DISPLAY_NAME, "").split(" ")[0]),
                 FirebaseUtil.SYSTEM, when);
         roomInvitedMessage.setLanguageRes(MessageUtil.LEAVE_CHAT);
+
         return roomInvitedMessage;
     }
 
     private void beginLeaving() {
-        ArrayMap<String, Object> map = new ArrayMap<>(2);
+        // Sometimes ValueEventListener in checkAdmin method gets call
+        // even we didn't press leave button WTF?
+        if (!MyLifeCycleHandler.getCurrentActivityName().equals(
+                RoomInfoActivity.class.getSimpleName())) return;
+        if (isLeaving) return;
+        else isLeaving = true;
+
+        ArrayMap<String, Object> map = new ArrayMap<>(10);
         String messageKey = messageFirebase.get().child(roomId).push().getKey();
+
         long when = System.currentTimeMillis();
         boolean isLastAdminNotLastMember = isAdmin && isLastAdmin && !isLastMember;
 
         if (isAdmin) {
-            FirebaseMapUtil.mapUserRoomAdminMember(map, myId, roomId, null);
+            FirebaseMapUtil.mapUserRoomAdminMember(map, uid, roomId, null);
         }
 
         if (isLastAdminNotLastMember) {
-            Message message = new Message(roomId, TextUtil.implode("/", myId, promotedMemberId),
+            Message message = new Message(roomId, TextUtil.implode("/", uid, promotedMemberId),
                     FirebaseUtil.SYSTEM, when);
             message.setLanguageRes(MessageUtil.LAST_ADMIN_LEAVED);
 
@@ -252,7 +260,7 @@ public class LeavePublicChatFragment extends BaseFragment {
 
             if (!isAdmin) {
                 Message memberMessage = new Message(roomId, "", FirebaseUtil.SYSTEM, when);
-                memberMessage.setMessage(myId);
+                memberMessage.setMessage(uid);
                 memberMessage.setLanguageRes(MessageUtil.LEAVE_CHAT);
 
                 FirebaseMapUtil.mapMessage(map, messageKey, roomId, memberMessage);
@@ -267,10 +275,10 @@ public class LeavePublicChatFragment extends BaseFragment {
             FirebaseMapUtil.mapUserRoom(map, memberIds.valueAt(i), roomId, when);
         }
 
-        FirebaseMapUtil.mapUserGroupRoom(map, myId, roomId, null);
-        FirebaseMapUtil.mapUserPublicRoom(map, myId, roomId, null);
-        FirebaseMapUtil.mapUserRoomMember(map, myId, roomId, null);
-        FirebaseMapUtil.mapUserRoom(map, myId, roomId, null);
+        FirebaseMapUtil.mapUserGroupRoom(map, uid, roomId, null);
+        FirebaseMapUtil.mapUserPublicRoom(map, uid, roomId, null);
+        FirebaseMapUtil.mapUserRoomMember(map, uid, roomId, null);
+        FirebaseMapUtil.mapUserRoom(map, uid, roomId, null);
 
         rootFirebase.get().updateChildren(map, new Firebase.CompletionListener() {
             @Override
@@ -282,9 +290,11 @@ public class LeavePublicChatFragment extends BaseFragment {
 
     private void checkLeaveCompletion(FirebaseError firebaseError) {
         if (firebaseError != null) {
-            Log.e(TAG, "onComplete: " + firebaseError.getMessage());
+            // error occurred while leave chat set isLeaving flag to false again.
+            isLeaving = false;
+
             if (leavePublicChatListener != null) {
-                leavePublicChatListener.onPublicLeaveFailed();
+                leavePublicChatListener.onLeaveRoomFailed();
             } else {
                 isLeaveFailed = true;
             }
@@ -292,14 +302,14 @@ public class LeavePublicChatFragment extends BaseFragment {
         }
 
         if (leavePublicChatListener != null) {
-            leavePublicChatListener.onPublicLeaveSuccess();
+            leavePublicChatListener.onLeaveRoomSuccess();
         } else {
             isLeaveSuccess = true;
         }
     }
 
     public interface OnLeavePublicChatListener {
-        void onPublicLeaveSuccess();
-        void onPublicLeaveFailed();
+        void onLeaveRoomSuccess();
+        void onLeaveRoomFailed();
     }
 }

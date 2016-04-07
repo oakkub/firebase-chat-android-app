@@ -1,6 +1,7 @@
 package com.oakkub.chat.managers;
 
 import android.app.Application;
+import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
@@ -18,6 +19,8 @@ import com.oakkub.chat.activities.MainActivity;
 import com.oakkub.chat.activities.NewMessagesActivity;
 import com.oakkub.chat.activities.ProfileActivity;
 import com.oakkub.chat.activities.RoomEditActivity;
+import com.oakkub.chat.activities.SplashScreenActivity;
+import com.oakkub.chat.broadcast.InternetConnectionChangeReceiver;
 import com.oakkub.chat.dagger.PerApp;
 import com.oakkub.chat.fragments.AddAdminFragment;
 import com.oakkub.chat.fragments.AuthStateFragment;
@@ -56,6 +59,7 @@ import com.oakkub.chat.managers.loaders.FindFriendLoader;
 import com.oakkub.chat.managers.loaders.RemoveFriendRequestLoader;
 import com.oakkub.chat.managers.loaders.SearchFriendRequestLoader;
 import com.oakkub.chat.managers.loaders.SendFriendRequestLoader;
+import com.oakkub.chat.managers.loaders.UpdateNodeLoader;
 import com.oakkub.chat.modules.AnimationModule;
 import com.oakkub.chat.modules.AppControllerModule;
 import com.oakkub.chat.modules.NetworkModule;
@@ -129,6 +133,7 @@ public interface AppComponent {
     void inject(LeaveGroupChatFragment leaveGroupChatFragment);
     void inject(LeavePrivateChatFragment leavePrivateChatFragment);
 
+    void inject(SplashScreenActivity splashScreenActivity);
     void inject(AddFriendActivity addFriendActivity);
     void inject(PendingFriendRequestFragment pendingFriendRequestFragment);
     void inject(ReceivedFriendRequestFragment receivedFriendRequestFragment);
@@ -136,12 +141,16 @@ public interface AppComponent {
 
     void inject(GCMListenerService gcmListenerService);
     void inject(FriendRequestActionService friendRequestActionService);
+
     void inject(SendFriendRequestLoader sendFriendRequestLoader);
     void inject(SearchFriendRequestLoader searchFriendRequestLoader);
     void inject(FindFriendLoader findFriendLoader);
+    void inject(UpdateNodeLoader updateNodeLoader);
     void inject(FetchKeyThenUserInfo fetchKeyThenUserInfo);
     void inject(FetchKeyLoader fetchKeyLoader);
     void inject(RemoveFriendRequestLoader removeFriendRequestLoader);
+
+    void inject(InternetConnectionChangeReceiver internetConnectionChangeReceiver);
 
     Application application();
 
@@ -151,6 +160,7 @@ public interface AppComponent {
     ConnectivityManager connectivityManager();
     NotificationManagerCompat notificationManager();
     Vibrator vibrator();
+    ClipboardManager clipboardManager();
 
     DefaultItemAnimator defaultItemAnimator();
 

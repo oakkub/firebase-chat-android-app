@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.support.annotation.Nullable;
+import android.util.Log;
 
 import com.firebase.client.DataSnapshot;
 import com.firebase.client.Firebase;
@@ -22,6 +23,9 @@ import com.oakkub.chat.models.eventbus.EventBusSearchingFriendRequest;
 import com.oakkub.chat.utils.FirebaseUtil;
 import com.oakkub.chat.utils.UserInfoUtil;
 
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+
 import java.util.ArrayList;
 import java.util.Collections;
 
@@ -29,7 +33,6 @@ import javax.inject.Inject;
 import javax.inject.Named;
 
 import dagger.Lazy;
-import de.greenrobot.event.EventBus;
 import icepick.State;
 
 /**
@@ -47,7 +50,7 @@ public class FriendRequestFragment extends BaseFragment {
     private static final String REQUEST_SUCCESS_INFO_STATE = "state:requestSuccessInfo";
     private static final String REQUEST_FAILED_INFO_STATE = "state:requestFailedInfo";
 
-    private static final int LOADING_LIMIT = 2;
+    private static final int LOADING_LIMIT = 20;
 
     @Inject
     @Named(FirebaseUtil.NAMED_USER_INFO)
@@ -173,7 +176,6 @@ public class FriendRequestFragment extends BaseFragment {
     private class FriendRequestValueEventListener implements ValueEventListener {
         @Override
         public void onDataChange(DataSnapshot dataSnapshot) {
-            dataSnapshot.getRef().removeEventListener(this);
             getRecommendedFriendList(dataSnapshot);
         }
 
@@ -224,6 +226,7 @@ public class FriendRequestFragment extends BaseFragment {
             @Override
             protected ArrayList<UserInfo> doInBackground(DataSnapshot... params) {
                 DataSnapshot dataSnapshot = params[0];
+                if (!dataSnapshot.exists()) return null;
 
                 size = (int) dataSnapshot.getChildrenCount();
                 ArrayList<UserInfo> recommendedFriendList =
@@ -232,7 +235,7 @@ public class FriendRequestFragment extends BaseFragment {
                 for (DataSnapshot children : dataSnapshot.getChildren()) {
                     String userKey = children.getKey();
                     int userKeyHashCode = userKey.hashCode();
-
+                    Log.d(TAG, "doInBackground: " + userKey);
                     UserInfo friendUserInfo = UserInfoUtil.get(userKey, children);
                     if (oldestFriendRegisteredDate > friendUserInfo.getRegisteredDate() ||
                         oldestFriendRegisteredDate == -1) {
@@ -257,6 +260,10 @@ public class FriendRequestFragment extends BaseFragment {
             protected void onPostExecute(ArrayList<UserInfo> userInfoList) {
                 super.onPostExecute(userInfoList);
 
+                if (userInfoList == null) {
+                    return;
+                }
+
                 if (isLoadingMore) {
                     size -= 1;
                     isLoadingMore = false;
@@ -267,6 +274,7 @@ public class FriendRequestFragment extends BaseFragment {
         }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, dataSnapshot);
     }
 
+    @Subscribe
     public void onEvent(EventBusFriendRequestListLoadingMore eventBusFriendRequestListLoadingMore) {
         getOlderRecommendedFriend(eventBusFriendRequestListLoadingMore.lastRegisteredDate);
     }
@@ -275,6 +283,7 @@ public class FriendRequestFragment extends BaseFragment {
         EventBus.getDefault().post(new EventBusFriendRequestList(recommendedFriendList, totalFetched));
     }
 
+    @Subscribe
     public void onEvent(EventBusSearchingFriendRequest eventBusSearchingFriendRequest) {
         search(eventBusSearchingFriendRequest.query.trim());
     }
@@ -340,6 +349,7 @@ public class FriendRequestFragment extends BaseFragment {
         }
     }
 
+    @Subscribe
     public void onEvent(EventBusLoadSendFriendRequest eventBusLoadSendFriendRequest) {
         getPendingRequestFriend();
     }

@@ -72,6 +72,10 @@ public class GCMListenerService extends GcmListenerService {
     @Named(FirebaseUtil.NAMED_USER_INFO)
     Lazy<Firebase> userInfoFirebase;
 
+    @Inject
+    @Named(FirebaseUtil.NAMED_ROOMS_INFO)
+    Lazy<Firebase> roomInfoFirebase;
+
     private String uid;
 
     private String title;
@@ -94,8 +98,8 @@ public class GCMListenerService extends GcmListenerService {
     public void onMessageReceived(String from, Bundle data) {
         AppController.getComponent(this).inject(this);
         getNotificationSettings();
-        debug(from, data);
         getDataBundle(data);
+        debug(from, data);
 
         if (!shouldShowNotification()) return;
 
@@ -236,18 +240,32 @@ public class GCMListenerService extends GcmListenerService {
     }
 
     private void onNewMessageReceivedBitmap(Bitmap bitmap) {
-        NotificationCompat.Builder newMessageNotification = getDefaultNotification(bitmap);
+        final NotificationCompat.Builder newMessageNotification = getDefaultNotification(bitmap);
+        newMessageNotification.setSmallIcon(R.drawable.ic_chat);
 
-        Room room = new Room();
-        room.setName(title);
-        room.setRoomId(roomId);
+        roomInfoFirebase.get().child(roomId).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                if (!dataSnapshot.exists()) return;
+                Room room = dataSnapshot.getValue(Room.class);
+                room.setRoomId(roomId);
 
-        newMessageNotification.setContentIntent(getNewMessageTaskStack(room));
-        GCMListenerService.this.notify(room.hashCode(), newMessageNotification.build());
+                newMessageNotification.setContentIntent(getNewMessageTaskStack(room));
+                GCMListenerService.this.notify(room.hashCode(), newMessageNotification.build());
+
+                dataSnapshot.getRef().removeEventListener(this);
+            }
+
+            @Override
+            public void onCancelled(FirebaseError firebaseError) {
+
+            }
+        });
     }
 
     private void onNewFriendRequestReceivedBitmap(Bitmap bitmap) {
         NotificationCompat.Builder newFriendRequestNotification = getDefaultNotification(bitmap);
+        newFriendRequestNotification.setSmallIcon(R.drawable.ic_person_add);
 
         Intent acceptService = getFriendRequestService(FriendRequestActionService.CODE_ACCEPT_FRIEND);
         Intent rejectService = getFriendRequestService(FriendRequestActionService.CODE_REJECT_FRIEND);
@@ -270,6 +288,7 @@ public class GCMListenerService extends GcmListenerService {
 
     private void onFriendAcceptedReceivedBitmap(Bitmap bitmap) {
         NotificationCompat.Builder acceptedFriendNotification = getDefaultNotification(bitmap);
+        acceptedFriendNotification.setSmallIcon(R.drawable.ic_person_add);
 
         TaskStackBuilder stackBuilder = getDefaultTaskStackBuilder();
 
@@ -307,16 +326,21 @@ public class GCMListenerService extends GcmListenerService {
         TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
         stackBuilder.addParentStack(MainActivity.class);
 
+        Intent messageIntent;
         if (isPrivateRoom) {
-            stackBuilder.addNextIntent(ChatRoomActivity
-                    .getIntentPrivateRoom(GCMListenerService.this, room, uid));
+            messageIntent = ChatRoomActivity
+                    .getIntentPrivateRoom(this, room, uid);
         } else {
-            stackBuilder.addNextIntent(ChatRoomActivity
-                    .getIntentGroupRoom(GCMListenerService.this, room));
+            messageIntent = ChatRoomActivity
+                    .getIntentGroupRoom(this, room);
         }
+        // For some unspecified reason, extras will be delivered only if you've set some action
+        messageIntent.setAction(room.getRoomId());
+        messageIntent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        stackBuilder.addNextIntent(messageIntent);
 
         return stackBuilder.getPendingIntent(
-                room.hashCode(), PendingIntent.FLAG_UPDATE_CURRENT);
+                room.hashCode(), PendingIntent.FLAG_CANCEL_CURRENT);
     }
 
     private NotificationCompat.Builder getDefaultNotification(Bitmap bitmap) {
@@ -326,7 +350,6 @@ public class GCMListenerService extends GcmListenerService {
                 .setContentTitle(title)
                 .setContentText(message)
                 .setLargeIcon(bitmap)
-                .setSmallIcon(R.mipmap.ic_launcher)
                 .setDefaults(NotificationCompat.DEFAULT_LIGHTS)
                 .setStyle(new NotificationCompat.BigTextStyle().bigText(message))
                 .setVisibility(NotificationCompat.VISIBILITY_PUBLIC);
@@ -354,6 +377,7 @@ public class GCMListenerService extends GcmListenerService {
         Log.e(TAG, "Title: " + data.getString(GCMUtil.DATA_TITLE));
         Log.e(TAG, "Message: " + data.getString(GCMUtil.DATA_MESSAGE));
         Log.e(TAG, "Profile URL: " + data.getString(GCMUtil.PROFILE_URL));
+        Log.e(TAG, "shouldShowNotification: " + shouldShowNotification());
 
         if (from.startsWith(GCMUtil.START_TOPICS)) {
             Log.e(TAG, "TOPICS");

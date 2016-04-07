@@ -27,64 +27,28 @@ public class Room {
         created = System.currentTimeMillis();
     }
 
-    public String getName() {
-        return name;
-    }
-
-    public String getLatestMessage() {
-        return latestMessage;
-    }
-
-    public String getLatestMessageUser() {
-        return latestMessageUser;
-    }
-
-    public String getType() {
-        return type;
-    }
-
-    public long getCreated() {
-        return created;
-    }
-
-    public long getLatestMessageTime() {
-        return latestMessageTime;
-    }
-
-    public void setLatestMessage(String latestMessage) {
-        this.latestMessage = latestMessage;
-    }
-
-    public void setLatestMessageUser(String latestMessageUser) {
-        this.latestMessageUser = latestMessageUser;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public void setLatestMessageTime(long latestMessageTime) {
-        this.latestMessageTime = latestMessageTime;
-    }
-
     public String getRoomId() {
         return roomId;
-    }
-
-    public String getImagePath() {
-        return imagePath;
     }
 
     public void setRoomId(String roomId) {
         this.roomId = roomId;
     }
 
-    public void setImagePath(String imagePath) {
-        this.imagePath = imagePath;
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 
     public String getDescription() {
         return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     public String getTag() {
@@ -95,16 +59,52 @@ public class Room {
         this.tag = tag;
     }
 
-    public void setDescription(String description) {
-        this.description = description;
+    public String getImagePath() {
+        return imagePath;
     }
 
-    public void setCreated(long created) {
-        this.created = created;
+    public void setImagePath(String imagePath) {
+        this.imagePath = imagePath;
+    }
+
+    public String getLatestMessage() {
+        return latestMessage;
+    }
+
+    public void setLatestMessage(String latestMessage) {
+        this.latestMessage = latestMessage;
+    }
+
+    public String getLatestMessageUser() {
+        return latestMessageUser;
+    }
+
+    public void setLatestMessageUser(String latestMessageUser) {
+        this.latestMessageUser = latestMessageUser;
+    }
+
+    public String getType() {
+        return type;
     }
 
     public void setType(String type) {
         this.type = type;
+    }
+
+    public long getLatestMessageTime() {
+        return latestMessageTime;
+    }
+
+    public void setLatestMessageTime(long latestMessageTime) {
+        this.latestMessageTime = latestMessageTime;
+    }
+
+    public long getCreated() {
+        return created;
+    }
+
+    public void setCreated(long created) {
+        this.created = created;
     }
 
     @Override

@@ -3,10 +3,7 @@ package com.oakkub.chat.activities;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.os.Bundle;
-import android.os.Parcelable;
 import android.support.design.widget.CoordinatorLayout;
-import android.support.design.widget.NavigationView;
-import android.support.design.widget.Snackbar;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v4.widget.SwipeRefreshLayout;
@@ -18,21 +15,20 @@ import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewTreeObserver;
 
 import com.oakkub.chat.R;
 import com.oakkub.chat.fragments.IsNodeExistsFirebaseFragment;
 import com.oakkub.chat.fragments.PublicChatSearchFragment;
+import com.oakkub.chat.managers.icepick_bundler.RoomBundler;
 import com.oakkub.chat.models.Room;
 import com.oakkub.chat.utils.FirebaseUtil;
 import com.oakkub.chat.utils.RoomUtil;
 import com.oakkub.chat.utils.TextUtil;
 import com.oakkub.chat.views.adapters.PublicChatSearchedResultAdapter;
+import com.oakkub.chat.views.adapters.PublicTypeAdapter;
 import com.oakkub.chat.views.adapters.presenter.OnAdapterItemClick;
-import com.oakkub.chat.views.dialogs.ProgressDialogFragment;
-import com.oakkub.chat.views.widgets.EmptyTextProgressBar;
-
-import org.parceler.Parcels;
+import com.oakkub.chat.views.widgets.MySwipeRefreshLayout;
+import com.oakkub.chat.views.widgets.MyTextView;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
@@ -41,17 +37,17 @@ import icepick.State;
 /**
  * Created by OaKKuB on 2/3/2016.
  */
-public class FindPublicChatActivity extends BaseActivity implements NavigationView.OnNavigationItemSelectedListener,
-    PublicChatSearchFragment.OnPublicRoomSearchResultListener, OnAdapterItemClick,
+public class FindPublicChatActivity extends BaseActivity implements
+    PublicChatSearchFragment.OnPublicRoomSearchResultListener,
     SwipeRefreshLayout.OnRefreshListener, SearchView.OnQueryTextListener,
     IsNodeExistsFirebaseFragment.OnNodeReceivedListener {
 
     private static final String TAG = FindPublicChatActivity.class.getSimpleName();
     private static final String FIND_PUBLIC_CHAT_TAG = "tag:findPublicChat";
     private static final String PUBLIC_CHAT_LIST_STATE = "state:publicChatList";
+    private static final String PUBLIC_TYPE_LIST_STATE = "state:publicType";
     private static final String IS_NODE_EXISTS_TAG = "tag:isNodeExits";
     private static final String STATE_SELECTED_ROOM = "state:selectedRoom";
-    private static final String PROGRESS_DIALOG_TAG = "tag:progressDialog";
 
     @Bind(R.id.find_public_drawer_layout)
     DrawerLayout drawerLayout;
@@ -60,16 +56,16 @@ public class FindPublicChatActivity extends BaseActivity implements NavigationVi
     CoordinatorLayout contentView;
 
     @Bind(R.id.find_public_navigation_view)
-    NavigationView navigationView;
+    RecyclerView publicTypeList;
 
     @Bind(R.id.find_public_swipe_refresh)
-    SwipeRefreshLayout swipeRefresh;
+    MySwipeRefreshLayout swipeRefresh;
 
     @Bind(R.id.recyclerview)
     RecyclerView publicChatList;
 
     @Bind(R.id.find_public_empty_text_progress_bar)
-    EmptyTextProgressBar emptyTextProgressBar;
+    MyTextView emptyTextTextView;
 
     @Bind(R.id.simple_toolbar)
     Toolbar toolbar;
@@ -83,7 +79,10 @@ public class FindPublicChatActivity extends BaseActivity implements NavigationVi
     String[] roomTypeKeys;
 
     @State
-    String selectedRoomType;
+    String selectedRoomTypeKey;
+
+    @State
+    String selectedRoomTypeValue;
 
     @State
     String searchViewQuery;
@@ -94,12 +93,16 @@ public class FindPublicChatActivity extends BaseActivity implements NavigationVi
     @State
     int selectedPosition;
 
-    private Room selectedRoom;
+    @State(RoomBundler.class)
+    Room selectedRoom;
 
-    private ProgressDialogFragment progressDialog;
+    private LinearLayoutManager publicChatLayoutManager;
+
+    private PublicTypeAdapter publicTypeAdapter;
+    private PublicChatSearchedResultAdapter publicChatAdapter;
+
     private IsNodeExistsFirebaseFragment isNodeExistsFirebaseFragment;
     private PublicChatSearchFragment publicChatSearchFragment;
-    private PublicChatSearchedResultAdapter publicChatAdapter;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -107,6 +110,10 @@ public class FindPublicChatActivity extends BaseActivity implements NavigationVi
         setContentView(R.layout.find_public_chat_layout);
         ButterKnife.bind(this);
         initInstances(savedInstanceState);
+
+        if (savedInstanceState == null) {
+            emptyTextTextView.gone();
+        }
     }
 
     private void initInstances(Bundle savedInstanceState) {
@@ -119,17 +126,9 @@ public class FindPublicChatActivity extends BaseActivity implements NavigationVi
 
     private void setSwipeRefresh(Bundle savedInstanceState) {
         swipeRefresh.setOnRefreshListener(this);
-        swipeRefresh.setColorSchemeColors(getCompatColor(R.color.blue));
 
         if (savedInstanceState == null) {
-            swipeRefresh.getViewTreeObserver().addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
-                @Override
-                public boolean onPreDraw() {
-                    swipeRefresh.setRefreshing(true);
-                    swipeRefresh.getViewTreeObserver().removeOnPreDrawListener(this);
-                    return true;
-                }
-            });
+            swipeRefresh.show();
         }
     }
 
@@ -137,90 +136,58 @@ public class FindPublicChatActivity extends BaseActivity implements NavigationVi
         setSupportActionBar(toolbar);
         ActionBar actionBar = getSupportActionBar();
         if (actionBar != null) {
-            actionBar.setTitle(selectedRoomType == null ? getString(R.string.all) : selectedRoomType);
+            actionBar.setTitle(selectedRoomTypeKey == null ? getString(R.string.all) : selectedRoomTypeKey);
             actionBar.setDisplayHomeAsUpEnabled(true);
         }
     }
 
     private void setDrawerLayout(Bundle savedInstanceState) {
-        if (savedInstanceState == null) {
-            Resources res = getResources();
-            roomTypeKeys = res.getStringArray(R.array.public_chat_tag_keys);
-            roomTypeValues = res.getStringArray(R.array.public_chat_tag_values);
-        }
+        Resources res = getResources();
+        roomTypeKeys = res.getStringArray(R.array.public_chat_tag_keys);
+        roomTypeValues = res.getStringArray(R.array.public_chat_tag_values);
 
-        int groupId = "PublicChatGroup".hashCode();
-        navigationView.setNavigationItemSelectedListener(this);
-        Menu menu = navigationView.getMenu();
-
+        publicTypeAdapter = new PublicTypeAdapter(onTypeAdapterItemClick);
         String all = getString(R.string.all);
-        menu.add(groupId, all.hashCode(), Menu.NONE, all);
-        for (String key : roomTypeKeys) {
-            menu.add(groupId, key.hashCode(), Menu.NONE, key);
+        publicTypeAdapter.addLast(all);
+        for (String item : roomTypeKeys) {
+            publicTypeAdapter.addLast(item);
         }
-        menu.setGroupCheckable(groupId, true, true);
-        navigationView.setCheckedItem(all.hashCode());
+        publicTypeList.setHasFixedSize(true);
+        publicTypeList.setLayoutManager(new LinearLayoutManager(this));
+        publicTypeList.setAdapter(publicTypeAdapter);
+
+        if (savedInstanceState == null) {
+            publicTypeAdapter.toggleSelection(0, all.hashCode());
+        }
     }
 
     private void setRecyclerView() {
-        publicChatAdapter = new PublicChatSearchedResultAdapter(this);
+        publicChatAdapter = new PublicChatSearchedResultAdapter(onChatAdapterItemClick);
 
-        LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this);
+        publicChatLayoutManager = new LinearLayoutManager(this);
 
         publicChatList.setHasFixedSize(true);
-        publicChatList.setLayoutManager(linearLayoutManager);
+        publicChatList.setLayoutManager(publicChatLayoutManager);
         publicChatList.setAdapter(publicChatAdapter);
     }
 
     private void addFragments() {
-        publicChatSearchFragment = (PublicChatSearchFragment) findFragmentByTag(FIND_PUBLIC_CHAT_TAG);
-        if (publicChatSearchFragment == null) {
-            publicChatSearchFragment = (PublicChatSearchFragment)
-                    addFragmentByTag(PublicChatSearchFragment.newInstance(uid),
-                    FIND_PUBLIC_CHAT_TAG);
-        }
+        publicChatSearchFragment = (PublicChatSearchFragment)
+                findOrAddFragmentByTag(getSupportFragmentManager(),
+                        new PublicChatSearchFragment(),
+                        FIND_PUBLIC_CHAT_TAG);
 
-        isNodeExistsFirebaseFragment = (IsNodeExistsFirebaseFragment) findFragmentByTag(IS_NODE_EXISTS_TAG);
-        if (isNodeExistsFirebaseFragment == null) {
-            isNodeExistsFirebaseFragment = (IsNodeExistsFirebaseFragment)
-                    addFragmentByTag(IsNodeExistsFirebaseFragment.newInstance(),
-                    IS_NODE_EXISTS_TAG);
-        }
-
-        progressDialog = (ProgressDialogFragment) findFragmentByTag(PROGRESS_DIALOG_TAG);
-        if (progressDialog == null) {
-            progressDialog = ProgressDialogFragment.newInstance();
-        }
+        isNodeExistsFirebaseFragment = (IsNodeExistsFirebaseFragment)
+                findOrAddFragmentByTag(getSupportFragmentManager(),
+                        IsNodeExistsFirebaseFragment.newInstance(),
+                        IS_NODE_EXISTS_TAG);
     }
-
-    /*private TextView getCustomSubMenuTextView(String text) {
-        int padding = getResources().getDimensionPixelOffset(R.dimen.spacing_medium);
-
-        TextView textView = new TextView(this);
-        textView.setFreezesText(true);
-        textView.setText(text);
-        textView.setClickable(true);
-        textView.setFocusable(true);
-        textView.setPadding(padding, padding, padding, padding);
-        if (Build.VERSION.SDK_INT >= 16) {
-            textView.setBackground(getSelectableItemDrawable());
-        }
-
-        ViewGroup.LayoutParams layoutParams = new ViewGroup.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        textView.setLayoutParams(layoutParams);
-
-        return textView;
-    }*/
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
 
-        if (selectedRoom != null) {
-            outState.putParcelable(STATE_SELECTED_ROOM, Parcels.wrap(selectedRoom));
-        }
-
+        publicTypeAdapter.onSaveInstanceState(PUBLIC_TYPE_LIST_STATE, outState);
         publicChatAdapter.onSaveInstanceState(PUBLIC_CHAT_LIST_STATE, outState);
     }
 
@@ -229,19 +196,8 @@ public class FindPublicChatActivity extends BaseActivity implements NavigationVi
         super.onRestoreInstanceState(savedInstanceState);
         if (savedInstanceState == null) return;
 
-        Parcelable selectedRoomParcelable = savedInstanceState.getParcelable(STATE_SELECTED_ROOM);
-        if (selectedRoomParcelable != null) {
-            selectedRoom = Parcels.unwrap(selectedRoomParcelable);
-        }
-
+        publicTypeAdapter.onRestoreInstanceState(PUBLIC_TYPE_LIST_STATE, savedInstanceState);
         publicChatAdapter.onRestoreInstanceState(PUBLIC_CHAT_LIST_STATE, savedInstanceState);
-    }
-
-    @Override
-    public boolean onNavigationItemSelected(MenuItem item) {
-        selectedRoomType = String.valueOf(item.getTitle());
-        setToolbarTitle(selectedRoomType);
-        return searchByTag();
     }
 
     @Override
@@ -252,6 +208,7 @@ public class FindPublicChatActivity extends BaseActivity implements NavigationVi
 
     @Override
     public boolean onQueryTextSubmit(String query) {
+        swipeRefresh.setRefreshing(true);
         return searchByQuery(query.trim());
     }
 
@@ -268,29 +225,18 @@ public class FindPublicChatActivity extends BaseActivity implements NavigationVi
         if (drawerLayout.isDrawerOpen(GravityCompat.END)) {
             drawerLayout.closeDrawer(GravityCompat.END);
         }
-
-        if (!swipeRefresh.isRefreshing()) {
-            swipeRefresh.setRefreshing(true);
-        }
     }
 
     private boolean searchByTag() {
         // if tag:all fetch all
-        if (selectedRoomType == null || selectedRoomType.equals(getString(R.string.all))) {
+        if (selectedRoomTypeKey == null || selectedRoomTypeKey.equals(getString(R.string.all))) {
             prepareSearching();
             publicChatSearchFragment.fetchAll();
             return true;
         }
 
-        // else loop through to find the chosen tag
-        for (int i = 0, size = roomTypeValues.length; i < size; i++) {
-            if (roomTypeKeys[i].equals(selectedRoomType)) {
-                prepareSearching();
-                selectedRoomType = roomTypeValues[i];
-                publicChatSearchFragment.search(RoomUtil.KEY_TAG, selectedRoomType);
-                return true;
-            }
-        }
+        prepareSearching();
+        publicChatSearchFragment.search(RoomUtil.KEY_TAG, selectedRoomTypeValue);
 
         return false;
     }
@@ -313,7 +259,6 @@ public class FindPublicChatActivity extends BaseActivity implements NavigationVi
 
     @Override
     public boolean onPrepareOptionsMenu(Menu menu) {
-
         if (searchViewQuery != null && !searchViewQuery.isEmpty()) {
             searchView.setQuery(searchViewQuery, false);
             searchView.setIconified(searchViewQuery.isEmpty());
@@ -354,7 +299,7 @@ public class FindPublicChatActivity extends BaseActivity implements NavigationVi
     }
 
     private void intentToRoomInfo(boolean isMember) {
-        progressDialog.dismiss();
+        hideProgressDialog();
 
         Intent roomInfoIntent = ChatRoomActivity.getIntentPublicRoom(this, selectedRoom, isMember);
         startActivity(roomInfoIntent);
@@ -363,51 +308,29 @@ public class FindPublicChatActivity extends BaseActivity implements NavigationVi
     @Override
     public void onPublicRoomReceived(Room room) {
         if (isSearching) {
-            publicChatAdapter.clear();
             isSearching = false;
         }
 
-        if (swipeRefresh.isRefreshing()) {
-            swipeRefresh.setRefreshing(false);
-        }
+        swipeRefresh.hide();
+        emptyTextTextView.gone();
 
         if (!publicChatAdapter.contains(room)) {
-            /*int size = publicChatAdapter.getItemCount();
-            Room beforeNewRoom = publicChatAdapter.getLastItem();
-            if (beforeNewRoom != null) {
-                if (room.getLatestMessageTime() > beforeNewRoom.getLatestMessageTime()) {
-                    publicChatAdapter.add(size - 1, room);
-                } else {
-                    publicChatAdapter.addLast(room);
-                }
-            } else {
-                publicChatAdapter.addLast(room);
-            }*/
             publicChatAdapter.addFirst(room);
+
+            if (publicChatLayoutManager.findFirstVisibleItemPosition() <= 1) {
+                publicChatList.scrollToPosition(0);
+            }
         }
     }
 
     @Override
     public void onNoResult() {
-        swipeRefresh.setRefreshing(false);
+        swipeRefresh.hide();
+        publicChatAdapter.clear();
 
-
-        Snackbar.make(contentView, getString(R.string.error_no_result_for, searchViewQuery),
-                Snackbar.LENGTH_LONG).show();
-    }
-
-    @Override
-    public void onAdapterClick(View itemView, int position) {
-        selectedRoom = publicChatAdapter.getItem(position);
-        isNodeExistsFirebaseFragment.fetchNode(TextUtil.getPath(FirebaseUtil.KEY_ROOMS,
-                FirebaseUtil.KEY_ROOMS_MEMBERS, selectedRoom.getRoomId(), uid));
-
-        progressDialog.show(getSupportFragmentManager(), PROGRESS_DIALOG_TAG);
-    }
-
-    @Override
-    public boolean onAdapterLongClick(View itemView, int position) {
-        return false;
+        emptyTextTextView.setText(R.string.no_result);
+        emptyTextTextView.visible();
+        setToolbarTitle(publicTypeAdapter.getItem(publicTypeAdapter.getSelectedItemValue()));
     }
 
     @Override
@@ -419,4 +342,45 @@ public class FindPublicChatActivity extends BaseActivity implements NavigationVi
     public void nodeNotExist() {
         intentToRoomInfo(false);
     }
+
+    private OnAdapterItemClick onTypeAdapterItemClick = new OnAdapterItemClick() {
+        @Override
+        public void onAdapterClick(View itemView, int position) {
+            selectedRoomTypeKey = publicTypeAdapter.getItem(position);
+
+            if (position > 0) {
+                selectedRoomTypeValue = roomTypeValues[position - 1];
+            }
+
+            setToolbarTitle(selectedRoomTypeKey);
+            publicTypeAdapter.toggleSelection(position, selectedRoomTypeKey.hashCode());
+
+            drawerLayout.closeDrawer(GravityCompat.END);
+
+            emptyTextTextView.gone();
+            searchByTag();
+            swipeRefresh.show();
+        }
+
+        @Override
+        public boolean onAdapterLongClick(View itemView, int position) {
+            return false;
+        }
+    };
+
+    private OnAdapterItemClick onChatAdapterItemClick = new OnAdapterItemClick() {
+        @Override
+        public void onAdapterClick(View itemView, int position) {
+            selectedRoom = publicChatAdapter.getItem(position);
+            isNodeExistsFirebaseFragment.fetchNode(TextUtil.getPath(FirebaseUtil.KEY_ROOMS,
+                    FirebaseUtil.KEY_ROOMS_MEMBERS, selectedRoom.getRoomId(), uid));
+
+            showProgressDialog();
+        }
+
+        @Override
+        public boolean onAdapterLongClick(View itemView, int position) {
+            return false;
+        }
+    };
 }

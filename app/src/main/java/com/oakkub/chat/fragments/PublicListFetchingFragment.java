@@ -11,13 +11,14 @@ import com.oakkub.chat.models.Room;
 import com.oakkub.chat.models.eventbus.EventBusPublicRoom;
 import com.oakkub.chat.utils.FirebaseUtil;
 
+import org.greenrobot.eventbus.EventBus;
+
 import java.util.ArrayList;
 
 import javax.inject.Inject;
 import javax.inject.Named;
 
 import dagger.Lazy;
-import de.greenrobot.event.EventBus;
 
 /**
  * Created by OaKKuB on 2/2/2016.
@@ -48,7 +49,6 @@ public class PublicListFetchingFragment extends BaseFragment {
     }
 
     public void fetchPublicList(String myId) {
-        userPublicFirebase.get().child(myId).keepSynced(true);
         userPublicFirebase.get().child(myId)
                 .addValueEventListener(new ValueEventListener() {
                     @Override
@@ -71,22 +71,30 @@ public class PublicListFetchingFragment extends BaseFragment {
     }
 
     private void publicListFetching(DataSnapshot dataSnapshot) {
+        boolean hasNewData = false;
+
         for (DataSnapshot children : dataSnapshot.getChildren()) {
 
             String publicRoomKey = children.getKey();
 
             if (!publicRoomsId.contains(publicRoomKey)) {
+                hasNewData = true;
                 publicRoomsId.add(publicRoomKey);
                 fetchPublicRoomInfo(publicRoomKey);
             }
+        }
+
+        if (!hasNewData) {
+            sendPublicRoom();
         }
     }
 
     private void fetchPublicRoomInfo(String roomId) {
         roomInfoFirebase.get().child(roomId)
-                .addListenerForSingleValueEvent(new ValueEventListener() {
+                .addValueEventListener(new ValueEventListener() {
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
+                        dataSnapshot.getRef().removeEventListener(this);
                         publicRoomInfoFetched(dataSnapshot);
                     }
 
@@ -99,6 +107,8 @@ public class PublicListFetchingFragment extends BaseFragment {
 
     private void publicRoomInfoFetched(DataSnapshot dataSnapshot) {
         Room room = dataSnapshot.getValue(Room.class);
+        if (room == null) return;
+
         room.setRoomId(dataSnapshot.getKey());
 
         roomInfoList.add(room);

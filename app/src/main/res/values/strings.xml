@@ -137,7 +137,7 @@
         <xliff:g id="person">%s</xliff:g> removed <xliff:g id="all_friends">%s</xliff:g> from chat.
     </string>
     <string name="remove_member">Remove member</string>
-    <string name="remove_admin">Remove admin</string>
+    <string name="demote_admin">Demote admin</string>
     <string name="error_no_friend_to_be_invited">No friend to be invited.</string>
     <string name="leave_room">Leave room</string>
     <string name="error.no_addable_admin">Every member is an admin.</string>
@@ -210,6 +210,21 @@
     <string name="you_dont_have_any_friends">You don\'t have any friends</string>
     <string name="you_dont_have_groups">You don\'t have any groups.</string>
     <string name="you_dont_have_public_chat">You don\'t have any public chats</string>
+    <string name="message">Message</string>
+    <string name="copy">Copy</string>
+    <string name="delete">Delete</string>
+    <string name="save_image">Save image</string>
+    <string name="error.delete_message">Cannot delete message, Please try again.</string>
+    <string name="error.remove_friend">Cannot remove friend, Please try again.</string>
+    <string name="remove_friend">Remove friend</string>
+    <string name="are_you_sure_to_remove_n_from_friend_contact">Are you sure to remove %s from friend contact?</string>
+    <string name="you_and_n_are_not_friend_so_cannot_send_message">You and %s are not friend.</string>
+    <string name="no_search_result">No searched result.</string>
+    <string name="no_result">No result</string>
+    <string name="online">Online</string>
+    <string name="online_n_day">Online %d days ago</string>
+    <string name="online_n_hour">Online %d hours ago</string>
+    <string name="online_n_minute">Online %d minutes ago</string>
 
     <string-array name="friend_tab_names">
         <item>Recommended Friends</item>
@@ -222,6 +237,16 @@
         <item>Friends</item>
         <item>Groups</item>
         <item>Public</item>
+    </string-array>
+
+    <string-array name="message_list_dialog">
+        <item>@string/copy</item>
+        <item>@string/delete</item>
+    </string-array>
+
+    <string-array name="image_message_list_dialog">
+        <!--<item>@string/save_image</item>-->
+        <item>@string/delete</item>
     </string-array>
 
 </resources>

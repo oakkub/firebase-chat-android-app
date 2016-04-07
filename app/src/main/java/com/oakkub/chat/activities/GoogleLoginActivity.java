@@ -30,12 +30,14 @@ import com.oakkub.chat.models.eventbus.EventBusGoogleLoginInfo;
 import com.oakkub.chat.utils.TextUtil;
 import com.oakkub.chat.utils.Util;
 
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+
 import java.io.IOException;
 import java.util.Set;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
-import de.greenrobot.event.EventBus;
 import icepick.State;
 
 /**
@@ -90,13 +92,8 @@ public class GoogleLoginActivity extends BaseActivity
     }
 
     private void setViews() {
-
-        setStatusBarColor(getCompatColor(R.color.colorPrimaryDark));
-        rootView.setBackgroundColor(getCompatColor(R.color.tomato));
-
         loggingInTextView.setText(action.equals(ACTION_LOGIN) ?
                 getString(R.string.logging_in_with_google) : getString(R.string.logging_out_with_google));
-
     }
 
     private void getDataFromIntent(Bundle savedInstanceState) {
@@ -233,6 +230,7 @@ public class GoogleLoginActivity extends BaseActivity
         return builder.toString().trim();
     }
 
+    @Subscribe
     public void onEvent(EventBusGoogleLoginInfo eventBusGoogleLoginInfo) {
 
         if (eventBusGoogleLoginInfo == null) {
