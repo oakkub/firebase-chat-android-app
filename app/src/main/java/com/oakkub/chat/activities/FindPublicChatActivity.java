@@ -30,7 +30,7 @@ import com.oakkub.chat.views.adapters.presenter.OnAdapterItemClick;
 import com.oakkub.chat.views.widgets.MySwipeRefreshLayout;
 import com.oakkub.chat.views.widgets.MyTextView;
 
-import butterknife.Bind;
+import butterknife.BindView;
 import butterknife.ButterKnife;
 import icepick.State;
 
@@ -49,25 +49,25 @@ public class FindPublicChatActivity extends BaseActivity implements
     private static final String IS_NODE_EXISTS_TAG = "tag:isNodeExits";
     private static final String STATE_SELECTED_ROOM = "state:selectedRoom";
 
-    @Bind(R.id.find_public_drawer_layout)
+    @BindView(R.id.find_public_drawer_layout)
     DrawerLayout drawerLayout;
 
-    @Bind(R.id.content_find_public_chat)
+    @BindView(R.id.content_find_public_chat)
     CoordinatorLayout contentView;
 
-    @Bind(R.id.find_public_navigation_view)
+    @BindView(R.id.find_public_navigation_view)
     RecyclerView publicTypeList;
 
-    @Bind(R.id.find_public_swipe_refresh)
+    @BindView(R.id.find_public_swipe_refresh)
     MySwipeRefreshLayout swipeRefresh;
 
-    @Bind(R.id.recyclerview)
+    @BindView(R.id.recyclerview)
     RecyclerView publicChatList;
 
-    @Bind(R.id.find_public_empty_text_progress_bar)
+    @BindView(R.id.find_public_empty_text_progress_bar)
     MyTextView emptyTextTextView;
 
-    @Bind(R.id.simple_toolbar)
+    @BindView(R.id.simple_toolbar)
     Toolbar toolbar;
 
     private SearchView searchView;
@@ -93,15 +93,21 @@ public class FindPublicChatActivity extends BaseActivity implements
     @State
     int selectedPosition;
 
+    @State
+    boolean isSearchByQuery;
+
+    @State
+    boolean isSearchByTag;
+
     @State(RoomBundler.class)
     Room selectedRoom;
 
     private LinearLayoutManager publicChatLayoutManager;
 
-    private PublicTypeAdapter publicTypeAdapter;
-    private PublicChatSearchedResultAdapter publicChatAdapter;
+    PublicTypeAdapter publicTypeAdapter;
+    PublicChatSearchedResultAdapter publicChatAdapter;
 
-    private IsNodeExistsFirebaseFragment isNodeExistsFirebaseFragment;
+    IsNodeExistsFirebaseFragment isNodeExistsFirebaseFragment;
     private PublicChatSearchFragment publicChatSearchFragment;
 
     @Override
@@ -136,7 +142,7 @@ public class FindPublicChatActivity extends BaseActivity implements
         setSupportActionBar(toolbar);
         ActionBar actionBar = getSupportActionBar();
         if (actionBar != null) {
-            actionBar.setTitle(selectedRoomTypeKey == null ? getString(R.string.all) : selectedRoomTypeKey);
+            actionBar.setTitle(getString(R.string.find_public_chat));
             actionBar.setDisplayHomeAsUpEnabled(true);
         }
     }
@@ -227,7 +233,9 @@ public class FindPublicChatActivity extends BaseActivity implements
         }
     }
 
-    private boolean searchByTag() {
+    boolean searchByTag() {
+        isSearchByQuery = false;
+
         // if tag:all fetch all
         if (selectedRoomTypeKey == null || selectedRoomTypeKey.equals(getString(R.string.all))) {
             prepareSearching();
@@ -242,6 +250,8 @@ public class FindPublicChatActivity extends BaseActivity implements
     }
 
     private boolean searchByQuery(String query) {
+        isSearchByQuery = true;
+
         prepareSearching();
         publicChatSearchFragment.search(RoomUtil.KEY_NAME, query);
         return true;
@@ -314,6 +324,13 @@ public class FindPublicChatActivity extends BaseActivity implements
         swipeRefresh.hide();
         emptyTextTextView.gone();
 
+        if (isSearchByQuery || isSearchByTag) {
+            publicChatAdapter.clear();
+
+            isSearchByQuery = false;
+            isSearchByTag = false;
+        }
+
         if (!publicChatAdapter.contains(room)) {
             publicChatAdapter.addFirst(room);
 
@@ -330,7 +347,6 @@ public class FindPublicChatActivity extends BaseActivity implements
 
         emptyTextTextView.setText(R.string.no_result);
         emptyTextTextView.visible();
-        setToolbarTitle(publicTypeAdapter.getItem(publicTypeAdapter.getSelectedItemValue()));
     }
 
     @Override
@@ -347,12 +363,12 @@ public class FindPublicChatActivity extends BaseActivity implements
         @Override
         public void onAdapterClick(View itemView, int position) {
             selectedRoomTypeKey = publicTypeAdapter.getItem(position);
+            isSearchByTag = true;
 
             if (position > 0) {
                 selectedRoomTypeValue = roomTypeValues[position - 1];
             }
 
-            setToolbarTitle(selectedRoomTypeKey);
             publicTypeAdapter.toggleSelection(position, selectedRoomTypeKey.hashCode());
 
             drawerLayout.closeDrawer(GravityCompat.END);

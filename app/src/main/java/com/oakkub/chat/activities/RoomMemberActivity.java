@@ -27,7 +27,7 @@ import org.parceler.Parcels;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import butterknife.Bind;
+import butterknife.BindView;
 import butterknife.ButterKnife;
 import icepick.State;
 
@@ -56,13 +56,13 @@ public class RoomMemberActivity extends BaseActivity implements RoomMemberFragme
     public static final String ACTION_PUBLIC_ADMIN = "action:publicAdmin";
     public static final String ACTION_PUBLIC_MEMBER = "action:publicMember";
 
-    @Bind(R.id.simple_toolbar)
+    @BindView(R.id.simple_toolbar)
     Toolbar toolbar;
 
-    @Bind(R.id.recyclerview)
+    @BindView(R.id.recyclerview)
     RecyclerView memberRecyclerView;
 
-    @Bind(R.id.frame_progress_bar_layout)
+    @BindView(R.id.frame_progress_bar_layout)
     FrameLayout frameProgressBarLayout;
 
     @State

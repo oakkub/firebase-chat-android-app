@@ -21,7 +21,7 @@ import com.oakkub.chat.activities.SearchFriendRequestActivity;
 import com.oakkub.chat.utils.Util;
 import com.oakkub.chat.views.adapters.viewholders.FriendViewPagerAdapter;
 
-import butterknife.Bind;
+import butterknife.BindView;
 import butterknife.ButterKnife;
 import icepick.State;
 
@@ -37,16 +37,16 @@ public class AddFriendPagerFragment extends BaseFragment implements
     public static final int FRIEND_REQUEST_TAB = 1;
     public static final int RECEIVED_REQUREST_TAB = 2;
 
-    @Bind(R.id.main_app_bar_layout)
+    @BindView(R.id.main_app_bar_layout)
     AppBarLayout appBarLayout;
 
-    @Bind(R.id.main_toolbar)
+    @BindView(R.id.main_toolbar)
     Toolbar toolbar;
 
-    @Bind(R.id.main_tablayout)
+    @BindView(R.id.main_tablayout)
     TabLayout tabLayout;
 
-    @Bind(R.id.friend_view_pager)
+    @BindView(R.id.friend_view_pager)
     ViewPager viewPager;
 
     @State

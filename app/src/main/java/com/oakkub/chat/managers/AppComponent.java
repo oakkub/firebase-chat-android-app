@@ -7,7 +7,6 @@ import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.os.Vibrator;
 import android.support.v4.app.NotificationManagerCompat;
-import android.support.v7.widget.DefaultItemAnimator;
 import android.view.inputmethod.InputMethodManager;
 
 import com.firebase.client.Firebase;
@@ -53,13 +52,13 @@ import com.oakkub.chat.fragments.RoomListFetchingFragment;
 import com.oakkub.chat.fragments.RoomListFragment;
 import com.oakkub.chat.fragments.RoomMemberFragment;
 import com.oakkub.chat.fragments.UserInfoFetchingFragment;
+import com.oakkub.chat.managers.loaders.DeleteFirebaseNodeLoader;
 import com.oakkub.chat.managers.loaders.FetchKeyLoader;
 import com.oakkub.chat.managers.loaders.FetchKeyThenUserInfo;
 import com.oakkub.chat.managers.loaders.FindFriendLoader;
 import com.oakkub.chat.managers.loaders.RemoveFriendRequestLoader;
 import com.oakkub.chat.managers.loaders.SearchFriendRequestLoader;
 import com.oakkub.chat.managers.loaders.SendFriendRequestLoader;
-import com.oakkub.chat.managers.loaders.UpdateNodeLoader;
 import com.oakkub.chat.modules.AnimationModule;
 import com.oakkub.chat.modules.AppControllerModule;
 import com.oakkub.chat.modules.NetworkModule;
@@ -145,7 +144,7 @@ public interface AppComponent {
     void inject(SendFriendRequestLoader sendFriendRequestLoader);
     void inject(SearchFriendRequestLoader searchFriendRequestLoader);
     void inject(FindFriendLoader findFriendLoader);
-    void inject(UpdateNodeLoader updateNodeLoader);
+    void inject(DeleteFirebaseNodeLoader deleteFirebaseNodeLoader);
     void inject(FetchKeyThenUserInfo fetchKeyThenUserInfo);
     void inject(FetchKeyLoader fetchKeyLoader);
     void inject(RemoveFriendRequestLoader removeFriendRequestLoader);
@@ -161,8 +160,6 @@ public interface AppComponent {
     NotificationManagerCompat notificationManager();
     Vibrator vibrator();
     ClipboardManager clipboardManager();
-
-    DefaultItemAnimator defaultItemAnimator();
 
     OkHttpClient okHttpClient();
     SharedPreferences sharedPreferences();

@@ -7,10 +7,13 @@ import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.v4.content.FileProvider;
+import android.support.v4.widget.NestedScrollView;
 import android.support.v7.widget.Toolbar;
 import android.widget.TextView;
 
 import com.firebase.client.Firebase;
+import com.oakkub.chat.BuildConfig;
 import com.oakkub.chat.R;
 import com.oakkub.chat.fragments.Base64ConverterFragment;
 import com.oakkub.chat.managers.AppController;
@@ -34,10 +37,11 @@ import java.net.URI;
 import javax.inject.Inject;
 import javax.inject.Named;
 
-import butterknife.Bind;
+import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import dagger.Lazy;
+import icepick.State;
 
 /**
  * Created by OaKKuB on 2/14/2016.
@@ -53,26 +57,33 @@ public class ProfileActivity extends BaseActivity implements
     private static final String BASE64_CONVERTER_TAG = "tag:base64Converter";
     private static final int CAMERA_REQUEST_CODE = 0;
     private static final int IMAGE_VIEWER_REQUEST_CODE = 1;
-    private static final int REQUEST_CODE_WRITE_STORAGE_PERMISSION = 100;
+    private static final int REQUEST_CODE_CAMERA_WRITE_STORAGE_PERMISSION = 100;
+    private static final int REQUEST_CODE_GALLERY_WRITE_STORAGE_PERMISSION = 101;
+
 
     @Inject
     @Named(FirebaseUtil.NAMED_USER_INFO)
     Lazy<Firebase> userInfoFirebase;
 
-    @Bind(R.id.simple_toolbar)
+    @BindView(R.id.simple_toolbar)
     Toolbar toolbar;
 
-    @Bind(R.id.user_profile_image)
+    @BindView(R.id.user_profile_container)
+    NestedScrollView userProfileContainer;
+
+    @BindView(R.id.user_profile_image)
     MyDraweeView profileImage;
 
-    @Bind(R.id.user_profile_display_name)
+    @BindView(R.id.user_profile_display_name)
     TextView displayNameTextView;
+
+    @State
+    Uri uriImage;
 
     private String myId;
     private UserInfo myInfo;
 
     private Base64ConverterFragment base64ConverterFragment;
-    private Uri uriImage;
 
     public static Intent getStartIntent(Context context, String myId, UserInfo myInfo) {
         Intent intent = new Intent(context, ProfileActivity.class);
@@ -113,16 +124,29 @@ public class ProfileActivity extends BaseActivity implements
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (resultCode != RESULT_OK) return;
-
         switch (requestCode) {
             case CAMERA_REQUEST_CODE:
-                onCameraResult();
+                if (resultCode == RESULT_OK) {
+                    onCameraResult();
+                } else {
+                    File file = new File(URI.create(uriImage.toString()));
+                    file.delete();
+                    uriImage = null;
+                }
                 break;
             case IMAGE_VIEWER_REQUEST_CODE:
-                onImageViewerResult(data);
+                if (resultCode == RESULT_OK) {
+                    onImageViewerResult(data);
+                }
                 break;
         }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        onRequestUseCameraPermission(requestCode, grantResults);
+        onRequestUseGalleryPermission(requestCode, grantResults);
     }
 
     private void onImageViewerResult(Intent data) {
@@ -139,9 +163,27 @@ public class ProfileActivity extends BaseActivity implements
         base64ConverterFragment.convert(file, true);
     }
 
+    private void onRequestUseCameraPermission(int requestCode, int[] grantResults) {
+        if (requestCode != REQUEST_CODE_CAMERA_WRITE_STORAGE_PERMISSION) return;
+        if (grantResults[0] != PackageManager.PERMISSION_GRANTED) {
+            MyToast.make("You denied write storage permission").show();
+        } else {
+            onCameraClick();
+        }
+    }
+
+    private void onRequestUseGalleryPermission(int requestCode, int[] grantResults) {
+        if (requestCode != REQUEST_CODE_GALLERY_WRITE_STORAGE_PERMISSION) return;
+        if (grantResults[0] != PackageManager.PERMISSION_GRANTED) {
+            MyToast.make("You denied write storage permission").show();
+        } else {
+            onGalleryClick();
+        }
+    }
+
     @OnClick(R.id.user_profile_change_image)
     public void onChangeProfileImageClick() {
-        ChooseImageDialog chooseImageDialog = ChooseImageDialog.newInstance(this);
+        ChooseImageDialog chooseImageDialog = ChooseImageDialog.newInstance();
         chooseImageDialog.show(getSupportFragmentManager(), CHOOSE_IMAGE_DIALOG);
     }
 
@@ -165,24 +207,11 @@ public class ProfileActivity extends BaseActivity implements
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        onRequestUseCameraPermission(requestCode, permissions, grantResults);
-    }
-
-    private void onRequestUseCameraPermission(int requestCode, String[] permissions, int[] grantResults) {
-        if (requestCode != REQUEST_CODE_WRITE_STORAGE_PERMISSION) return;
-        if (grantResults[0] != PackageManager.PERMISSION_GRANTED) {
-            MyToast.make("You denied write storage permission").show();
-        } else {
-            onCameraClick();
-        }
-    }
-
-    @Override
     public void onCameraClick() {
-        String neededPermission = Manifest.permission.WRITE_EXTERNAL_STORAGE;
-        if (!PermissionUtil.isPermissionAllowed(this, neededPermission, REQUEST_CODE_WRITE_STORAGE_PERMISSION)) {
+        if (!PermissionUtil.isPermissionAllowed(
+                this,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                REQUEST_CODE_CAMERA_WRITE_STORAGE_PERMISSION)) {
             return;
         }
 
@@ -193,7 +222,12 @@ public class ProfileActivity extends BaseActivity implements
         }
 
         uriImage = Uri.fromFile(cameraStorage);
-        Intent cameraIntent = IntentUtil.openCamera(this, uriImage);
+
+        Uri contentUri = FileProvider.getUriForFile(this,
+                BuildConfig.APPLICATION_ID + ".fileprovider",
+                cameraStorage);
+
+        Intent cameraIntent = IntentUtil.openCamera(this, contentUri);
         if (cameraIntent != null) {
             startActivityForResult(cameraIntent, CAMERA_REQUEST_CODE);
         }
@@ -201,6 +235,13 @@ public class ProfileActivity extends BaseActivity implements
 
     @Override
     public void onGalleryClick() {
+        if (!PermissionUtil.isPermissionAllowed(
+                this,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                REQUEST_CODE_GALLERY_WRITE_STORAGE_PERMISSION)) {
+            return;
+        }
+
         Intent imageViewerIntent = IntentUtil.openImageViewer(this, false);
         if (imageViewerIntent != null) {
             startActivityForResult(imageViewerIntent, IMAGE_VIEWER_REQUEST_CODE);

@@ -17,7 +17,7 @@ import com.oakkub.chat.utils.TextUtil;
 import com.oakkub.chat.utils.Util;
 import com.oakkub.chat.views.widgets.MyToast;
 
-import butterknife.Bind;
+import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import butterknife.OnTextChanged;
@@ -27,19 +27,19 @@ public class RegisterActivity extends BaseActivity implements RegisterFragment.O
     private static final String TAG = RegisterActivity.class.getSimpleName();
     private static final String REGISTER_FRAG_TAG = "tag:registerFragment";
 
-    @Bind(R.id.simple_app_bar_layout)
+    @BindView(R.id.simple_app_bar_layout)
     AppBarLayout appBarLayout;
 
-    @Bind(R.id.simple_toolbar)
+    @BindView(R.id.simple_toolbar)
     Toolbar toolbar;
 
-    @Bind(R.id.email_register_edittext)
+    @BindView(R.id.email_register_edittext)
     EditText emailEditText;
 
-    @Bind(R.id.password_register_edittext)
+    @BindView(R.id.password_register_edittext)
     EditText passwordEditText;
 
-    @Bind(R.id.confirm_password_register_edittext)
+    @BindView(R.id.confirm_password_register_edittext)
     EditText confirmPasswordEditText;
 
     private RegisterFragment registerFragment;

@@ -36,7 +36,7 @@ import org.greenrobot.eventbus.Subscribe;
 import javax.inject.Inject;
 import javax.inject.Named;
 
-import butterknife.Bind;
+import butterknife.BindView;
 import butterknife.ButterKnife;
 import dagger.Lazy;
 import icepick.State;
@@ -68,13 +68,13 @@ public class PendingFriendRequestFragment extends BaseFragment implements
     @Named(FirebaseUtil.NAMED_USER_FRIENDS)
     Lazy<Firebase> userFriendsFirebase;
 
-    @Bind(R.id.swipe_refresh_progress_bar_recycler_view_layout)
+    @BindView(R.id.swipe_refresh_progress_bar_recycler_view_layout)
     MySwipeRefreshLayout swipeRefreshLayout;
 
-    @Bind(R.id.swipe_refresh_text_view)
+    @BindView(R.id.swipe_refresh_text_view)
     MyTextView alertTextView;
 
-    @Bind(R.id.recyclerview)
+    @BindView(R.id.recyclerview)
     RecyclerView pendingRequestList;
 
     @State

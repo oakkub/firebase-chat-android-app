@@ -17,7 +17,7 @@ import com.oakkub.chat.utils.NetworkUtil;
 import com.oakkub.chat.utils.Util;
 import com.oakkub.chat.views.widgets.viewpager.ViewPagerCommunicator;
 
-import butterknife.Bind;
+import butterknife.BindView;
 import butterknife.ButterKnife;
 import icepick.State;
 
@@ -26,15 +26,15 @@ import icepick.State;
  */
 public class LoginFragment extends BaseFragment implements View.OnClickListener {
 
-    @Bind(R.id.login_with_email_button)
+    @BindView(R.id.login_with_email_button)
     Button emailLoginButton;
 
     /* Google view */
-    @Bind(R.id.google_login_button)
+    @BindView(R.id.google_login_button)
     SignInButton googleLoginButton;
 
     /* Facebook view */
-    @Bind(R.id.facebook_login_button)
+    @BindView(R.id.facebook_login_button)
     Button facebookLoginButton;
 
     @State
@@ -84,7 +84,6 @@ public class LoginFragment extends BaseFragment implements View.OnClickListener 
     }
 
     private void goToLogin(Class<?> cls, String action) {
-
         if (!NetworkUtil.isNetworkConnected(getActivity())) {
             Util.showSnackBar(getView(), getString(R.string.error_message_internet_connection));
             return;

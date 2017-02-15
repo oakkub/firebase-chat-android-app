@@ -33,7 +33,7 @@ import org.greenrobot.eventbus.Subscribe;
 
 import java.util.List;
 
-import butterknife.Bind;
+import butterknife.BindView;
 import butterknife.ButterKnife;
 import icepick.State;
 
@@ -46,13 +46,13 @@ public class SendFriendRequestFragment extends BaseFragment implements OnAdapter
     private static final String FRIEND_REQUEST_LIST_STATE = "state:addFriendList";
     private static final String ARGS_QUERY = "args:query";
 
-    @Bind(R.id.swipe_refresh_progress_bar_recycler_view_layout)
+    @BindView(R.id.swipe_refresh_progress_bar_recycler_view_layout)
     MySwipeRefreshLayout swipeRefreshLayout;
 
-    @Bind(R.id.recyclerview)
+    @BindView(R.id.recyclerview)
     RecyclerView addFriendList;
 
-    @Bind(R.id.swipe_refresh_text_view)
+    @BindView(R.id.swipe_refresh_text_view)
     MyTextView alertTextView;
 
     @State

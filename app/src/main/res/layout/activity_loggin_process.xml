@@ -8,7 +8,7 @@
 
     <fragment
         android:id="@+id/logging_in_fragment"
-        android:name="com.oakkub.chat.fragments.FacebookLoginActivityFragment"
+        android:name="com.oakkub.chat.fragments.FacebookLoginFragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         app:layout_behavior="@string/appbar_scrolling_view_behavior"

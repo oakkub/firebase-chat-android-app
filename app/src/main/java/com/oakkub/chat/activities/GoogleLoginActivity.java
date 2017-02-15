@@ -11,7 +11,6 @@ import android.support.design.widget.CoordinatorLayout;
 import android.util.Log;
 import android.widget.TextView;
 
-import com.crashlytics.android.Crashlytics;
 import com.google.android.gms.auth.GoogleAuthException;
 import com.google.android.gms.auth.GoogleAuthUtil;
 import com.google.android.gms.auth.UserRecoverableAuthException;
@@ -36,7 +35,7 @@ import org.greenrobot.eventbus.Subscribe;
 import java.io.IOException;
 import java.util.Set;
 
-import butterknife.Bind;
+import butterknife.BindView;
 import butterknife.ButterKnife;
 import icepick.State;
 
@@ -56,9 +55,9 @@ public class GoogleLoginActivity extends BaseActivity
     private static final String PROFILE_SCOPE = "https://www.googleapis.com/auth/userinfo.profile";
     private static final String EMAIL_SCOPE = "https://www.googleapis.com/auth/userinfo.email";
 
-    @Bind(R.id.login_process_root_view)
+    @BindView(R.id.login_process_root_view)
     CoordinatorLayout rootView;
-    @Bind(R.id.logging_in_text_view)
+    @BindView(R.id.logging_in_text_view)
     TextView loggingInTextView;
 
     @State
@@ -206,7 +205,6 @@ public class GoogleLoginActivity extends BaseActivity
         final int errorCode = result.getErrorCode();
         Log.e("google errror code", String.valueOf(errorCode));
         Log.e("google errror code", String.valueOf(isResolvingError));
-        Crashlytics.log(result.getErrorCode() + " : " + result.getErrorMessage());
     }
 
     private void onGoogleServicesConnected(GoogleSignInAccount account) {

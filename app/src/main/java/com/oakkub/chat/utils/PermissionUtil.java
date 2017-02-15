@@ -1,8 +1,11 @@
 package com.oakkub.chat.utils;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.pm.PackageManager;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.Fragment;
+import android.support.v4.content.ContextCompat;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,10 +17,6 @@ public class PermissionUtil {
 
     public static boolean isPermissionAllowed(Activity activity, String permission, int requestCode) {
         if (!isPermissionGranted(activity, permission)) {
-            if (!ActivityCompat.shouldShowRequestPermissionRationale(activity, permission)) {
-                ActivityCompat.requestPermissions(activity, new String[] { permission }, requestCode);
-                return false;
-            }
             ActivityCompat.requestPermissions(activity, new String[] { permission }, requestCode);
             return false;
         }
@@ -25,18 +24,17 @@ public class PermissionUtil {
         return true;
     }
 
-    public static boolean isPermissionGranted(Activity activity, String permission) {
-        return ActivityCompat.checkSelfPermission(activity, permission) ==
-                PackageManager.PERMISSION_GRANTED;
+    public static boolean isPermissionAllowed(Fragment fragment, String permission, int requestCode) {
+        if (!isPermissionGranted(fragment.getContext(), permission)) {
+            fragment.requestPermissions(new String[] { permission }, requestCode);
+            return false;
+        }
+
+        return true;
     }
 
-    public static boolean havePermissions(Activity activity, List<String> permissionList) {
-        List<String> permissionNeeded = getNeededPermissions(activity, permissionList);
-
-        if (permissionList.size() > 0 && permissionNeeded.size() > 0) {
-
-        }
-        return false;
+    public static boolean isPermissionGranted(Context context, String permission) {
+        return ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED;
     }
 
     private static List<String> getNeededPermissions(Activity activity, List<String> permissionList) {

@@ -143,7 +143,6 @@ import javax.inject.Named;
                         }
 
                         if (size < MESSAGE_LIMIT) {
-                            MyToast.make("no more data").show();
                             sendEmptyData();
                         }
                     }

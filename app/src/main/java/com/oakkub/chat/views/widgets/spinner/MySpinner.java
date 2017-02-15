@@ -40,12 +40,11 @@ public class MySpinner extends AppCompatSpinner {
 
     @Override
     public Parcelable onSaveInstanceState() {
+        Parcelable superState = super.onSaveInstanceState();
 
-        Parcelable parcelable = super.onSaveInstanceState();
-        BundleSavedState savedState = new BundleSavedState(parcelable);
-
-        Bundle bundle = new Bundle();
-        bundle.putInt("visibility", getVisibility());
+        Bundle savedState = new Bundle();
+        savedState.putParcelable("SUPER_STATE", superState);
+        savedState.putInt("visibility", getVisibility());
 
         return savedState;
     }
@@ -53,10 +52,10 @@ public class MySpinner extends AppCompatSpinner {
     @SuppressWarnings("WrongConstant")
     @Override
     public void onRestoreInstanceState(Parcelable state) {
-        BundleSavedState savedState = (BundleSavedState) state;
-        super.onRestoreInstanceState(savedState.getSuperState());
+        Bundle savedState = (Bundle) state;
+        super.onRestoreInstanceState(savedState.getBundle("SUPER_STATE"));
 
-        setVisibility(savedState.bundle.getInt("visibility"));
+        setVisibility(savedState.getInt("visibility"));
     }
 
 }

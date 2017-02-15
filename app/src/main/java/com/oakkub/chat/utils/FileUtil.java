@@ -6,7 +6,6 @@ import android.os.Environment;
 import android.os.ParcelFileDescriptor;
 import android.util.Log;
 
-import com.crashlytics.android.Crashlytics;
 import com.oakkub.chat.R;
 import com.oakkub.chat.managers.Contextor;
 
@@ -28,7 +27,6 @@ public class FileUtil {
         try {
             return context.getContentResolver().openFileDescriptor(uri, mode);
         } catch (IOException e) {
-            Crashlytics.logException(e);
             e.printStackTrace();
         }
         return null;

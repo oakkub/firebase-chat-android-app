@@ -13,17 +13,17 @@ import com.oakkub.chat.R;
 import com.oakkub.chat.fragments.AuthStateFragment;
 import com.oakkub.chat.managers.AppController;
 
-import butterknife.Bind;
+import butterknife.BindView;
 import butterknife.ButterKnife;
 
 public class SplashScreenActivity extends BaseActivity implements AuthStateFragment.OnFirebaseAuthentication {
 
     private static final String FIREBASE_AUTH_TAG = "tag:FirebaseAuth";
 
-    @Bind(R.id.simple_app_bar_layout)
+    @BindView(R.id.simple_app_bar_layout)
     AppBarLayout appBarLayout;
 
-    @Bind(R.id.simple_toolbar)
+    @BindView(R.id.simple_toolbar)
     Toolbar toolbar;
 
     @Override
@@ -46,7 +46,7 @@ public class SplashScreenActivity extends BaseActivity implements AuthStateFragm
         }
 
         findOrAddFragmentByTag(getSupportFragmentManager(),
-                new AuthStateFragment(), FIREBASE_AUTH_TAG);
+                AuthStateFragment.newInstance(), FIREBASE_AUTH_TAG);
 
         setDefaultSettings();
     }

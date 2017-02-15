@@ -191,6 +191,8 @@
         <item name="android:textColor">@android:color/black</item>
     </style>
 
+    <style name="ThemeNoDisplay" parent="@android:style/Theme.NoDisplay" />
+
     <style name="AppTheme.NoActionBar">
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>

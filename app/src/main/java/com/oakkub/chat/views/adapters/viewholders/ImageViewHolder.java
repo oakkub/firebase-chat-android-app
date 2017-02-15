@@ -6,7 +6,7 @@ import android.view.View;
 import com.facebook.drawee.view.SimpleDraweeView;
 import com.oakkub.chat.R;
 
-import butterknife.Bind;
+import butterknife.BindView;
 import butterknife.ButterKnife;
 
 /**
@@ -14,7 +14,7 @@ import butterknife.ButterKnife;
  */
 public class ImageViewHolder extends RecyclerView.ViewHolder {
 
-    @Bind(R.id.circle_image)
+    @BindView(R.id.circle_image)
     public SimpleDraweeView image;
 
     public ImageViewHolder(View itemView) {

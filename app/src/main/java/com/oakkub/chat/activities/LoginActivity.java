@@ -28,7 +28,7 @@ import com.oakkub.chat.views.widgets.viewpager.ViewPagerCommunicator;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
-import butterknife.Bind;
+import butterknife.BindView;
 import butterknife.ButterKnife;
 import icepick.State;
 import me.relex.circleindicator.CircleIndicator;
@@ -38,13 +38,13 @@ public class LoginActivity extends BaseActivity implements ViewPagerCommunicator
     public static final String LOGIN_FAILED = "loginFailed";
     private static final String TAG = LoginActivity.class.getSimpleName();
 
-    @Bind(R.id.application_name_textview)
+    @BindView(R.id.application_name_textview)
     TextView appNameTextView;
 
-    @Bind(R.id.login_viewpager)
+    @BindView(R.id.login_viewpager)
     ViewPager viewPager;
 
-    @Bind(R.id.viewpager_indicator)
+    @BindView(R.id.viewpager_indicator)
     CircleIndicator viewPagerIndicator;
 
     @State
@@ -150,7 +150,7 @@ public class LoginActivity extends BaseActivity implements ViewPagerCommunicator
 
         try {
             PackageInfo info = getPackageManager().getPackageInfo(
-                    "com.oakkub.chat",
+                    getPackageName(),
                     PackageManager.GET_SIGNATURES);
             for (Signature signature : info.signatures) {
                 MessageDigest md = MessageDigest.getInstance("SHA");

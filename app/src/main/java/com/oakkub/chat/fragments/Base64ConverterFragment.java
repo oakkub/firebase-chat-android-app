@@ -74,7 +74,6 @@ public class Base64ConverterFragment extends BaseFragment {
         new Thread(new Runnable() {
             @Override
             public void run() {
-
                 try {
                     Context context = Contextor.getInstance().getContext();
 
@@ -97,7 +96,7 @@ public class Base64ConverterFragment extends BaseFragment {
         isConverting = true;
     }
 
-    private void convertBitmap(Bitmap bitmap) {
+    void convertBitmap(Bitmap bitmap) {
         String base64 = Base64Util.toDataUri(Base64Util.toBase64(bitmap, 50));
         if (base64ConverterListener != null) {
             base64ConverterListener.onBase64Received(base64);

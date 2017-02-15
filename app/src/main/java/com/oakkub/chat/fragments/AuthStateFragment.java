@@ -26,6 +26,14 @@ public class AuthStateFragment extends BaseFragment implements Firebase.AuthStat
     private AuthData authData;
     private OnFirebaseAuthentication onFirebaseAuthentication;
 
+    public static AuthStateFragment newInstance() {
+        Bundle args = new Bundle();
+
+        AuthStateFragment fragment = new AuthStateFragment();
+        fragment.setArguments(args);
+        return fragment;
+    }
+
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);

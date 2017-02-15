@@ -45,7 +45,7 @@ import org.greenrobot.eventbus.Subscribe;
 import javax.inject.Inject;
 import javax.inject.Named;
 
-import butterknife.Bind;
+import butterknife.BindView;
 import butterknife.ButterKnife;
 import icepick.State;
 
@@ -72,13 +72,13 @@ public class ReceivedFriendRequestFragment extends BaseFragment implements
     @Named(FirebaseUtil.NAMED_USER_INFO)
     Firebase userInfoFirebase;
 
-    @Bind(R.id.swipe_refresh_progress_bar_recycler_view_layout)
+    @BindView(R.id.swipe_refresh_progress_bar_recycler_view_layout)
     MySwipeRefreshLayout swipeRefreshLayout;
 
-    @Bind(R.id.recyclerview)
+    @BindView(R.id.recyclerview)
     RecyclerView friendRequestedList;
 
-    @Bind(R.id.swipe_refresh_text_view)
+    @BindView(R.id.swipe_refresh_text_view)
     MyTextView alertTextView;
 
     @State

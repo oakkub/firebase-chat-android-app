@@ -2,6 +2,7 @@ package com.oakkub.chat.fragments;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.LoaderManager;
@@ -9,6 +10,7 @@ import android.support.v4.content.Loader;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -31,14 +33,17 @@ import com.oakkub.chat.views.adapters.FriendListAdapter;
 import com.oakkub.chat.views.adapters.presenter.OnAdapterItemClick;
 import com.oakkub.chat.views.widgets.MySwipeRefreshLayout;
 import com.oakkub.chat.views.widgets.MyTextView;
+import com.oakkub.chat.views.widgets.MyToast;
 import com.oakkub.chat.views.widgets.recyclerview.RecyclerViewScrollDirectionListener;
+
+import org.parceler.Parcels;
 
 import java.util.List;
 
 import javax.inject.Inject;
 import javax.inject.Named;
 
-import butterknife.Bind;
+import butterknife.BindView;
 import butterknife.ButterKnife;
 import icepick.State;
 
@@ -53,13 +58,13 @@ public class FriendsFragment extends BaseFragment
     @Named(FirebaseUtil.NAMED_USER_FRIENDS)
     Firebase userFriendsFirebase;
 
-    @Bind(R.id.swipe_refresh_progress_bar_recycler_view_layout)
+    @BindView(R.id.swipe_refresh_progress_bar_recycler_view_layout)
     MySwipeRefreshLayout swipeRefreshLayout;
 
-    @Bind(R.id.recyclerview)
+    @BindView(R.id.recyclerview)
     RecyclerView friendsList;
 
-    @Bind(R.id.swipe_refresh_text_view)
+    @BindView(R.id.swipe_refresh_text_view)
     MyTextView alertTextView;
 
     @State
@@ -69,7 +74,7 @@ public class FriendsFragment extends BaseFragment
     int selectedItemPosition;
 
     private FriendListAdapter friendListAdapter;
-    private OnScrolledEventListener onScrolledEventListener;
+    OnScrolledEventListener onScrolledEventListener;
     private RefreshListener refreshListener;
 
     @Override
@@ -117,6 +122,12 @@ public class FriendsFragment extends BaseFragment
     }
 
     @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        onRemoveFriendResult(requestCode, resultCode);
+    }
+
+    @Override
     public void onDetach() {
         super.onDetach();
 
@@ -153,10 +164,14 @@ public class FriendsFragment extends BaseFragment
 
         UserInfo friendInfo = friendListAdapter.getItem(position);
 
-        ImageView profileImage = ButterKnife.findById(itemView, R.id.simpleInfoProfileImageView);
+        /*ImageView profileImage = ButterKnife.findById(itemView, R.id.simpleInfoProfileImageView);
 
         FriendDetailActivity.launch((AppCompatActivity) getActivity(),
-                profileImage, friendInfo, FRIEND_DETAIL_REQUEST_CODE);
+                profileImage, friendInfo, FRIEND_DETAIL_REQUEST_CODE);*/
+
+        Intent intent = new Intent(getActivity(), FriendDetailActivity.class);
+        intent.putExtra(FriendDetailActivity.EXTRA_INFO, Parcels.wrap(friendInfo));
+        startActivityForResult(intent, FRIEND_DETAIL_REQUEST_CODE);
     }
 
     @Override
@@ -164,7 +179,7 @@ public class FriendsFragment extends BaseFragment
         return false;
     }
 
-    private void onFriendDetailResult(int requestCode, int resultCode) {
+    private void onRemoveFriendResult(int requestCode, int resultCode) {
         if (requestCode != FRIEND_DETAIL_REQUEST_CODE || resultCode != Activity.RESULT_OK) return;
 
         friendListAdapter.remove(selectedItemPosition);

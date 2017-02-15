@@ -28,7 +28,7 @@ import com.oakkub.chat.views.widgets.MyToast;
 import org.greenrobot.eventbus.EventBus;
 import org.parceler.Parcels;
 
-import butterknife.Bind;
+import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import icepick.State;
@@ -56,25 +56,25 @@ public class RoomInfoActivity extends BaseActivity implements RoomAdminAuthentic
 
     private static final int EDIT_ROOM_REQUEST_CODE = 0;
 
-    @Bind(R.id.simple_toolbar)
+    @BindView(R.id.simple_toolbar)
     Toolbar toolbar;
 
-    @Bind(R.id.group_info_profile_image)
+    @BindView(R.id.group_info_profile_image)
     MyDraweeView profileImage;
 
-    @Bind(R.id.group_info_text_view)
+    @BindView(R.id.group_info_text_view)
     TextView roomNameTextView;
 
-    @Bind(R.id.room_info_edit_button)
+    @BindView(R.id.room_info_edit_button)
     Button editInfoButton;
 
-    @Bind(R.id.room_info_admin_button)
+    @BindView(R.id.room_info_admin_button)
     Button adminInfoButton;
 
-    @Bind(R.id.room_info_member_button)
+    @BindView(R.id.room_info_member_button)
     Button memberInfoButton;
 
-    @Bind(R.id.progressBar)
+    @BindView(R.id.progressBar)
     ProgressBar progressBar;
 
     @State

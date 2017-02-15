@@ -2,14 +2,17 @@ package com.oakkub.chat.views.dialogs;
 
 import android.app.Activity;
 import android.app.Dialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.TextInputLayout;
 import android.support.v4.app.DialogFragment;
 import android.support.v7.app.AlertDialog;
+import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 
 import com.oakkub.chat.R;
 
@@ -48,8 +51,8 @@ public class EditTextDialog extends DialogFragment implements DialogInterface.On
     }
 
     @Override
-    public void onAttach(Activity activity) {
-        super.onAttach(activity);
+    public void onAttach(Context context) {
+        super.onAttach(context);
 
         try {
             if (getParentFragment() != null) {
@@ -83,10 +86,12 @@ public class EditTextDialog extends DialogFragment implements DialogInterface.On
 
         int padding = getResources().getDimensionPixelOffset(R.dimen.spacing_super_medium);
 
+        TextInputLayout inputLayout = getInputLayout(savedInstanceState, text, hint);
+        inputLayout.setPadding(padding, padding, padding, padding);
+
         return new AlertDialog.Builder(getActivity())
                 .setTitle(title)
-                .setView(getInputLayout(savedInstanceState, text, hint),
-                        padding, padding, padding, padding)
+                .setView(inputLayout)
                 .setPositiveButton(buttonOk, this)
                 .setNegativeButton(buttonCancel, this).create();
     }
@@ -96,24 +101,26 @@ public class EditTextDialog extends DialogFragment implements DialogInterface.On
         initEditText(savedInstanceState, text, hint);
 
         TextInputLayout inputLayout = new TextInputLayout(getActivity());
-        inputLayout.setId(1);
-        inputLayout.addView(editText, 0, editText.getLayoutParams());
+        inputLayout.setId(View.generateViewId());
+        inputLayout.addView(editText);
 
         return inputLayout;
     }
 
     @SuppressWarnings("ResourceType")
     private void initEditText(Bundle savedInstanceState, String text, String hint) {
+        // Don't know why but layout params have to be LinearLayoutParams
+        // Or else TextInputLayout cannot add it since it try to cast it to LinearLayoutParams
+        LinearLayout.LayoutParams ediTextLayoutParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+
         editText = new EditText(getActivity());
+        editText.setLayoutParams(ediTextLayoutParams);
+        editText.setId(View.generateViewId());
+        editText.setHint(hint);
         if (savedInstanceState == null) {
             editText.setText(text);
         }
-        editText.setId(2);
-        editText.setHint(hint);
-
-        ViewGroup.LayoutParams ediTextLayoutParams = new ViewGroup.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        editText.setLayoutParams(ediTextLayoutParams);
     }
 
     @Override

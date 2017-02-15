@@ -21,7 +21,7 @@ public class MyDraweeView extends SimpleDraweeView {
 
     private static final String URI_STATE = "state:uriImage";
 
-    private Uri uriImage;
+    Uri uriImage;
 
     public MyDraweeView(Context context, GenericDraweeHierarchy hierarchy) {
         super(context, hierarchy);
@@ -80,7 +80,7 @@ public class MyDraweeView extends SimpleDraweeView {
             @Override
             public boolean onPreDraw() {
                 DraweeController controller = FrescoUtil.getResizeController(
-                        getWidth(), getHeight(),
+                        getMeasuredWidth(), getMeasuredHeight(),
                         uriImage, getController());
                 setController(controller);
                 getViewTreeObserver().removeOnPreDrawListener(this);

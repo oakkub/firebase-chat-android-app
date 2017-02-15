@@ -7,9 +7,9 @@ import android.support.v4.app.FragmentManager;
 import android.widget.TextView;
 
 import com.oakkub.chat.R;
-import com.oakkub.chat.fragments.FacebookLoginActivityFragment;
+import com.oakkub.chat.fragments.FacebookLoginFragment;
 
-import butterknife.Bind;
+import butterknife.BindView;
 import butterknife.ButterKnife;
 import icepick.State;
 
@@ -21,9 +21,9 @@ public class FacebookLoginActivity extends BaseActivity {
 
     private static final String FRAGMENT_TAG = "tag:facebookLoginFragment";
 
-    @Bind(R.id.login_process_root_view)
+    @BindView(R.id.login_process_root_view)
     CoordinatorLayout rootView;
-    @Bind(R.id.logging_in_text_view)
+    @BindView(R.id.logging_in_text_view)
     TextView loggingTextView;
 
     @State
@@ -61,10 +61,10 @@ public class FacebookLoginActivity extends BaseActivity {
 
     private void findFacebookLoginFragment() {
         FragmentManager fragmentManager = getSupportFragmentManager();
-        FacebookLoginActivityFragment fragment = (FacebookLoginActivityFragment) fragmentManager.findFragmentByTag(FRAGMENT_TAG);
+        FacebookLoginFragment fragment = (FacebookLoginFragment) fragmentManager.findFragmentByTag(FRAGMENT_TAG);
 
         if (fragment == null) {
-            fragment = FacebookLoginActivityFragment.newInstance(action);
+            fragment = FacebookLoginFragment.newInstance(action);
 
             fragmentManager.beginTransaction()
                     .add(fragment, FRAGMENT_TAG)

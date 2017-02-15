@@ -26,7 +26,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
-import butterknife.Bind;
+import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import icepick.State;
@@ -39,25 +39,25 @@ public class MessageInputFragment extends BaseFragment {
     private static final String TAG = MessageInputFragment.class.getSimpleName();
     private static final int CAMERA_REQUEST_CODE = 1;
 
-    @Bind(R.id.message_attachment_root)
+    @BindView(R.id.message_attachment_root)
     MyLinearLayout attachmentLayout;
 
-    @Bind(R.id.textImageCamera)
+    @BindView(R.id.textImageCamera)
     TextImageView cameraTextImage;
 
-    @Bind(R.id.textImageGallery)
+    @BindView(R.id.textImageGallery)
     TextImageView galleryTextImage;
 
-    @Bind(R.id.textImageBack)
+    @BindView(R.id.textImageBack)
     TextImageView backTextImage;
 
-    @Bind(R.id.message_attachment_button)
+    @BindView(R.id.message_attachment_button)
     ImageButton attachmentButton;
 
-    @Bind(R.id.message_input_ediitext)
+    @BindView(R.id.message_input_ediitext)
     EditText messageText;
 
-    @Bind(R.id.message_input_button)
+    @BindView(R.id.message_input_button)
     ImageButton sendMessageButton;
 
     @State

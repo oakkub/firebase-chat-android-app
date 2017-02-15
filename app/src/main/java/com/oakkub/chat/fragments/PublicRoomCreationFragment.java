@@ -1,13 +1,17 @@
 package com.oakkub.chat.fragments;
 
+import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.TextInputLayout;
+import android.support.v4.content.FileProvider;
 import android.support.v7.app.ActionBar;
 import android.support.v7.widget.Toolbar;
 import android.text.Editable;
@@ -19,8 +23,10 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
+import android.widget.Spinner;
 import android.widget.TextView;
 
+import com.oakkub.chat.BuildConfig;
 import com.oakkub.chat.R;
 import com.oakkub.chat.activities.BaseActivity;
 import com.oakkub.chat.managers.icepick_bundler.RoomBundler;
@@ -28,6 +34,7 @@ import com.oakkub.chat.models.Room;
 import com.oakkub.chat.utils.FileUtil;
 import com.oakkub.chat.utils.FirebaseUtil;
 import com.oakkub.chat.utils.IntentUtil;
+import com.oakkub.chat.utils.PermissionUtil;
 import com.oakkub.chat.utils.RoomUtil;
 import com.oakkub.chat.utils.UriUtil;
 import com.oakkub.chat.views.dialogs.ChooseImageDialog;
@@ -38,16 +45,17 @@ import com.oakkub.chat.views.widgets.spinner.MySpinner;
 import org.parceler.Parcels;
 
 import java.io.File;
+import java.net.URI;
 
-import butterknife.Bind;
+import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import butterknife.OnTextChanged;
 import icepick.State;
 
 public class PublicRoomCreationFragment extends BaseFragment implements
-        ChooseImageDialog.ChooseImageDialogListener,
-        TextBitmapCreationFragment.OnTextBitmapCreationListener {
+        TextBitmapCreationFragment.OnTextBitmapCreationListener,
+        ChooseImageDialog.ChooseImageDialogListener {
 
     private static final String TAG = PublicRoomCreationFragment.class.getSimpleName();
     private static final String CHOOSE_IMAGE_DIALOG_TAG = "tag:chooseImageDialog";
@@ -57,30 +65,33 @@ public class PublicRoomCreationFragment extends BaseFragment implements
     private static final String ARGS_TOOLBAR_TITLE = "args:toolbarTitle";
     private static final int CAMERA_REQUEST_CODE = 0;
     private static final int IMAGE_VIEWER_REQUEST_CODE = 1;
+    private static final int REQUEST_CODE_CHOOSE_IMAGE_DIALOG = 1000;
+    private static final int REQUEST_CODE_CAMERA_WRITE_STORAGE_PERMISSION = 100;
+    private static final int REQUEST_CODE_GALLERY_WRITE_STORAGE_PERMISSION = 101;
 
-    @Bind(R.id.simple_toolbar)
+    @BindView(R.id.simple_toolbar)
     Toolbar toolbar;
 
-    @Bind(R.id.public_chat_image)
+    @BindView(R.id.public_chat_image)
     MyDraweeView image;
 
-    @Bind(R.id.public_chat_name_text_input_layout)
+    @BindView(R.id.public_chat_name_text_input_layout)
     TextInputLayout nameEditTextLayout;
 
-    @Bind(R.id.public_chat_name_edittext)
+    @BindView(R.id.public_chat_name_edittext)
     EditText nameEditText;
 
-    @Bind(R.id.public_chat_optional_desc_text_input_layout)
+    @BindView(R.id.public_chat_optional_desc_text_input_layout)
     TextInputLayout descriptionTextLayout;
 
-    @Bind(R.id.public_chat_optional_desc_edittext)
+    @BindView(R.id.public_chat_optional_desc_edittext)
     EditText descriptionEditText;
 
-    @Bind(R.id.public_chat_type_room_textview)
+    @BindView(R.id.public_chat_type_room_textview)
     TextView typeTextView;
 
-    @Bind(R.id.public_chat_type_spinner)
-    MySpinner tagSpinner;
+    @BindView(R.id.public_chat_type_spinner)
+    Spinner tagSpinner;
 
     @State
     String absolutePath;
@@ -289,10 +300,36 @@ public class PublicRoomCreationFragment extends BaseFragment implements
         tagSpinner.setAdapter(spinnerAdapter);
     }
 
+    private void onRequestUseCameraPermission(int requestCode, int[] grantResults) {
+        if (requestCode != REQUEST_CODE_CAMERA_WRITE_STORAGE_PERMISSION) return;
+        if (grantResults[0] != PackageManager.PERMISSION_GRANTED) {
+            MyToast.make("You denied write storage permission").show();
+        } else {
+            onCameraClick();
+        }
+    }
+
+    private void onRequestUseGalleryPermission(int requestCode, int[] grantResults) {
+        if (requestCode != REQUEST_CODE_GALLERY_WRITE_STORAGE_PERMISSION) return;
+        if (grantResults[0] != PackageManager.PERMISSION_GRANTED) {
+            MyToast.make("You denied write storage permission").show();
+        } else {
+            onGalleryClick();
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        onRequestUseCameraPermission(requestCode, grantResults);
+        onRequestUseGalleryPermission(requestCode, grantResults);
+    }
+
     @OnClick(R.id.public_chat_image)
     public void onPublicChatImageClick() {
-        ChooseImageDialog chooseImageDialog = ChooseImageDialog.newInstance(this);
-        chooseImageDialog.show(getChildFragmentManager(), CHOOSE_IMAGE_DIALOG_TAG);
+        ChooseImageDialog chooseImageDialog = ChooseImageDialog.newInstance();
+        chooseImageDialog.setTargetFragment(this, REQUEST_CODE_CHOOSE_IMAGE_DIALOG);
+        chooseImageDialog.show(getFragmentManager(), CHOOSE_IMAGE_DIALOG_TAG);
     }
 
     @OnTextChanged(value = R.id.public_chat_name_edittext,
@@ -315,6 +352,13 @@ public class PublicRoomCreationFragment extends BaseFragment implements
 
     @Override
     public void onCameraClick() {
+        if (!PermissionUtil.isPermissionAllowed(
+                this,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                REQUEST_CODE_CAMERA_WRITE_STORAGE_PERMISSION)) {
+            return;
+        }
+
         File cameraStorage = FileUtil.getCameraStorageDirectory();
         if (cameraStorage == null) {
             MyToast.make("Cannot use camera, no sdcard available.").show();
@@ -323,7 +367,11 @@ public class PublicRoomCreationFragment extends BaseFragment implements
 
         uriImage = Uri.fromFile(cameraStorage);
 
-        Intent cameraIntent = IntentUtil.openCamera(getActivity(), uriImage);
+        Uri contentUri = FileProvider.getUriForFile(getContext(),
+                BuildConfig.APPLICATION_ID + ".fileprovider",
+                cameraStorage);
+
+        Intent cameraIntent = IntentUtil.openCamera(getActivity(), contentUri);
         if (cameraIntent != null) {
             startActivityForResult(cameraIntent, CAMERA_REQUEST_CODE);
         }
@@ -331,6 +379,13 @@ public class PublicRoomCreationFragment extends BaseFragment implements
 
     @Override
     public void onGalleryClick() {
+        if (!PermissionUtil.isPermissionAllowed(
+                this,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                REQUEST_CODE_GALLERY_WRITE_STORAGE_PERMISSION)) {
+            return;
+        }
+
         Intent imageViewerIntent = IntentUtil.openImageViewer(getActivity(), false);
         if (imageViewerIntent != null) {
             startActivityForResult(imageViewerIntent, IMAGE_VIEWER_REQUEST_CODE);
@@ -389,9 +444,16 @@ public class PublicRoomCreationFragment extends BaseFragment implements
     }
 
     private void onCameraResult(int requestCode, int resultCode) {
-        if (requestCode != CAMERA_REQUEST_CODE || resultCode != Activity.RESULT_OK) return;
+        if (requestCode != CAMERA_REQUEST_CODE) return;
+
         useDefaultImage = false;
-        image.setMatchedSizeImageURI(uriImage);
+        if (resultCode == Activity.RESULT_OK) {
+            image.setMatchedSizeImageURI(uriImage);
+        } else {
+            File file = new File(URI.create(uriImage.toString()));
+            file.delete();
+            uriImage = null;
+        }
     }
 
     public interface OnRoomCreationListener {

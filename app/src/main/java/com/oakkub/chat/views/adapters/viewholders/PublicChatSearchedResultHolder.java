@@ -8,7 +8,7 @@ import com.facebook.drawee.view.SimpleDraweeView;
 import com.oakkub.chat.R;
 import com.oakkub.chat.views.adapters.presenter.OnAdapterItemClick;
 
-import butterknife.Bind;
+import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 
@@ -17,16 +17,16 @@ import butterknife.OnClick;
  */
 public class PublicChatSearchedResultHolder extends RecyclerView.ViewHolder {
 
-    @Bind(R.id.public_room_imageview)
+    @BindView(R.id.public_room_imageview)
     public SimpleDraweeView roomImage;
 
-    @Bind(R.id.public_room_name_textview)
+    @BindView(R.id.public_room_name_textview)
     public TextView nameTextView;
 
-    @Bind(R.id.public_room_type_textview)
+    @BindView(R.id.public_room_type_textview)
     public TextView typeTextView;
 
-    @Bind(R.id.public_room_latest_time_textview)
+    @BindView(R.id.public_room_latest_time_textview)
     public TextView latestMessageTimeTextView;
 
     private OnAdapterItemClick onAdapterItemClick;

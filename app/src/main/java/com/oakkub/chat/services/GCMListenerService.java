@@ -13,7 +13,6 @@ import android.support.v4.app.TaskStackBuilder;
 import android.text.TextUtils;
 import android.util.Log;
 
-import com.crashlytics.android.Crashlytics;
 import com.facebook.common.executors.CallerThreadExecutor;
 import com.facebook.common.references.CloseableReference;
 import com.facebook.datasource.DataSource;
@@ -119,7 +118,6 @@ public class GCMListenerService extends GcmListenerService {
                 fetchImageUri(MODE_FRIEND_ACCEPTED);
                 break;
             default:
-                Crashlytics.log("Something wrong with notification.");
                 break;
         }
     }

@@ -20,6 +20,7 @@ import com.oakkub.chat.utils.Base64Util;
 import com.oakkub.chat.utils.BitmapUtil;
 import com.oakkub.chat.utils.FirebaseMapUtil;
 import com.oakkub.chat.utils.FirebaseUtil;
+import com.oakkub.chat.utils.UriUtil;
 
 import java.io.File;
 import java.io.FileDescriptor;
@@ -54,9 +55,9 @@ public class NewPublicChatFragment extends BaseFragment {
     @Named(FirebaseUtil.NAMED_MESSAGES)
     Lazy<Firebase> messageFirebase;
 
-    private NewPublicChatListener newPublicChatListener;
+    NewPublicChatListener newPublicChatListener;
     private Room createdRoom;
-    private boolean roomFailedCreated;
+    boolean roomFailedCreated;
 
     @Override
     public void onAttach(Context context) {
@@ -92,7 +93,7 @@ public class NewPublicChatFragment extends BaseFragment {
         newPublicChatListener = null;
     }
 
-    private void failedCreatePublicChat() {
+    void failedCreatePublicChat() {
         getActivity().runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -117,7 +118,7 @@ public class NewPublicChatFragment extends BaseFragment {
         }).start();
     }
 
-    private String getBase64UriImage(Room room, Uri imageUri, String absolutePath) {
+    String getBase64UriImage(Room room, Uri imageUri, String absolutePath) {
         if (room.getImagePath() == null) {
 
             Bitmap imageBitmap = getBitmapPublicImage(imageUri, absolutePath);
@@ -137,8 +138,12 @@ public class NewPublicChatFragment extends BaseFragment {
 
     private Bitmap getBitmapPublicImage(Uri imageUri, String absolutePath) {
         Bitmap bitmap;
-        if (absolutePath == null) bitmap = createPublicImageFromFile(imageUri);
-        else bitmap = createPublicImageFromFileDescriptor(imageUri, absolutePath);
+
+        if (absolutePath == null) {
+            bitmap = createPublicImageFromFile(imageUri);
+        } else {
+            bitmap = createPublicImageFromFileDescriptor(imageUri, absolutePath);
+        }
         return bitmap == null ? null : bitmap;
     }
 
@@ -151,8 +156,7 @@ public class NewPublicChatFragment extends BaseFragment {
         try {
             Context context = Contextor.getInstance().getContext();
 
-            ParcelFileDescriptor parcelFileDescriptor = context
-                    .getContentResolver().openFileDescriptor(imageUri, "r");
+            ParcelFileDescriptor parcelFileDescriptor = context.getContentResolver().openFileDescriptor(imageUri, "r");
             if (parcelFileDescriptor == null) return null;
 
             FileDescriptor fileDescriptor = parcelFileDescriptor.getFileDescriptor();
@@ -166,7 +170,7 @@ public class NewPublicChatFragment extends BaseFragment {
         }
     }
 
-    private void onRoomImageCreated(final Room room, String uriBase64) {
+    void onRoomImageCreated(final Room room, String uriBase64) {
         String roomKey = roomFirebase.get().push().getKey();
 
         room.setRoomId(roomKey);
@@ -201,7 +205,7 @@ public class NewPublicChatFragment extends BaseFragment {
         });
     }
 
-    private void onPublicRoomCreated(Room room) {
+    void onPublicRoomCreated(Room room) {
         if (newPublicChatListener != null) {
             newPublicChatListener.onPublicChatCreated(room);
         } else {

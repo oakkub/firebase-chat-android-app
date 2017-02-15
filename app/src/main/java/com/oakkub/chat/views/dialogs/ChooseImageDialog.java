@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.DialogFragment;
+import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,7 +14,7 @@ import android.widget.TextView;
 
 import com.oakkub.chat.R;
 
-import butterknife.Bind;
+import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 
@@ -22,32 +23,36 @@ import butterknife.OnClick;
  */
 public class ChooseImageDialog extends DialogFragment {
 
-    @Bind(R.id.image_intent_camera)
+    @BindView(R.id.image_intent_camera)
     TextView cameraTextView;
 
-    @Bind(R.id.image_intent_image_viewer)
+    @BindView(R.id.image_intent_image_viewer)
     TextView galleryTextView;
 
     private ChooseImageDialogListener chooseImageDialogListener;
 
-    public static ChooseImageDialog newInstance(ChooseImageDialogListener listener) {
+    public static ChooseImageDialog newInstance() {
         Bundle args = new Bundle();
 
         ChooseImageDialog chooseImageDialog = new ChooseImageDialog();
         chooseImageDialog.setArguments(args);
-        chooseImageDialog.setChooseImageDialogListener(listener);
-
         return chooseImageDialog;
     }
 
-    private void setChooseImageDialogListener(ChooseImageDialogListener chooseImageDialogListener) {
-        this.chooseImageDialogListener = chooseImageDialogListener;
+    @Override
+    public void onResume() {
+        super.onResume();
+        Fragment targetFragment = getTargetFragment();
+        if (targetFragment != null) {
+            chooseImageDialogListener = (ChooseImageDialogListener) targetFragment;
+        } else {
+            chooseImageDialogListener = (ChooseImageDialogListener) getActivity();
+        }
     }
 
     @Override
-    public void onDetach() {
-        super.onDetach();
-
+    public void onStop() {
+        super.onStop();
         chooseImageDialogListener = null;
     }
 
@@ -63,7 +68,10 @@ public class ChooseImageDialog extends DialogFragment {
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
         Dialog dialog = super.onCreateDialog(savedInstanceState);
-        dialog.getWindow().requestFeature(Window.FEATURE_NO_TITLE);
+        Window window = dialog.getWindow();
+        if (window != null) {
+            window.requestFeature(Window.FEATURE_NO_TITLE);
+        }
 
         return dialog;
     }
@@ -72,6 +80,7 @@ public class ChooseImageDialog extends DialogFragment {
     public void onImageCameraClick() {
         dismiss();
         if (chooseImageDialogListener == null) return;
+
         chooseImageDialogListener.onCameraClick();
     }
 
@@ -79,11 +88,13 @@ public class ChooseImageDialog extends DialogFragment {
     public void onImageGalleryClick() {
         dismiss();
         if (chooseImageDialogListener == null) return;
+
         chooseImageDialogListener.onGalleryClick();
     }
 
     public interface ChooseImageDialogListener {
         void onCameraClick();
+
         void onGalleryClick();
     }
 }

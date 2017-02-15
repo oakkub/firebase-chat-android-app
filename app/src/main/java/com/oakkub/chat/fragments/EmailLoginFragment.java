@@ -19,7 +19,7 @@ import com.oakkub.chat.utils.Util;
 
 import javax.inject.Inject;
 
-import butterknife.Bind;
+import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import dagger.Lazy;
@@ -29,10 +29,10 @@ import dagger.Lazy;
  */
 public class EmailLoginFragment extends BaseFragment {
 
-    @Bind(R.id.email_edittext)
+    @BindView(R.id.email_edittext)
     EditText emailEditText;
 
-    @Bind(R.id.password_edittext)
+    @BindView(R.id.password_edittext)
     EditText passwordEditText;
 
     @Inject

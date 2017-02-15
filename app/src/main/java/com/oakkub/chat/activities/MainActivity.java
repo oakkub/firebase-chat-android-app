@@ -25,7 +25,7 @@ import android.widget.TextView;
 import com.firebase.client.Firebase;
 import com.oakkub.chat.R;
 import com.oakkub.chat.broadcast.InternetConnectionChangeReceiver;
-import com.oakkub.chat.fragments.FacebookLoginActivityFragment;
+import com.oakkub.chat.fragments.FacebookLoginFragment;
 import com.oakkub.chat.fragments.FriendsFetchingFragment;
 import com.oakkub.chat.fragments.FriendsFragment;
 import com.oakkub.chat.fragments.GroupListFetchingFragment;
@@ -52,7 +52,7 @@ import org.parceler.Parcels;
 import javax.inject.Inject;
 import javax.inject.Named;
 
-import butterknife.Bind;
+import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import icepick.State;
@@ -85,25 +85,25 @@ public class MainActivity extends BaseActivity implements
             R.drawable.ic_public_white_24dp
     };
 
-    @Bind(R.id.main_drawer_layout)
+    @BindView(R.id.main_drawer_layout)
     DrawerLayout drawerLayout;
 
-    @Bind(R.id.main_navigation_view)
+    @BindView(R.id.main_navigation_view)
     NavigationView navigationView;
 
-    @Bind(R.id.main_app_bar_layout)
+    @BindView(R.id.main_app_bar_layout)
     AppBarLayout appBarLayout;
 
-    @Bind(R.id.main_toolbar)
+    @BindView(R.id.main_toolbar)
     Toolbar toolbar;
 
-    @Bind(R.id.main_tablayout)
+    @BindView(R.id.main_tablayout)
     TabLayout tabLayout;
 
-    @Bind(R.id.viewpager)
+    @BindView(R.id.viewpager)
     ViewPager viewPager;
 
-    @Bind(R.id.fab)
+    @BindView(R.id.fab)
     SheetFab fab;
 
     private MyDraweeView headerImage;
@@ -481,7 +481,7 @@ public class MainActivity extends BaseActivity implements
 
         switch (requestCode) {
 
-            case FacebookLoginActivityFragment.RC_FACEBOOK:
+            case FacebookLoginFragment.RC_FACEBOOK:
             case GoogleLoginActivity.RC_GOOGLE:
 
                 firebaseUnAuthenticate();
@@ -505,7 +505,7 @@ public class MainActivity extends BaseActivity implements
 
             logout(FacebookLoginActivity.class,
                     FacebookLoginActivity.ACTION_LOGOUT,
-                    FacebookLoginActivityFragment.RC_FACEBOOK);
+                    FacebookLoginFragment.RC_FACEBOOK);
 
         } else if (FirebaseUtil.isGoogleLogin(provider)) {
 

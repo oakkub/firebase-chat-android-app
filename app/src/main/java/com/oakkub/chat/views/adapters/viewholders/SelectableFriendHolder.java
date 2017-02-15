@@ -10,7 +10,7 @@ import com.facebook.drawee.view.SimpleDraweeView;
 import com.oakkub.chat.R;
 import com.oakkub.chat.views.adapters.presenter.OnAdapterItemClick;
 
-import butterknife.Bind;
+import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import butterknife.OnLongClick;
@@ -20,16 +20,16 @@ import butterknife.OnLongClick;
  */
 public class SelectableFriendHolder extends RecyclerView.ViewHolder {
 
-    @Bind(R.id.selectable_root)
+    @BindView(R.id.selectable_root)
     public LinearLayout root;
 
-    @Bind(R.id.selectable_profile_image)
+    @BindView(R.id.selectable_profile_image)
     public SimpleDraweeView profileImage;
 
-    @Bind(R.id.selectable_friend_name_textview)
+    @BindView(R.id.selectable_friend_name_textview)
     public TextView friendNameTextView;
 
-    @Bind(R.id.selectable_friend_checkbox)
+    @BindView(R.id.selectable_friend_checkbox)
     public CheckBox friendCheckBox;
 
     private OnAdapterItemClick onAdapterItemClick;

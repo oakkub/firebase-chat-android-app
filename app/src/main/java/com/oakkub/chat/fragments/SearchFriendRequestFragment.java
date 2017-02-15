@@ -36,7 +36,7 @@ import org.greenrobot.eventbus.Subscribe;
 import java.util.ArrayList;
 import java.util.List;
 
-import butterknife.Bind;
+import butterknife.BindView;
 import butterknife.ButterKnife;
 import icepick.State;
 
@@ -54,16 +54,16 @@ public class SearchFriendRequestFragment extends BaseFragment implements
     private static final String FRIEND_REQUEST_DIALOG_TAG = "tag:friendRequestDialog";
     private static final String FRIEND_REQUEST_STATE = "state:friendRequestAdapter";
 
-    @Bind(R.id.simple_toolbar)
+    @BindView(R.id.simple_toolbar)
     Toolbar toolbar;
 
-    @Bind(R.id.swipe_refresh_progress_bar_recycler_view_layout)
+    @BindView(R.id.swipe_refresh_progress_bar_recycler_view_layout)
     MySwipeRefreshLayout swipeRefreshLayout;
 
-    @Bind(R.id.recyclerview)
+    @BindView(R.id.recyclerview)
     RecyclerView searchResultList;
 
-    @Bind(R.id.swipe_refresh_text_view)
+    @BindView(R.id.swipe_refresh_text_view)
     MyTextView alertTextView;
 
     @State

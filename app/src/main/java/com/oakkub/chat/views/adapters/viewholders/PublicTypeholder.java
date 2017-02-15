@@ -7,7 +7,7 @@ import android.widget.TextView;
 import com.oakkub.chat.R;
 import com.oakkub.chat.views.adapters.presenter.OnAdapterItemClick;
 
-import butterknife.Bind;
+import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 
@@ -16,7 +16,7 @@ import butterknife.OnClick;
  */
 public class PublicTypeHolder extends RecyclerView.ViewHolder {
 
-    @Bind(R.id.public_type_textview)
+    @BindView(R.id.public_type_textview)
     public TextView publicTypeTextView;
 
     private OnAdapterItemClick onAdapterItemClick;

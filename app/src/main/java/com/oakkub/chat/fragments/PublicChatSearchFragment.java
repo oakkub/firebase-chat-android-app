@@ -34,7 +34,7 @@ public class PublicChatSearchFragment extends BaseFragment {
 
     private boolean isResultNotExist;
 
-    private ArrayList<String> publicRoomKeyList;
+    ArrayList<String> publicRoomKeyList;
     private Room publicRoom;
 
     private OnPublicRoomSearchResultListener onPublicRoomSearchResultListener;
@@ -103,7 +103,7 @@ public class PublicChatSearchFragment extends BaseFragment {
         }
     };
 
-    private void fetchValueNode(String key) {
+    void fetchValueNode(String key) {
         roomInfoFirebase.child(key)
                 .addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
@@ -142,7 +142,7 @@ public class PublicChatSearchFragment extends BaseFragment {
         }
     };
 
-    private void getRoomDataSnapshot(DataSnapshot dataSnapshot) {
+    void getRoomDataSnapshot(DataSnapshot dataSnapshot) {
         String key = dataSnapshot.getKey();
         Room room = dataSnapshot.getValue(Room.class);
         room.setRoomId(key);
@@ -154,7 +154,7 @@ public class PublicChatSearchFragment extends BaseFragment {
         }
     }
 
-    private boolean isResultExists(DataSnapshot dataSnapshot) {
+    boolean isResultExists(DataSnapshot dataSnapshot) {
         boolean exists = dataSnapshot.exists();
 
         if (onPublicRoomSearchResultListener != null) {

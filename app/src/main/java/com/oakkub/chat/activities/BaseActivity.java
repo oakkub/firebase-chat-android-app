@@ -15,6 +15,7 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.NotificationManagerCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.ActionBar;
+import android.support.v7.app.AppCompatDelegate;
 
 import com.akexorcist.localizationactivity.LanguageSetting;
 import com.akexorcist.localizationactivity.LocalizationActivity;
@@ -50,6 +51,7 @@ public class BaseActivity extends LocalizationActivity {
     public void onCreate(Bundle savedInstanceState) {
         checkLanguage();
         super.onCreate(savedInstanceState);
+        AppCompatDelegate.setCompatVectorFromResourcesEnabled(true);
         Icepick.restoreInstanceState(this, savedInstanceState);
 
         if (savedInstanceState == null) {

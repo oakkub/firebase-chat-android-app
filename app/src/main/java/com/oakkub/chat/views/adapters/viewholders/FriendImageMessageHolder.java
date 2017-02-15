@@ -8,7 +8,7 @@ import com.facebook.drawee.view.SimpleDraweeView;
 import com.oakkub.chat.R;
 import com.oakkub.chat.views.adapters.presenter.OnAdapterItemClick;
 
-import butterknife.Bind;
+import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnLongClick;
 
@@ -17,13 +17,13 @@ import butterknife.OnLongClick;
  */
 public class FriendImageMessageHolder extends RecyclerView.ViewHolder {
 
-    @Bind(R.id.friend_message_image_profile_image_view)
+    @BindView(R.id.friend_message_image_profile_image_view)
     public SimpleDraweeView profileImage;
 
-    @Bind(R.id.friend_message_image_imageview)
+    @BindView(R.id.friend_message_image_imageview)
     public SimpleDraweeView messageImage;
 
-    @Bind(R.id.message_time_text_view)
+    @BindView(R.id.message_time_text_view)
     public TextView messageTimeTextView;
 
     private OnAdapterItemClick onAdapterItemClick;

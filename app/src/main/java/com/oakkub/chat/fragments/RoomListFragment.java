@@ -36,24 +36,22 @@ import com.oakkub.chat.views.widgets.recyclerview.RecyclerViewScrollDirectionLis
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 
-import butterknife.Bind;
+import butterknife.BindView;
 import butterknife.ButterKnife;
 
 public class RoomListFragment extends BaseFragment implements OnAdapterItemClick,
     SwipeRefreshLayout.OnRefreshListener {
 
-    public static final String ARGS_MY_ID = "args:uid";
-
     private static final String ROOM_LIST_STATE = "state:roomList";
     private static final String TAG = RoomListFragment.class.getSimpleName();
 
-    @Bind(R.id.swipe_refresh_progress_bar_recycler_view_layout)
+    @BindView(R.id.swipe_refresh_progress_bar_recycler_view_layout)
     MySwipeRefreshLayout swipeRefreshLayout;
 
-    @Bind(R.id.recyclerview)
+    @BindView(R.id.recyclerview)
     RecyclerView roomList;
 
-    @Bind(R.id.swipe_refresh_text_view)
+    @BindView(R.id.swipe_refresh_text_view)
     MyTextView alretTextView;
 
     private RoomListAdapter roomListAdapter;

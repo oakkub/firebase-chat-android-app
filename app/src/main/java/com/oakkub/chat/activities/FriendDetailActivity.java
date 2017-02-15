@@ -19,7 +19,7 @@ import com.oakkub.chat.R;
 import com.oakkub.chat.fragments.CreatePrivateRoomFragment;
 import com.oakkub.chat.managers.AppController;
 import com.oakkub.chat.managers.icepick_bundler.UserInfoBundler;
-import com.oakkub.chat.managers.loaders.UpdateNodeLoader;
+import com.oakkub.chat.managers.loaders.DeleteFirebaseNodeLoader;
 import com.oakkub.chat.models.Room;
 import com.oakkub.chat.models.UserInfo;
 import com.oakkub.chat.utils.FirebaseUtil;
@@ -30,7 +30,7 @@ import com.oakkub.chat.views.widgets.MyToast;
 
 import org.parceler.Parcels;
 
-import butterknife.Bind;
+import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import icepick.State;
@@ -38,7 +38,7 @@ import icepick.State;
 public class FriendDetailActivity extends BaseActivity implements
         CreatePrivateRoomFragment.OnPrivateRoomRequestListener,
         AlertDialogFragment.OnAlertDialogListener,
-        LoaderManager.LoaderCallbacks<Boolean>{
+        LoaderManager.LoaderCallbacks<Boolean> {
 
     public static final String EXTRA_INFO = "FriendDetailActivity:friendInfo";
     public static final String TRANSITION_PROFILE_IMAGE = "transition:profileImage";
@@ -47,13 +47,13 @@ public class FriendDetailActivity extends BaseActivity implements
     private static final String TAG_CREATE_PRIVATE_ROOM = "tag:createPrivateRoom";
     private static final int REMOVE_FRIEND_LOADER_ID = 100;
 
-    @Bind(R.id.friend_detail_profile_image_view)
+    @BindView(R.id.friend_detail_profile_image_view)
     SimpleDraweeView profileImage;
 
-    @Bind(R.id.friend_detail_display_name_text_view)
+    @BindView(R.id.friend_detail_display_name_text_view)
     TextView displayName;
 
-    @Bind(R.id.friend_detail_chat_button)
+    @BindView(R.id.friend_detail_chat_button)
     Button chatButton;
 
     @State
@@ -163,11 +163,14 @@ public class FriendDetailActivity extends BaseActivity implements
         if (isSameAsMe) return;
 
         String roomKey = RoomUtil.getPrivateRoomKey(this, uid, friendInfo.getKey());
+
+        showProgressDialog();
         createPrivateRoomFragment.createPrivateRoom(roomKey);
     }
 
     @Override
     public void onPrivateRoomCreated(Room room) {
+        hideProgressDialog();
         room.setName(friendInfo.getDisplayName());
         room.setImagePath(friendInfo.getProfileImageURL());
 
@@ -192,7 +195,7 @@ public class FriendDetailActivity extends BaseActivity implements
 
         switch (id) {
             case REMOVE_FRIEND_LOADER_ID:
-                return new UpdateNodeLoader(this, getFriendsMap());
+                return new DeleteFirebaseNodeLoader(this, getFriendsMap());
             default:
                 return null;
         }

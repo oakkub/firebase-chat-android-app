@@ -66,7 +66,7 @@ public class ChatRoomFragment extends BaseFragment implements ChildEventListener
     public static final String EXTRA_ROOM = "extra:room";
     public static final int DOWNLOAD_MESSAGE_ITEM_LIMIT = 20;
 
-    private static final String TAG = ChatRoomFragment.class.getSimpleName();
+    static final String TAG = ChatRoomFragment.class.getSimpleName();
 
     @Inject
     @Named(FirebaseUtil.NAMED_ROOT)
@@ -112,55 +112,55 @@ public class ChatRoomFragment extends BaseFragment implements ChildEventListener
     @Named(FirebaseUtil.NAMED_MESSAGES_TYPING)
     Lazy<Firebase> messagesTypingFirebase;
 
-    private String roomId;
+    String roomId;
     private String latestMessageKey = "";
-    private boolean isMember;
-    private boolean isPublicChat;
-    private Room room;
+    boolean isMember;
+    boolean isPublicChat;
+    Room room;
 
     private String groupNewMemberKey;
 
-    private UserInfo privateFriendInfo;
+    UserInfo privateFriendInfo;
     private UserOnlineInfo privateFriendOnlineInfo;
 
     private boolean isMessageSending;
-    private boolean isLoadMoreFailed;
+    boolean isLoadMoreFailed;
     private boolean isLoadMoreNoData;
     private boolean isTypingMessage;
-    private boolean isPrivateRoom;
-    private boolean emptyMessage;
+    boolean isPrivateRoom;
+    boolean emptyMessage;
     private boolean isGroupRoomFirebaseInit;
-    private boolean isFriendTypingMessage;
-    private boolean onJoinRoomSuccess;
-    private boolean onJoinRoomFailed;
-    private boolean isRemovedByAdmin;
+    boolean isFriendTypingMessage;
+    boolean onJoinRoomSuccess;
+    boolean onJoinRoomFailed;
+    boolean isRemovedByAdmin;
     private long latestMessageSentWhen;
 
-    private boolean isRemovedByFriend;
-    private SparseBooleanArray isRemovedByFriendArray;
+    boolean isRemovedByFriend;
+    SparseBooleanArray isRemovedByFriendArray;
 
-    private int totalGroupMember;
+    int totalGroupMember;
 
     private String privateFriendKey;
-    private String privateFriendName;
+    String privateFriendName;
     private SparseArray<UserInfo> preservedGroupMemberList;
-    private SparseStringArray instanceIdList;
+    SparseStringArray instanceIdList;
     private ArrayMap<String, ValueEventListener> eventListenerMemberList;
 
-    private ArrayList<Message> oldMessages;
+    ArrayList<Message> oldMessages;
     private ArrayList<Message> newMessages;
     private Message sentMessage;
     private Message changedMessage;
 
-    private Message deletedMessage;
-    private boolean isDeletedSuccess;
+    Message deletedMessage;
+    boolean isDeletedSuccess;
 
-    private MessageRequestListener messageRequestListener;
-    private OnRecyclerViewInfiniteScrollListener onRecyclerViewInfiniteScrollListener;
+    MessageRequestListener messageRequestListener;
+    OnRecyclerViewInfiniteScrollListener onRecyclerViewInfiniteScrollListener;
 
     private ToolbarCommunicator toolbarCommunicator;
 
-    private Uri cameraImageUri;
+    Uri cameraImageUri;
 
     @Override
     public void onAttach(Context context) {
@@ -183,8 +183,8 @@ public class ChatRoomFragment extends BaseFragment implements ChildEventListener
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
 
+        getDataIntent(getActivity().getIntent());
         if (savedInstanceState == null) {
-            getDataIntent(getActivity().getIntent());
             checkEmptyMessages();
         }
 
@@ -294,11 +294,11 @@ public class ChatRoomFragment extends BaseFragment implements ChildEventListener
 
     private boolean isToolbarCommunicatorAvailable() { return toolbarCommunicator != null; }
 
-    private boolean isMessageRequestAvailable() {
+    boolean isMessageRequestAvailable() {
         return messageRequestListener != null;
     }
 
-    private boolean isLoadMoreFailedAvailable() {
+    boolean isLoadMoreFailedAvailable() {
         return onRecyclerViewInfiniteScrollListener != null;
     }
 
@@ -367,7 +367,7 @@ public class ChatRoomFragment extends BaseFragment implements ChildEventListener
                 });
     }
 
-    private void fetchFriendInfoGroupMember() {
+    void fetchFriendInfoGroupMember() {
         preservedRoomMembersFirebase.get().child(roomId)
                 .addChildEventListener(preservedRoomMembersChildEventListener);
     }
@@ -390,7 +390,7 @@ public class ChatRoomFragment extends BaseFragment implements ChildEventListener
         public void onCancelled(FirebaseError firebaseError) {}
     };
 
-    private void getMemberInfo(DataSnapshot dataSnapshot) {
+    void getMemberInfo(DataSnapshot dataSnapshot) {
         String memberKey = dataSnapshot.getKey();
 
         userInfoFirebase.get().child(memberKey).keepSynced(true);
@@ -437,7 +437,7 @@ public class ChatRoomFragment extends BaseFragment implements ChildEventListener
                 .addValueEventListener(eventListenerMemberList.get(friendInfo.getKey()));
     }
 
-    private void onMemberInfoFetched(DataSnapshot dataSnapshot) {
+    void onMemberInfoFetched(DataSnapshot dataSnapshot) {
         if (eventListenerMemberList == null) {
             eventListenerMemberList = new ArrayMap<>();
         }
@@ -508,7 +508,7 @@ public class ChatRoomFragment extends BaseFragment implements ChildEventListener
         isPublicChat = !isPrivateRoom && room.getTag() != null;
     }
 
-    private void setTitleToolbar(String title) {
+    void setTitleToolbar(String title) {
         if (isToolbarCommunicatorAvailable()) {
             toolbarCommunicator.setTitle(title);
         } else {
@@ -596,7 +596,7 @@ public class ChatRoomFragment extends BaseFragment implements ChildEventListener
 
     }
 
-    private void checkLoadMoreCompletion(int count) {
+    void checkLoadMoreCompletion(int count) {
         if (count < DOWNLOAD_MESSAGE_ITEM_LIMIT) {
             if (isLoadMoreFailedAvailable()) {
                 onRecyclerViewInfiniteScrollListener.onLoadMoreNoData();
@@ -606,7 +606,7 @@ public class ChatRoomFragment extends BaseFragment implements ChildEventListener
         }
     }
 
-    private void addOlderMessages(ArrayList<Message> messageList, DataSnapshot dataSnapshot) {
+    void addOlderMessages(ArrayList<Message> messageList, DataSnapshot dataSnapshot) {
         for (DataSnapshot postSnapshot : dataSnapshot.getChildren()) {
             Message message = getMessage(postSnapshot);
             message.successfullySent();
@@ -635,7 +635,6 @@ public class ChatRoomFragment extends BaseFragment implements ChildEventListener
 
     private void checkEmptyMessages() {
         messagesFirebase.child(roomId)
-                .limitToFirst(1)
                 .addValueEventListener(checkEmptyValueEventListener);
     }
 
@@ -651,7 +650,7 @@ public class ChatRoomFragment extends BaseFragment implements ChildEventListener
         if (!isPrivateRoom) return;
         getFriendChecker().addValueEventListener(friendCheckerListener);
     }
-    private void initRoomMemberChecker() {
+    void initRoomMemberChecker() {
         if (isPrivateRoom) return;
         getRoomMemberChecker().addValueEventListener(roomMemberCheckerListener);
     }
@@ -683,6 +682,9 @@ public class ChatRoomFragment extends BaseFragment implements ChildEventListener
         public void onDataChange(DataSnapshot dataSnapshot) {
             if (!dataSnapshot.exists()) {
                 if (isPublicChat && !isMember) return;
+
+                roomMembersFirebase.get().removeValue();
+                userRoomFirebase.child(uid).child(roomId).removeValue();
 
                 if (isMessageRequestAvailable()) {
                     messageRequestListener.onRemovedByAdmin();
@@ -728,7 +730,7 @@ public class ChatRoomFragment extends BaseFragment implements ChildEventListener
         return userOnlinesFirebase.child(privateFriendKey);
     }
 
-    private void sendUserOnlineCallback(UserOnlineInfo userOnlineInfo) {
+    void sendUserOnlineCallback(UserOnlineInfo userOnlineInfo) {
         if (isMessageRequestAvailable()) {
             messageRequestListener.onCheckUserOnline(userOnlineInfo);
         } else {
@@ -898,7 +900,7 @@ public class ChatRoomFragment extends BaseFragment implements ChildEventListener
         }).start();
     }
 
-    private void sendMessageBase64ToFirebase(Bitmap bitmap, final Message message) {
+    void sendMessageBase64ToFirebase(Bitmap bitmap, final Message message) {
         String uriBase64 = Base64Util.toDataUri(Base64Util.toBase64(bitmap, 50));
 
         String imageRatio =
@@ -948,7 +950,7 @@ public class ChatRoomFragment extends BaseFragment implements ChildEventListener
         }).start();
     }
 
-    private ArrayMap<String, Object> getMapDataMessage(Message message) {
+    ArrayMap<String, Object> getMapDataMessage(Message message) {
         String[] usersKey = getUsersKeyArray();
 
         ArrayMap<String, Object> messageMap = new ArrayMap<>();
@@ -982,7 +984,7 @@ public class ChatRoomFragment extends BaseFragment implements ChildEventListener
         return usersKey;
     }
 
-    private void sentMessageToFirebase(ArrayMap<String, Object> messageMap, final Message message) {
+    void sentMessageToFirebase(ArrayMap<String, Object> messageMap, final Message message) {
         rootFirebase.updateChildren(messageMap, new Firebase.CompletionListener() {
             @Override
             public void onComplete(final FirebaseError firebaseError, Firebase firebase) {
@@ -991,7 +993,7 @@ public class ChatRoomFragment extends BaseFragment implements ChildEventListener
         });
     }
 
-    private void onMessageSent(FirebaseError firebaseError, final Message message) {
+    void onMessageSent(FirebaseError firebaseError, final Message message) {
         if (firebaseError != null) {
             Log.e(TAG, firebaseError.getMessage());
             MyToast.make(firebaseError.getMessage()).show();
@@ -1013,7 +1015,7 @@ public class ChatRoomFragment extends BaseFragment implements ChildEventListener
         isMessageSending = false;
     }
 
-    private void sendMessageNotification(Message message) {
+    void sendMessageNotification(Message message) {
         Intent notifyMessageIntent = new Intent(Contextor.getInstance().getContext(), GCMNotifyService.class);
         notifyMessageIntent.putExtra(GCMUtil.DATA_TITLE, isPrivateRoom ?
                 "" : room.getName());
@@ -1123,7 +1125,11 @@ public class ChatRoomFragment extends BaseFragment implements ChildEventListener
 
     @Override
     public void onChildRemoved(DataSnapshot dataSnapshot) {
+        /*Message message = getMessage(dataSnapshot);
 
+        if (isMessageRequestAvailable()) {
+            messageRequestListener.onRemoveMessage(message);
+        }*/
     }
 
     @Override

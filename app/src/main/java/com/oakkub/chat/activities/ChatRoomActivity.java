@@ -1,14 +1,19 @@
 package com.oakkub.chat.activities;
 
+import android.Manifest;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.support.annotation.NonNull;
+import android.support.design.widget.CoordinatorLayout;
+import android.support.v4.content.FileProvider;
 import android.support.v7.app.ActionBar;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
@@ -29,6 +34,7 @@ import android.widget.ImageButton;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import com.oakkub.chat.BuildConfig;
 import com.oakkub.chat.R;
 import com.oakkub.chat.fragments.ChatRoomFragment;
 import com.oakkub.chat.managers.AppController;
@@ -39,9 +45,11 @@ import com.oakkub.chat.models.Message;
 import com.oakkub.chat.models.Room;
 import com.oakkub.chat.models.UserInfo;
 import com.oakkub.chat.models.UserOnlineInfo;
+import com.oakkub.chat.models.eventbus.EventBusRemovedRoom;
 import com.oakkub.chat.utils.AnimateUtil;
 import com.oakkub.chat.utils.FirebaseUtil;
 import com.oakkub.chat.utils.IntentUtil;
+import com.oakkub.chat.utils.PermissionUtil;
 import com.oakkub.chat.utils.TimeUtil;
 import com.oakkub.chat.utils.UriUtil;
 import com.oakkub.chat.utils.Util;
@@ -57,6 +65,7 @@ import com.oakkub.chat.views.widgets.TextImageView;
 import com.oakkub.chat.views.widgets.recyclerview.RecyclerViewInfiniteScrollListener;
 import com.oakkub.chat.views.widgets.toolbar.ToolbarCommunicator;
 
+import org.greenrobot.eventbus.EventBus;
 import org.parceler.Parcels;
 
 import java.io.File;
@@ -67,7 +76,7 @@ import java.util.ArrayList;
 import java.util.GregorianCalendar;
 import java.util.Locale;
 
-import butterknife.Bind;
+import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import butterknife.OnTextChanged;
@@ -95,56 +104,61 @@ public class ChatRoomActivity extends BaseActivity
     private static final int CAMERA_REQUEST_CODE = 1;
     private static final int IMAGE_VIEWER_REQUEST_CODE = 2;
     private static final int ROOM_INFO_REQUEST_CODE = 3;
+    private static final int REQUEST_CODE_CAMERA_WRITE_STORAGE_PERMISSION = 100;
+    private static final int REQUEST_CODE_GALLERY_WRITE_STORAGE_PERMISSION = 101;
 
-    @Bind(R.id.simple_toolbar)
+    @BindView(R.id.simple_toolbar)
     Toolbar toolbar;
 
-    @Bind(R.id.chat_title_toolbar_textview)
+    @BindView(R.id.chat_room_root_container)
+    CoordinatorLayout rootContainer;
+
+    @BindView(R.id.chat_title_toolbar_textview)
     MyTextView titleTextView;
 
-    @Bind(R.id.chat_sub_title_toolbar_textview)
+    @BindView(R.id.chat_sub_title_toolbar_textview)
     MyTextView subTitleTextView;
 
-    @Bind(R.id.private_chat_message_recycler_view)
+    @BindView(R.id.private_chat_message_recycler_view)
     RecyclerView messageList;
 
-    @Bind(R.id.message_attachment_root)
+    @BindView(R.id.message_attachment_root)
     MyLinearLayout attachmentLayout;
 
-    @Bind(R.id.message_input_layout)
+    @BindView(R.id.message_input_layout)
     MyLinearLayout messageInputLayout;
 
-    @Bind(R.id.textImageCamera)
+    @BindView(R.id.textImageCamera)
     TextImageView cameraTextImage;
 
-    @Bind(R.id.textImageGallery)
+    @BindView(R.id.textImageGallery)
     TextImageView galleryTextImage;
 
-    @Bind(R.id.textImageBack)
+    @BindView(R.id.textImageBack)
     TextImageView backTextImage;
 
-    @Bind(R.id.message_attachment_button)
+    @BindView(R.id.message_attachment_button)
     ImageButton attachmentButton;
 
-    @Bind(R.id.message_input_ediitext)
+    @BindView(R.id.message_input_ediitext)
     EditText messageText;
 
-    @Bind(R.id.message_input_button)
+    @BindView(R.id.message_input_button)
     ImageButton sendMessageButton;
 
-    @Bind(R.id.private_chat_typing_notify_textview)
+    @BindView(R.id.private_chat_typing_notify_textview)
     TextView headerTextView;
 
-    @Bind(R.id.private_chat_new_message_notify_textview)
+    @BindView(R.id.private_chat_new_message_notify_textview)
     TextView footerTextView;
 
-    @Bind(R.id.private_chat_join_room_to_chat_botton)
+    @BindView(R.id.private_chat_join_room_to_chat_botton)
     Button joinRoomToChatButton;
 
-    @Bind(R.id.progressBar)
+    @BindView(R.id.progressBar)
     ProgressBar progressBar;
 
-    @Bind(R.id.empty_messages_textview)
+    @BindView(R.id.empty_messages_textview)
     MyTextView emptyMessageTextView;
 
     @State
@@ -219,10 +233,10 @@ public class ChatRoomActivity extends BaseActivity
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_private_chat_room);
+        setContentView(R.layout.activity_chat_room);
+        getDataIntent(savedInstanceState);
         clearNotification();
         ButterKnife.bind(this);
-        getDataIntent(savedInstanceState);
         findMessageFragment();
 
         setToolbar();
@@ -263,9 +277,12 @@ public class ChatRoomActivity extends BaseActivity
             isMember = intent.getBooleanExtra(ChatRoomFragment.EXTRA_IS_MEMBER, false);
             privateFriendId = intent.getStringExtra(ChatRoomFragment.EXTRA_FRIEND_ID);
             isPrivateRoom = privateFriendId != null;
-            room = Parcels.unwrap(intent.getParcelableExtra(ChatRoomFragment.EXTRA_ROOM));
         }
 
+        Room intentRoom = Parcels.unwrap(intent.getParcelableExtra(ChatRoomFragment.EXTRA_ROOM));
+        if (room == null || intentRoom.fullEquals(room)) {
+            room = intentRoom;
+        }
     }
 
     private void setToolbar() {
@@ -439,19 +456,27 @@ public class ChatRoomActivity extends BaseActivity
     }
 
     @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+    protected void onActivityResult(final int requestCode, final int resultCode, final Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
-        if (attachmentLayout.isRevealed()) {
-            attachmentLayout.circleReveal();
-        }
+        rootContainer.getViewTreeObserver().addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
+            @Override
+            public boolean onPreDraw() {
+                if (attachmentLayout.isRevealed()) {
+                    attachmentLayout.circleReveal();
+                }
 
-        onRoomInfoIntentResult(resultCode, requestCode, data);
-        onCameraIntentResult(resultCode, requestCode);
-        onImageViewerIntentResult(resultCode, requestCode, data);
+                onRoomInfoIntentResult(resultCode, requestCode, data);
+                onCameraIntentResult(resultCode, requestCode);
+                onImageViewerIntentResult(resultCode, requestCode, data);
+
+                rootContainer.getViewTreeObserver().removeOnPreDrawListener(this);
+                return false;
+            }
+        });
     }
 
-    private void onRoomInfoIntentResult(int resultCode, int requestCode, Intent data) {
+    void onRoomInfoIntentResult(int resultCode, int requestCode, Intent data) {
         if (resultCode != RESULT_OK || requestCode != ROOM_INFO_REQUEST_CODE || data == null) {
             return;
         }
@@ -463,7 +488,7 @@ public class ChatRoomActivity extends BaseActivity
     }
 
     @SuppressWarnings("ResultOfMethodCallIgnored")
-    private void onCameraIntentResult(int resultCode, int requestCode) {
+    void onCameraIntentResult(int resultCode, int requestCode) {
         if (requestCode != CAMERA_REQUEST_CODE) return;
 
         switch (resultCode) {
@@ -482,7 +507,7 @@ public class ChatRoomActivity extends BaseActivity
         }
     }
 
-    private void onImageViewerIntentResult(int resultCode, int requestCode, Intent data) {
+    void onImageViewerIntentResult(int resultCode, int requestCode, Intent data) {
         if (requestCode != IMAGE_VIEWER_REQUEST_CODE) return;
 
         switch (resultCode) {
@@ -526,6 +551,13 @@ public class ChatRoomActivity extends BaseActivity
         onNewMessage(messages);
     }
 
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        onRequestUseCameraPermission(requestCode, grantResults);
+        onRequestUseGalleryPermission(requestCode, grantResults);
+    }
+
     @SuppressWarnings("unused")
     @OnTouch(R.id.message_input_ediitext)
     public boolean onMessageEditTextClick(View view, MotionEvent event) {
@@ -562,6 +594,13 @@ public class ChatRoomActivity extends BaseActivity
     public void onTextImageCameraClick() {
         if (!isMember()) return;
 
+        if (!PermissionUtil.isPermissionAllowed(
+                this,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                REQUEST_CODE_CAMERA_WRITE_STORAGE_PERMISSION)) {
+            return;
+        }
+
         File imageFile = null;
         try {
             imageFile = chatRoomFragment.createImageFile();
@@ -574,7 +613,11 @@ public class ChatRoomActivity extends BaseActivity
         }
         uriCameraImageFile = Uri.fromFile(imageFile);
 
-        Intent cameraIntent = IntentUtil.openCamera(this, uriCameraImageFile);
+        Uri contentUri = FileProvider.getUriForFile(this,
+                BuildConfig.APPLICATION_ID + ".fileprovider",
+                imageFile);
+
+        Intent cameraIntent = IntentUtil.openCamera(this, contentUri);
         if (cameraIntent != null) {
             startActivityForResult(cameraIntent, CAMERA_REQUEST_CODE);
         }
@@ -584,9 +627,34 @@ public class ChatRoomActivity extends BaseActivity
     public void onTextImageGalleryClick() {
         if (!isMember()) return;
 
+        if (!PermissionUtil.isPermissionAllowed(
+                this,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                REQUEST_CODE_GALLERY_WRITE_STORAGE_PERMISSION)) {
+            return;
+        }
+
         Intent imageViewerIntent = IntentUtil.openImageViewer(this, true);
         if (imageViewerIntent != null) {
             startActivityForResult(imageViewerIntent, IMAGE_VIEWER_REQUEST_CODE);
+        }
+    }
+
+    private void onRequestUseCameraPermission(int requestCode, int[] grantResults) {
+        if (requestCode != REQUEST_CODE_CAMERA_WRITE_STORAGE_PERMISSION) return;
+        if (grantResults[0] != PackageManager.PERMISSION_GRANTED) {
+            MyToast.make("You denied write storage permission").show();
+        } else {
+            onTextImageCameraClick();
+        }
+    }
+
+    private void onRequestUseGalleryPermission(int requestCode, int[] grantResults) {
+        if (requestCode != REQUEST_CODE_GALLERY_WRITE_STORAGE_PERMISSION) return;
+        if (grantResults[0] != PackageManager.PERMISSION_GRANTED) {
+            MyToast.make("You denied write storage permission").show();
+        } else {
+            onTextImageGalleryClick();
         }
     }
 
@@ -891,9 +959,8 @@ public class ChatRoomActivity extends BaseActivity
     @Override
     public void onRemovedByFriend(boolean isRemoved) {
         isRemovedByFriend = isRemoved;
-
         if (!isRemoved) return;
-        // TODO: still cannot decide what to do when our friend remove us from friend contact when in chat screen
+
         headerTextView.setText(getString(R.string.you_and_n_are_not_friend_so_cannot_send_message,
                 room.getName().split(" ")[0]));
         AnimateUtil.alphaAnimation(headerTextView, true);
@@ -916,6 +983,8 @@ public class ChatRoomActivity extends BaseActivity
     @Override
     public void onAlertDialogClick(String tag, int which) {
         if (tag.equals(REMOVED_FROM_CHAT_DIALOG_TAG) && which == DialogInterface.BUTTON_POSITIVE) {
+
+            EventBus.getDefault().post(new EventBusRemovedRoom(room));
 
             Intent mainIntent = new Intent(this, MainActivity.class);
             mainIntent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);

@@ -9,7 +9,7 @@ import com.oakkub.chat.R;
 import com.oakkub.chat.fragments.AuthenticationFragment;
 import com.oakkub.chat.utils.FirebaseUtil;
 
-import butterknife.Bind;
+import butterknife.BindView;
 import butterknife.ButterKnife;
 import icepick.State;
 
@@ -17,10 +17,10 @@ public class AuthenticationActivity extends BaseActivity {
 
     private static final String AUTHENTICATION_TAG = "tag:authenticationFragment";
 
-    @Bind(R.id.login_process_root_view)
+    @BindView(R.id.login_process_root_view)
     CoordinatorLayout rootView;
 
-    @Bind(R.id.logging_in_text_view)
+    @BindView(R.id.logging_in_text_view)
     TextView loggingTextView;
 
     @State

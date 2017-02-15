@@ -31,7 +31,7 @@ import org.parceler.Parcels;
 
 import java.util.ArrayList;
 
-import butterknife.Bind;
+import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnTextChanged;
 import icepick.State;
@@ -59,22 +59,22 @@ public class MemberManagerActivity extends BaseActivity implements OnAdapterItem
     private static final String STATE_FRIEND_IMAGE_LIST = "state:friendImageList";
     private static final String EXTRA_ROOM_ID = "extra:roomId";
 
-    @Bind(R.id.simple_toolbar)
+    @BindView(R.id.simple_toolbar)
     Toolbar toolbar;
 
-    @Bind(R.id.find_friend_edittext)
+    @BindView(R.id.find_friend_edittext)
     EditText findFriendsEditText;
 
-    @Bind(R.id.find_friend_selected_friend_recyclerview)
+    @BindView(R.id.find_friend_selected_friend_recyclerview)
     RecyclerView selectedFriendImageList;
 
-    @Bind(R.id.find_friend_selected_friend_line)
+    @BindView(R.id.find_friend_selected_friend_line)
     View selectedFriendLine;
 
-    @Bind(R.id.find_friend_friend_recyclerview)
+    @BindView(R.id.find_friend_friend_recyclerview)
     RecyclerView friendList;
 
-    @Bind(R.id.find_friend_emptyTextProgressBar)
+    @BindView(R.id.find_friend_emptyTextProgressBar)
     EmptyTextProgressBar progressBarLayout;
 
     @State

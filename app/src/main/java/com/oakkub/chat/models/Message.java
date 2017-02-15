@@ -115,4 +115,20 @@ public class Message {
     public int hashCode() {
         return messageKey.hashCode();
     }
+
+    @Override
+    public String toString() {
+        return "Message{" +
+                "messageKey='" + messageKey + '\'' +
+                ", roomId='" + roomId + '\'' +
+                ", message='" + message + '\'' +
+                ", sentBy='" + sentBy + '\'' +
+                ", imagePath='" + imagePath + '\'' +
+                ", ratio='" + ratio + '\'' +
+                ", isSuccessfullySent='" + isSuccessfullySent + '\'' +
+                ", languageRes='" + languageRes + '\'' +
+                ", readTotal=" + readTotal +
+                ", sentWhen=" + sentWhen +
+                '}';
+    }
 }

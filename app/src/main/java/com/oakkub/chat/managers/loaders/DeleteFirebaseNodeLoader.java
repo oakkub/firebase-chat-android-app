@@ -14,7 +14,7 @@ import javax.inject.Named;
 /**
  * Created by OaKKuB on 3/17/2016.
  */
-public class UpdateNodeLoader extends MyLoader<Boolean> {
+public class DeleteFirebaseNodeLoader extends MyLoader<Boolean> {
 
     @Inject
     @Named(FirebaseUtil.NAMED_ROOT)
@@ -22,7 +22,7 @@ public class UpdateNodeLoader extends MyLoader<Boolean> {
 
     private ArrayMap<String, Object> removeMap;
 
-    public UpdateNodeLoader(Context context, ArrayMap<String, Object> removeMap) {
+    public DeleteFirebaseNodeLoader(Context context, ArrayMap<String, Object> removeMap) {
         super(context);
         AppController.getComponent(getContext()).inject(this);
         this.removeMap = removeMap;

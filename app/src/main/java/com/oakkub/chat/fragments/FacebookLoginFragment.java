@@ -23,7 +23,7 @@ import java.util.Arrays;
 /**
  * A placeholder fragment containing a simple view.
  */
-public class FacebookLoginActivityFragment extends Fragment implements FacebookCallback<LoginResult> {
+public class FacebookLoginFragment extends Fragment implements FacebookCallback<LoginResult> {
 
     public static final int RC_FACEBOOK = 2000;
 
@@ -32,14 +32,14 @@ public class FacebookLoginActivityFragment extends Fragment implements FacebookC
 
     private String action;
 
-    public static FacebookLoginActivityFragment newInstance(String action) {
+    public static FacebookLoginFragment newInstance(String action) {
         Bundle args = new Bundle();
         args.putString(FacebookLoginActivity.ACTION, action);
 
-        FacebookLoginActivityFragment facebookLoginActivityFragment = new FacebookLoginActivityFragment();
-        facebookLoginActivityFragment.setArguments(args);
+        FacebookLoginFragment facebookLoginFragment = new FacebookLoginFragment();
+        facebookLoginFragment.setArguments(args);
 
-        return facebookLoginActivityFragment;
+        return facebookLoginFragment;
     }
 
     @Override
@@ -64,16 +64,14 @@ public class FacebookLoginActivityFragment extends Fragment implements FacebookC
         accessTokenTracker = new AccessTokenTracker() {
             @Override
             protected void onCurrentAccessTokenChanged(AccessToken oldAccessToken, AccessToken currentAccessToken) {
-
                 if (currentAccessToken != null) {
                     beginAuthentication(currentAccessToken.getToken());
                 } else {
-                    logoutSuccess();
+                    finishActivity();
                 }
             }
         };
         LoginManager.getInstance().registerCallback(callbackManager, this);
-
     }
 
     private void checkAction() {
@@ -87,16 +85,8 @@ public class FacebookLoginActivityFragment extends Fragment implements FacebookC
     }
 
     private void performLogin() {
-
-        new Handler().postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                LoginManager.getInstance().
-                        logInWithReadPermissions(FacebookLoginActivityFragment.this,
-                                Arrays.asList("public_profile", "email"));
-            }
-        }, 500);
-
+        LoginManager.getInstance().logInWithReadPermissions(this,
+                Arrays.asList("public_profile", "email"));
     }
 
     private void performLogout() {
@@ -105,27 +95,25 @@ public class FacebookLoginActivityFragment extends Fragment implements FacebookC
             public void run() {
                 LoginManager.getInstance().logOut();
             }
-        }, 1000);
+        }, 500);
     }
 
-    private void logoutSuccess() {
+    void logoutSuccess() {
         finishActivity();
     }
 
-    private void beginAuthentication(String token) {
+    void beginAuthentication(String token) {
 
-        Intent authenticationIntent =
-                Util.intentClearActivity(getActivity().getApplicationContext(),
+        Intent authenticationIntent = Util.intentClearActivity(getActivity().getApplicationContext(),
                         AuthenticationActivity.class);
-        authenticationIntent.putExtra(AuthenticationFragment.PROVIDER,
-                                        TextUtil.FACEBOOK_PROVIDER);
+        authenticationIntent.putExtra(AuthenticationFragment.PROVIDER, TextUtil.FACEBOOK_PROVIDER);
         authenticationIntent.putExtra(AuthenticationFragment.TOKEN, token);
 
         startActivity(authenticationIntent);
         getActivity().overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
     }
 
-    private void finishActivity() {
+    void finishActivity() {
         ((BaseActivity) getActivity()).fadeOutFinish();
     }
 

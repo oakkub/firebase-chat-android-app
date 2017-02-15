@@ -102,7 +102,7 @@ public class CreatePrivateRoomFragment extends BaseFragment {
                 });
     }
 
-    private void isRoomAlreadyCreated(DataSnapshot dataSnapshot, String roomKey) {
+    void isRoomAlreadyCreated(DataSnapshot dataSnapshot, String roomKey) {
         if (dataSnapshot.exists()) {
             Room room = dataSnapshot.getValue(Room.class);
             room.setRoomId(dataSnapshot.getKey());
@@ -136,7 +136,7 @@ public class CreatePrivateRoomFragment extends BaseFragment {
         });
     }
 
-    private void roomCreated(Room room) {
+    void roomCreated(Room room) {
         if (!useEventBus) {
             if (onPrivateRoomRequestListener != null) {
                 onPrivateRoomRequestListener.onPrivateRoomCreated(room);

@@ -8,7 +8,7 @@ import android.widget.TextView;
 import com.oakkub.chat.R;
 import com.oakkub.chat.views.adapters.presenter.OnAdapterItemClick;
 
-import butterknife.Bind;
+import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 
@@ -17,10 +17,10 @@ import butterknife.OnClick;
  */
 public class SimpleInfoHolder extends RecyclerView.ViewHolder {
 
-    @Bind(R.id.simpleInfoProfileImageView)
+    @BindView(R.id.simpleInfoProfileImageView)
     public ImageView profileImageTextView;
 
-    @Bind(R.id.simpleInfoTextView)
+    @BindView(R.id.simpleInfoTextView)
     public TextView nameTextView;
 
     private OnAdapterItemClick onAdapterItemClick;

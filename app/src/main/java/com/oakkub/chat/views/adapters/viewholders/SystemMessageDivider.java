@@ -6,7 +6,7 @@ import android.widget.TextView;
 
 import com.oakkub.chat.R;
 
-import butterknife.Bind;
+import butterknife.BindView;
 import butterknife.ButterKnife;
 
 /**
@@ -14,7 +14,7 @@ import butterknife.ButterKnife;
  */
 public class SystemMessageDivider extends RecyclerView.ViewHolder {
 
-    @Bind(R.id.system_message_text_view)
+    @BindView(R.id.system_message_text_view)
     public TextView systemMessageTextView;
 
     public SystemMessageDivider(View itemView) {

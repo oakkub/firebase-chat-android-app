@@ -117,10 +117,8 @@ public class Room {
         return roomId.equals(room.roomId);
     }
 
-    public boolean fullEquals(Object o) {
-        if (!equals(o)) return false;
-
-        Room room = (Room) o;
+    public boolean fullEquals(Room room) {
+        if (!equals(room)) return false;
 
         if (latestMessageTime != room.latestMessageTime) return false;
         if (created != room.created) return false;

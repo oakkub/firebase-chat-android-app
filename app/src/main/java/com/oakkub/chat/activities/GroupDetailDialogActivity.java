@@ -13,7 +13,7 @@ import com.oakkub.chat.models.Room;
 
 import org.parceler.Parcels;
 
-import butterknife.Bind;
+import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import icepick.State;
@@ -30,10 +30,10 @@ public class GroupDetailDialogActivity extends BaseActivity {
     public static final String ACTION_GROUP = "com.oakkub.chat.activities.GroupDetailDialogActivity.ACTION_GROUP";
     public static final String ACTION_PUBLIC = "com.oakkub.chat.activities.GroupDetailDialogActivity.ACTION_PUBLIC";
 
-    @Bind(R.id.group_detail_profile_image_view)
+    @BindView(R.id.group_detail_profile_image_view)
     SimpleDraweeView roomImage;
 
-    @Bind(R.id.group_detail_display_name_text_view)
+    @BindView(R.id.group_detail_display_name_text_view)
     TextView roomNameTextView;
 
     @State

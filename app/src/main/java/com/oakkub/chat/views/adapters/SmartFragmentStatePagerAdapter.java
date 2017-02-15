@@ -6,6 +6,8 @@ import android.support.v4.app.FragmentStatePagerAdapter;
 import android.util.SparseArray;
 import android.view.ViewGroup;
 
+import com.oakkub.chat.utils.BitmapUtils;
+
 /**
  * Created by OaKKuB on 10/12/2015.
  */
@@ -33,4 +35,5 @@ public abstract class SmartFragmentStatePagerAdapter extends FragmentStatePagerA
     public Fragment getRegisteredFragment(int position) {
         return registeredFragments.get(position);
     }
+
 }

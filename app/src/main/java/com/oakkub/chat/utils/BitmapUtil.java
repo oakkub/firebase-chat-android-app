@@ -10,9 +10,6 @@ import java.io.File;
 import java.io.FileDescriptor;
 import java.io.IOException;
 
-/**
- * Created by OaKKuB on 1/20/2016.
- */
 public class BitmapUtil {
 
     private static final String TAG = BitmapUtil.class.getSimpleName();

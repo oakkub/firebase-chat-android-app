@@ -13,13 +13,13 @@ import com.oakkub.chat.views.widgets.MyToast;
  */
 public class IntentUtil {
 
-    public static Intent openImageViewer(Context context, boolean allowMultipleSelection) {
+    public static Intent openImageViewer(Context context, boolean shouldAllowMultipleSelection) {
         Intent imageViewerIntent = new Intent(Intent.ACTION_GET_CONTENT);
         imageViewerIntent.addCategory(Intent.CATEGORY_OPENABLE);
         imageViewerIntent.setType("image/*");
         imageViewerIntent.putExtra(Intent.EXTRA_LOCAL_ONLY, true);
 
-        if (Build.VERSION.SDK_INT >= 18 && allowMultipleSelection) {
+        if (Build.VERSION.SDK_INT >= 18 && shouldAllowMultipleSelection) {
             imageViewerIntent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
         }
 

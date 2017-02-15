@@ -34,8 +34,8 @@ public class UriUtil {
             return path;
         }
 
-        int columnIndex = cursor.getColumnIndexOrThrow(projection[0]);
         if (cursor.moveToFirst()) {
+            int columnIndex = cursor.getColumnIndexOrThrow(projection[0]);
             path = cursor.getString(columnIndex);
         }
         cursor.close();

@@ -89,7 +89,7 @@
                     android:text="@string/type_colon"
                     android:textAppearance="@style/TextAppearance.AppCompat.Subhead" />
 
-                <com.oakkub.chat.views.widgets.spinner.MySpinner
+                <Spinner
                     android:id="@+id/public_chat_type_spinner"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content" />

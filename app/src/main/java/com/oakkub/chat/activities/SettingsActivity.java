@@ -7,7 +7,7 @@ import android.support.v7.widget.Toolbar;
 import com.oakkub.chat.R;
 import com.oakkub.chat.fragments.GeneralPreferenceFragment;
 
-import butterknife.Bind;
+import butterknife.BindView;
 import butterknife.ButterKnife;
 
 /**
@@ -16,7 +16,7 @@ import butterknife.ButterKnife;
 public class SettingsActivity extends BaseActivity implements
         GeneralPreferenceFragment.OnLanguageChangeListener {
 
-    @Bind(R.id.simple_toolbar)
+    @BindView(R.id.simple_toolbar)
     Toolbar toolbar;
 
     @Override

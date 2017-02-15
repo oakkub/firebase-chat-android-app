@@ -1,7 +1,7 @@
 package com.oakkub.chat.views.dialogs;
 
-import android.app.Activity;
 import android.app.Dialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -73,14 +73,14 @@ public class AlertDialogFragment extends DialogFragment implements DialogInterfa
 
 
     @Override
-    public void onAttach(Activity activity) {
-        super.onAttach(activity);
+    public void onAttach(Context context) {
+        super.onAttach(context);
 
         try {
-            if (getParentFragment() != null) {
-                onAlertDialogListener = (OnAlertDialogListener) getParentFragment();
-            } else if (getTargetFragment() != null) {
+            if (getTargetFragment() != null) {
                 onAlertDialogListener = (OnAlertDialogListener) getTargetFragment();
+            } else if (getParentFragment() != null) {
+                onAlertDialogListener = (OnAlertDialogListener) getParentFragment();
             } else {
                 onAlertDialogListener = (OnAlertDialogListener) getActivity();
             }

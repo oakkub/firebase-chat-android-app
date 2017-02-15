@@ -15,7 +15,7 @@ import com.oakkub.chat.models.UserInfo;
 import com.oakkub.chat.views.adapters.RecyclerViewAdapter;
 import com.oakkub.chat.views.adapters.presenter.OnAdapterItemClick;
 
-import butterknife.Bind;
+import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 
@@ -72,16 +72,16 @@ public class SimpleInfoButtonListAdapter extends RecyclerViewAdapter<UserInfo> {
 
     public class SimpleInfoButtonHolder extends RecyclerView.ViewHolder {
 
-        @Bind(R.id.simpleInfoButtonContainer)
+        @BindView(R.id.simpleInfoButtonContainer)
         CardView simpleInfoContainer;
 
-        @Bind(R.id.simpleInfoButtonProfileImageView)
+        @BindView(R.id.simpleInfoButtonProfileImageView)
         SimpleDraweeView simpleInfoProfileImageView;
 
-        @Bind(R.id.simpleInfoButtonTextView)
+        @BindView(R.id.simpleInfoButtonTextView)
         TextView simpleInfoTextView;
 
-        @Bind(R.id.simpleInfoButton)
+        @BindView(R.id.simpleInfoButton)
         Button simpleInfoButton;
 
         public SimpleInfoButtonHolder(View itemView, String buttonText) {

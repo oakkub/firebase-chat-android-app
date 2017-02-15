@@ -32,7 +32,7 @@ import org.greenrobot.eventbus.Subscribe;
 import java.util.ArrayList;
 import java.util.Collections;
 
-import butterknife.Bind;
+import butterknife.BindView;
 import butterknife.ButterKnife;
 
 /**
@@ -44,13 +44,13 @@ public class PublicListFragment extends BaseFragment implements OnAdapterItemCli
     private static final String ARGS_MY_ID = "args:uid";
     private static final String STATE_PUBLIC_CHAT_ADAPTER = "state:publicChatAdapter";
 
-    @Bind(R.id.swipe_refresh_progress_bar_recycler_view_layout)
+    @BindView(R.id.swipe_refresh_progress_bar_recycler_view_layout)
     MySwipeRefreshLayout swipeRefreshLayout;
 
-    @Bind(R.id.recyclerview)
+    @BindView(R.id.recyclerview)
     RecyclerView publicChatList;
 
-    @Bind(R.id.swipe_refresh_text_view)
+    @BindView(R.id.swipe_refresh_text_view)
     MyTextView alertTextView;
 
     private GroupListAdapter publicChatAdapter;
