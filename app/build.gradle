@@ -58,10 +58,10 @@ dependencies {
         force true
     }
     compile 'com.facebook.android:facebook-android-sdk:4.19.0'
-    compile 'com.facebook.fresco:fresco:1.0.1'
+    compile 'com.facebook.fresco:fresco:1.1.0'
     compile 'com.firebase:firebase-client-android:2.5.2'
-    compile 'com.google.android.gms:play-services-auth:10.0.1'
-    compile 'com.google.android.gms:play-services-gcm:10.0.1'
+    compile 'com.google.android.gms:play-services-auth:10.2.0'
+    compile 'com.google.android.gms:play-services-gcm:10.2.0'
     compile 'com.jakewharton:butterknife:8.5.1'
     compile 'com.squareup.okhttp3:okhttp:3.6.0'
     compile 'org.greenrobot:eventbus:3.0.0'
